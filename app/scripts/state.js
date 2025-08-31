@@ -5,8 +5,7 @@
 const LS_KEYS = {
   theme: 'pw.theme',
   model: 'pw.model',
-  mode: 'pw.mode',
-  webSearch: 'pw.websearch'
+  mode: 'pw.mode'
 };
 
 export const THEMES = ['matrix', 'dark', 'aurora'];
@@ -61,22 +60,18 @@ const chatHistories = {
 const state = {
   theme: 'aurora',
   modelKey: 'openai:gpt-5', // populated by modelRegistry defaults
-  mode: 'basic',
-  webSearch: MODES.basic.defaultSearch
+  mode: 'basic'
 };
 
 function loadPersisted() {
   const t = localStorage.getItem(LS_KEYS.theme);
   const m = localStorage.getItem(LS_KEYS.model);
   const md = localStorage.getItem(LS_KEYS.mode);
-  const ws = localStorage.getItem(LS_KEYS.webSearch);
   if (t && THEMES.includes(t)) state.theme = t;
   if (m) state.modelKey = m;
   if (md && MODES[md]) {
     state.mode = md;
-    state.webSearch = MODES[md].defaultSearch;
   }
-  if (ws != null) state.webSearch = ws === 'true';
 }
 
 export function initState() {
@@ -106,18 +101,10 @@ export function setModelKey(modelKey) {
 export function setMode(mode) {
   if (!MODES[mode]) return;
   state.mode = mode;
-  // Reset webSearch to mode default when switching modes
-  state.webSearch = MODES[mode].defaultSearch;
   localStorage.setItem(LS_KEYS.mode, mode);
-  localStorage.setItem(LS_KEYS.webSearch, String(state.webSearch));
-  dispatch('pw:mode:changed', { mode, webSearch: state.webSearch });
+  dispatch('pw:mode:changed', { mode });
 }
 
-export function setWebSearch(on) {
-  state.webSearch = !!on;
-  localStorage.setItem(LS_KEYS.webSearch, String(state.webSearch));
-  dispatch('pw:websearch:changed', { webSearch: state.webSearch });
-}
 
 // Chat history ops
 export function getChatHistory(mode) {

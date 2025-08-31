@@ -92,9 +92,10 @@ function buildWebResultsDigest(results) {
   return lines.length ? `Web results digest:\n${lines.join('\n')}` : null;
 }
 
-async function performWebSearchIfNeeded(mode, explicitFlag, userQuery) {
+async function performWebSearchIfNeeded(mode, userQuery) {
   const spec = MODE_SPECS[mode] || MODE_SPECS.basic;
-  const shouldSearch = typeof explicitFlag === 'boolean' ? explicitFlag : spec.defaultSearch;
+  // Never use web search in basic mode; web mode uses it by default.
+  const shouldSearch = mode === 'basic' ? false : spec.defaultSearch;
   if (!shouldSearch || !userQuery) return { digest: null, sources: [] };
 
   const { results } = await tavilySearch(userQuery, { maxResults: 6, includeAnswer: false, searchDepth: 'advanced' });
@@ -147,7 +148,6 @@ router.post('/', async (req, res, next) => {
     const {
       mode = 'basic',
       messages: rawMessages,
-      webSearch,
       provider, // 'openai' | 'deepseek' (preferred)
       model // optional specific model id for provider
     } = req.body || {};
@@ -166,7 +166,7 @@ router.post('/', async (req, res, next) => {
     const systemMsg = { role: 'system', content: sys };
 
     // Optional web search
-    const { digest, sources } = await performWebSearchIfNeeded(mode, webSearch, latestUserContent);
+    const { digest, sources } = await performWebSearchIfNeeded(mode, latestUserContent);
     const webMsg = digest ? [{ role: 'system', content: digest }] : [];
 
     // Compose final message list

@@ -113,7 +113,7 @@ Open http://localhost:8787 in your browser.
 ## Endpoints (high level)
 
 - POST /api/chat
-  - Body: { mode, messages: [{role, content}], webSearch?, provider?, model? }
+  - Body: { mode, messages: [{role, content}], provider?, model? }
   - Returns: { message, modelUsed, providerUsed, disclaimer?, sources? }
 
 - POST /api/quote

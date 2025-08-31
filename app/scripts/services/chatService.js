@@ -17,16 +17,14 @@ function withTimeout(promise, ms = 45000) {
  * @param {Object} opts
  * @param {'doctor'|'therapist'|'web'|'basic'|'excuse'} opts.mode
  * @param {Array<{role:'user'|'assistant', content:string}>} opts.messages
- * @param {boolean} opts.webSearch
  * @param {'openai'|'deepseek'} [opts.provider]
  * @param {string} [opts.model]
  * @returns {Promise<{ message:{role:'assistant',content:string}, modelUsed:string, providerUsed:string, disclaimer:string|null, sources:Array<{title:string,url:string,source:string}> }>}
  */
-export async function sendChat({ mode, messages, webSearch, provider, model }) {
+export async function sendChat({ mode, messages, provider, model }) {
   const body = JSON.stringify({
     mode,
     messages,
-    webSearch: !!webSearch,
     provider,
     model
   });

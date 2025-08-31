@@ -1,5 +1,5 @@
 import { applyTheme } from './theme.js';
-import { initState, getState, THEMES, MODES, setTheme, setMode, setWebSearch, setModelKey, getChatHistory, appendChatMessage } from './state.js';
+import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage } from './state.js';
 import { getModels, providerFor, modelIdFor, getDefaultModelKey } from './services/modelRegistry.js';
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
@@ -13,7 +13,6 @@ const $ = (sel) => document.querySelector(sel);
 const themeSelect = () => $('#themeSelect');
 const modelSelect = () => $('#modelSelect');
 const modeSelect = () => $('#modeSelect');
-const webSearchToggle = () => $('#webSearchToggle');
 const chatForm = () => $('#chatForm');
 const chatInput = () => $('#chatInput');
 const chatMessages = () => $('#chatMessages');
@@ -41,9 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
   hydrateModeSelect(s.mode);
   syncDisclaimerForMode(s.mode);
   showStarterIfEmpty(s.mode);
-
-  // Web search toggle
-  webSearchToggle().checked = !!s.webSearch;
 
   // Initial quote and news
   void refreshQuote();
@@ -89,10 +85,6 @@ function wireControls() {
     renderChat(getChatHistory(m));
   });
 
-  // Web search toggle
-  webSearchToggle().addEventListener('change', (e) => {
-    setWebSearch(!!e.target.checked);
-  });
 
   // Chat submit
   chatForm().addEventListener('submit', async (e) => {
@@ -119,7 +111,6 @@ function wireControls() {
       const resp = await sendChat({
         mode: s.mode,
         messages: getChatHistory(s.mode),
-        webSearch: !!s.webSearch,
         provider,
         model: modelId
       });
@@ -173,9 +164,8 @@ function wireStateEvents() {
     hydrateModelSelect(modelKey);
   });
   document.addEventListener('pw:mode:changed', (e) => {
-    const { mode, webSearch } = e.detail || {};
+    const { mode } = e.detail || {};
     hydrateModeSelect(mode);
-    webSearchToggle().checked = !!webSearch;
     syncDisclaimerForMode(mode);
     showStarterIfEmpty(mode);
     renderChat(getChatHistory(mode));
