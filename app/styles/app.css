@@ -130,6 +130,11 @@ body {
   margin: 0;
   font-size: 1rem;
 }
+/* Normalize header heights so buttons don't make some headers taller */
+.card-head .btn {
+  line-height: 1;
+  padding-block: 0.25rem;
+}
 
 /* Specific card placements */
 .quote-card, .clock-card, .chat-card, .news-card { padding-bottom: 0.25rem; }
