@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Productivity Workspace</title>
+  <link rel="stylesheet" href="styles/app.css" />
+  <link rel="stylesheet" href="styles/themes.css" />
+</head>
+<body data-theme="aurora">
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">PW</span>
+      <h1 class="title">Productivity Workspace</h1>
+    </div>
+
+    <div class="controls">
+      <label class="control">
+        <span class="label">Theme</span>
+        <select id="themeSelect" aria-label="Theme">
+          <option value="matrix">Matrix</option>
+          <option value="dark">Dark</option>
+          <option value="aurora" selected>Aurora</option>
+        </select>
+      </label>
+
+      <label class="control">
+        <span class="label">Model</span>
+        <select id="modelSelect" aria-label="Model">
+          <!-- Populated at runtime from model registry -->
+        </select>
+      </label>
+    </div>
+
+    <div class="code-rain" aria-hidden="true"></div>
+  </header>
+
+  <main class="layout">
+    <section class="card quote-card" aria-labelledby="quoteTitle">
+      <div class="card-head">
+        <h2 id="quoteTitle">Inspiration</h2>
+        <button id="quoteRefresh" class="btn" type="button" aria-label="Refresh quote">Refresh</button>
+      </div>
+      <blockquote id="quoteText" class="quote-text" aria-live="polite">
+        <!-- Quote loads asynchronously -->
+      </blockquote>
+    </section>
+
+    <section class="card clock-card" aria-labelledby="clockTitle">
+      <div class="card-head">
+        <h2 id="clockTitle">Now</h2>
+      </div>
+      <div class="clock">
+        <div id="clockTime" class="time" aria-live="polite">--:--</div>
+        <div id="clockDate" class="date">--</div>
+      </div>
+    </section>
+
+    <section class="card chat-card" aria-labelledby="chatTitle">
+      <div class="card-head">
+        <h2 id="chatTitle">Chat</h2>
+        <div class="chat-controls">
+          <label class="control">
+            <span class="label">Mode</span>
+            <select id="modeSelect" aria-label="Chat mode">
+              <option value="doctor">Medical Doctor</option>
+              <option value="therapist">Therapist</option>
+              <option value="web">Web Search</option>
+              <option value="basic" selected>Basic Info</option>
+              <option value="excuse">Excuse Generator</option>
+            </select>
+          </label>
+
+          <label class="control toggle" title="Use web search when available">
+            <input id="webSearchToggle" type="checkbox" />
+            <span>Web search</span>
+          </label>
+        </div>
+      </div>
+
+      <div id="chatDisclaimer" class="disclaimer" role="note" aria-live="polite"></div>
+
+      <div id="chatMessages" class="messages" aria-live="polite" aria-busy="false">
+        <!-- Messages render here -->
+      </div>
+
+      <form id="chatForm" class="chat-input" autocomplete="off">
+        <label class="sr-only" for="chatInput">Your message</label>
+        <input id="chatInput" type="text" placeholder="Type your message..." required />
+        <button id="chatSend" class="btn primary" type="submit">Send</button>
+      </form>
+    </section>
+
+    <section class="card news-card" aria-labelledby="newsTitle">
+      <div class="card-head">
+        <h2 id="newsTitle">News</h2>
+        <div class="news-controls">
+          <nav id="newsTabs" class="tabs" aria-label="News categories">
+            <button class="tab active" data-cat="national" type="button">National</button>
+            <button class="tab" data-cat="world" type="button">World</button>
+            <button class="tab" data-cat="local" type="button">Local</button>
+          </nav>
+          <button id="newsRefresh" class="btn" type="button" aria-label="Refresh news">Refresh</button>
+        </div>
+      </div>
+
+      <div id="newsItems" class="news-items" aria-live="polite" aria-busy="false">
+        <!-- News items render here -->
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <small>&copy; <span id="year"></span> Productivity Workspace</small>
+  </footer>
+
+  <script type="module" src="scripts/main.js"></script>
+</body>
+</html>

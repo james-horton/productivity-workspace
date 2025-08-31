@@ -1,0 +1,142 @@
+/**
+ * Client session state (in-memory) + lightweight persistence for preferences
+ */
+
+const LS_KEYS = {
+  theme: 'pw.theme',
+  model: 'pw.model',
+  mode: 'pw.mode',
+  webSearch: 'pw.websearch'
+};
+
+export const THEMES = ['matrix', 'dark', 'aurora'];
+
+export const MODES = {
+  doctor: {
+    id: 'doctor',
+    label: 'Medical Doctor',
+    starter: 'What health issue are you dealing with today, and what symptoms have you noticed?',
+    disclaimer: 'Not medical advice. For urgent symptoms, contact a licensed clinician or emergency services.',
+    defaultSearch: false
+  },
+  therapist: {
+    id: 'therapist',
+    label: 'Therapist',
+    starter: 'What’s on your mind today, and how would you like to feel by the end of this chat?',
+    disclaimer: 'Supportive conversation only, not a substitute for professional care. If in crisis, contact local emergency services or a crisis hotline.',
+    defaultSearch: false
+  },
+  web: {
+    id: 'web',
+    label: 'Web Search',
+    starter: 'What do you want to look up right now?',
+    disclaimer: '',
+    defaultSearch: true
+  },
+  basic: {
+    id: 'basic',
+    label: 'Basic Info',
+    starter: 'What quick info do you need right now?',
+    disclaimer: '',
+    defaultSearch: false
+  },
+  excuse: {
+    id: 'excuse',
+    label: 'Excuse Generator',
+    starter: 'What do you need an excuse for, and how believable should it be?',
+    disclaimer: '',
+    defaultSearch: false
+  }
+};
+
+// Per-mode chat histories (in-memory for session only)
+const chatHistories = {
+  doctor: [],
+  therapist: [],
+  web: [],
+  basic: [],
+  excuse: []
+};
+
+const state = {
+  theme: 'aurora',
+  modelKey: 'openai:gpt-5', // populated by modelRegistry defaults
+  mode: 'basic',
+  webSearch: MODES.basic.defaultSearch
+};
+
+function loadPersisted() {
+  const t = localStorage.getItem(LS_KEYS.theme);
+  const m = localStorage.getItem(LS_KEYS.model);
+  const md = localStorage.getItem(LS_KEYS.mode);
+  const ws = localStorage.getItem(LS_KEYS.webSearch);
+  if (t && THEMES.includes(t)) state.theme = t;
+  if (m) state.modelKey = m;
+  if (md && MODES[md]) {
+    state.mode = md;
+    state.webSearch = MODES[md].defaultSearch;
+  }
+  if (ws != null) state.webSearch = ws === 'true';
+}
+
+export function initState() {
+  loadPersisted();
+  // Ensure histories exist for all modes
+  Object.keys(MODES).forEach(k => { if (!chatHistories[k]) chatHistories[k] = []; });
+  dispatch('pw:state:init', { ...state });
+}
+
+export function getState() {
+  return { ...state };
+}
+
+export function setTheme(theme) {
+  if (!THEMES.includes(theme)) return;
+  state.theme = theme;
+  localStorage.setItem(LS_KEYS.theme, theme);
+  dispatch('pw:theme:changed', { theme });
+}
+
+export function setModelKey(modelKey) {
+  state.modelKey = modelKey;
+  localStorage.setItem(LS_KEYS.model, modelKey);
+  dispatch('pw:model:changed', { modelKey });
+}
+
+export function setMode(mode) {
+  if (!MODES[mode]) return;
+  state.mode = mode;
+  // Reset webSearch to mode default when switching modes
+  state.webSearch = MODES[mode].defaultSearch;
+  localStorage.setItem(LS_KEYS.mode, mode);
+  localStorage.setItem(LS_KEYS.webSearch, String(state.webSearch));
+  dispatch('pw:mode:changed', { mode, webSearch: state.webSearch });
+}
+
+export function setWebSearch(on) {
+  state.webSearch = !!on;
+  localStorage.setItem(LS_KEYS.webSearch, String(state.webSearch));
+  dispatch('pw:websearch:changed', { webSearch: state.webSearch });
+}
+
+// Chat history ops
+export function getChatHistory(mode) {
+  return [...(chatHistories[mode] || [])];
+}
+
+export function appendChatMessage(mode, message) {
+  if (!MODES[mode]) return;
+  const arr = chatHistories[mode];
+  arr.push({ role: message.role, content: String(message.content || '').slice(0, 8000) });
+  dispatch('pw:chat:updated', { mode, messages: [...arr] });
+}
+
+export function clearChat(mode) {
+  if (!MODES[mode]) return;
+  chatHistories[mode] = [];
+  dispatch('pw:chat:updated', { mode, messages: [] });
+}
+
+function dispatch(type, detail) {
+  document.dispatchEvent(new CustomEvent(type, { detail }));
+}
