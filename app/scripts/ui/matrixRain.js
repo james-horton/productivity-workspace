@@ -133,9 +133,12 @@ function tick(now) {
   lastTime = now;
   const tScale = T_SCALE; // overall motion scale
 
-  // Trail fade (slightly stronger to reduce visual noise)
-  ctx.fillStyle = `rgba(0, 8, 4, ${TRAIL_FADE_ALPHA})`;
+  // Trail fade to transparency (keeps canvas background transparent while fading trails)
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.fillStyle = `rgba(0, 0, 0, ${TRAIL_FADE_ALPHA})`;
   ctx.fillRect(0, 0, width, height);
+  ctx.restore();
 
   const styles = getComputedStyle(document.body);
   const headColor = styles.getPropertyValue('--primary').trim() || '#39ff14';
