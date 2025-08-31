@@ -6,6 +6,7 @@ import { sendChat } from './services/chatService.js';
 import { fetchNews } from './services/newsService.js';
 import { setDisclaimer, setBusy, renderChat } from './ui/chatUI.js';
 import { setNewsBusy, setActiveTab, renderNewsItems } from './ui/newsUI.js';
+import { initMatrixRain, setMatrixRainEnabled } from './ui/matrixRain.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -32,6 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Apply saved theme
   applyTheme(s.theme);
   hydrateThemeSelect(s.theme);
+
+  // Init matrix rain canvas and toggle based on theme
+  initMatrixRain();
+  setMatrixRainEnabled(s.theme === 'matrix');
 
   // Populate model list and select
   populateModelSelect(s.modelKey || getDefaultModelKey());
@@ -66,6 +71,7 @@ function wireControls() {
     if (!THEMES.includes(theme)) return;
     setTheme(theme);
     applyTheme(theme);
+    setMatrixRainEnabled(theme === 'matrix');
     // Refresh quote to match theme vibe
     await refreshQuote();
   });
@@ -158,6 +164,7 @@ function wireStateEvents() {
   document.addEventListener('pw:theme:changed', (e) => {
     const { theme } = e.detail || {};
     hydrateThemeSelect(theme);
+    setMatrixRainEnabled(theme === 'matrix');
   });
   document.addEventListener('pw:model:changed', (e) => {
     const { modelKey } = e.detail || {};
