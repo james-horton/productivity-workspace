@@ -8,7 +8,7 @@ const LS_KEYS = {
   mode: 'pw.mode'
 };
 
-export const THEMES = ['matrix', 'dark', 'aurora'];
+export const THEMES = ['matrix', 'dark', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow'];
 
 export const MODES = {
   doctor: {

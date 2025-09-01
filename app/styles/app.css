@@ -40,7 +40,7 @@ body {
 }
 
 /* When the Matrix viewport is hidden, collapse column 2 but keep controls in col 3 */
-body:not([data-theme="matrix"]) .topbar {
+body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .topbar {
   grid-template-columns: max-content 0 auto;
 }
 
@@ -118,7 +118,7 @@ body:not([data-theme="matrix"]) .topbar {
   justify-content: stretch;
   pointer-events: none;
 }
-body:not([data-theme="matrix"]) .matrix-viewport { display: none; }
+body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { display: none; }
 .matrix-viewport canvas {
   width: 100%;
   height: 100%;

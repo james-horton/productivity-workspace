@@ -86,3 +86,81 @@ body[data-theme="aurora"] {
   background: color-mix(in oklab, var(--primary) 40%, #000);
   color: #06110a;
 }
+
+/* THEME: Light (non-white background) */
+body[data-theme="light"] {
+  --bg: #f5f7fb;
+  --text: #0b1220;
+  --muted: #5b6472;
+  --surface: #ffffff;
+  --surface-2: #eef2f6;
+  --ring: #d6dee6;
+  --accent: #0ea5e9; /* sky */
+  --primary: #60a5fa; /* light blue for readable dark text on buttons */
+  --shadow: 0 12px 34px rgba(2, 6, 23, 0.06);
+  --topbar-bg: linear-gradient(180deg, rgba(0,0,0,0), rgba(2,6,23,0.04));
+  --coderain-opacity: 0.0;
+}
+
+/* THEME: Bright White */
+body[data-theme="bright-white"] {
+  --bg: #ffffff;
+  --text: #0a0a0a;
+  --muted: #6b7280;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --ring: #e5e7eb;
+  --accent: #2563eb; /* blue */
+  --primary: #ffd400; /* bright yellow for strong contrast with dark text */
+  --shadow: 0 12px 34px rgba(0, 0, 0, 0.06);
+  --topbar-bg: linear-gradient(180deg, rgba(0,0,0,0.03), rgba(0,0,0,0));
+  --coderain-opacity: 0.0;
+}
+
+/* THEME: Nyan Cat */
+body[data-theme="nyan-cat"] {
+  --bg: #0b0d18;       /* deep space */
+  --text: #ecebff;
+  --muted: #9ca3c7;
+  --surface: #0f1224;
+  --surface-2: #0c0f1e;
+  --ring: #1f2547;
+  --accent: #ff7ad9;   /* neon pink */
+  --primary: #ffd400;  /* star yellow */
+  --shadow: 0 12px 34px rgba(255, 122, 217, 0.08), 0 2px 10px rgba(0,0,0,0.55);
+  --topbar-bg: linear-gradient(180deg, rgba(255,122,217,0.06), rgba(0,0,0,0));
+  --coderain-opacity: 0.0; /* canvas animation handles visuals */
+}
+
+/* THEME: Rainbow */
+body[data-theme="rainbow"] {
+  /* Pride-inspired full-spectrum background with readability overlay */
+  --bg:
+    linear-gradient(180deg, rgba(0,0,0,0.32), rgba(0,0,0,0.32)),
+    linear-gradient(120deg,
+      #e40303 0%,    /* red */
+      #ff8c00 16.66%,
+      #ffed00 33.33%,
+      #008026 50%,
+      #24408e 66.66%,
+      #732982 83.33%,
+      #e40303 100%
+    );
+  --text: #f9fbff;
+  --muted: #c9d2e0;
+  --surface: #101323;
+  --surface-2: #0c1020;
+  --ring: #2a3352;
+  --accent: #ff2d55;   /* magenta/pink accent */
+  --primary: #ffd400;  /* bright yellow for strong contrast with dark text */
+  --shadow: 0 18px 42px rgba(0, 0, 0, 0.50);
+  --topbar-bg: linear-gradient(90deg,
+    rgba(228,3,3,0.28) 0%,
+    rgba(255,140,0,0.28) 20%,
+    rgba(255,237,0,0.28) 40%,
+    rgba(0,128,38,0.28) 60%,
+    rgba(36,64,142,0.28) 80%,
+    rgba(115,41,130,0.28) 100%
+  );
+  --coderain-opacity: 0.0;
+}

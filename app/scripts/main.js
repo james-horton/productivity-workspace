@@ -7,6 +7,7 @@ import { fetchNews } from './services/newsService.js';
 import { setDisclaimer, setBusy, renderChat } from './ui/chatUI.js';
 import { setNewsBusy, setActiveTab, renderNewsItems } from './ui/newsUI.js';
 import { initMatrixRain, setMatrixRainEnabled } from './ui/matrixRain.js';
+import { initNyanCat, setNyanCatEnabled } from './ui/nyanCat.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -34,10 +35,10 @@ document.addEventListener('DOMContentLoaded', () => {
   applyTheme(s.theme);
   hydrateThemeSelect(s.theme);
 
-  // Init matrix rain canvas and toggle based on theme
-  initMatrixRain();
-  setMatrixRainEnabled(s.theme === 'matrix');
-
+  // Init header animations and toggle based on theme
+  initMatrixRain(); initNyanCat();
+  setMatrixRainEnabled(s.theme === 'matrix'); setNyanCatEnabled(s.theme === 'nyan-cat');
+ 
   // Populate model list and select
   populateModelSelect(s.modelKey || getDefaultModelKey());
 
@@ -71,7 +72,7 @@ function wireControls() {
     if (!THEMES.includes(theme)) return;
     setTheme(theme);
     applyTheme(theme);
-    setMatrixRainEnabled(theme === 'matrix');
+    setMatrixRainEnabled(theme === 'matrix'); setNyanCatEnabled(theme === 'nyan-cat');
     // Refresh quote to match theme vibe
     await refreshQuote();
   });
@@ -164,7 +165,7 @@ function wireStateEvents() {
   document.addEventListener('pw:theme:changed', (e) => {
     const { theme } = e.detail || {};
     hydrateThemeSelect(theme);
-    setMatrixRainEnabled(theme === 'matrix');
+    setMatrixRainEnabled(theme === 'matrix'); setNyanCatEnabled(theme === 'nyan-cat');
   });
   document.addEventListener('pw:model:changed', (e) => {
     const { modelKey } = e.detail || {};
