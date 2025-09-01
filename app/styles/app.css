@@ -152,8 +152,9 @@ body:not([data-theme="matrix"]) .matrix-viewport { display: none; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.9rem 1rem;
+  gap: 0.6rem;
+  padding: 0.6rem 0.9rem;
+  min-height: 44px;
   background: var(--surface-2);
   border-bottom: 1px solid var(--ring);
 }
@@ -171,6 +172,18 @@ body:not([data-theme="matrix"]) .matrix-viewport { display: none; }
   line-height: 1;
   padding-block: 0.25rem;
 }
+.card-head .btn.icon-only {
+  inline-size: 30px;
+  block-size: 30px;
+  padding: 0;
+}
+
+/* Hard-cap header height for Inspiration and Now to be visually equal */
+.quote-card .card-head,
+.clock-card .card-head {
+  block-size: 48px;            /* fixed header height */
+  padding-block: 0.4rem;       /* balanced to fit 30px icon/text */
+}
 
 /* Specific card placements */
 .quote-card, .clock-card, .chat-card, .news-card { padding-bottom: 0.25rem; }
@@ -184,29 +197,29 @@ body:not([data-theme="matrix"]) .matrix-viewport { display: none; }
 /* Quote */
 .quote-text {
   margin: 0;
-  padding: 1rem;
-  font-size: 1.05rem;
+  padding: 0.75rem;
+  font-size: 0.92rem;
   color: var(--text);
 }
 
 /* Clock */
 .clock {
-  padding: 1rem;
+  padding: 0.75rem;
   display: grid;
-  gap: 0.25rem;
+  gap: 0.2rem;
   align-items: center;
   justify-items: start;
 }
 .time {
   font-feature-settings: "tnum";
   font-variant-numeric: tabular-nums;
-  font-size: clamp(2rem, 6vw, 3rem);
+  font-size: clamp(1.7rem, 4.5vw, 2.5rem);
   font-weight: 800;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.015em;
 }
 .date {
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: 0.85rem;
 }
 
 /* Buttons */
@@ -233,12 +246,12 @@ body:not([data-theme="matrix"]) .matrix-viewport { display: none; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem;
+  padding: 0.25rem;
 }
 
 .btn.icon-only .icon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   display: block;
 }
 /* Emphasized hover for refresh buttons */
