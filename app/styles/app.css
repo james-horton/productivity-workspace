@@ -223,6 +223,35 @@ body:not([data-theme="matrix"]) .matrix-viewport { display: none; }
   border-color: color-mix(in oklab, var(--primary) 70%, #000);
 }
 
+/* Emphasized hover for refresh buttons */
+#quoteRefresh.btn,
+#newsRefresh.btn {
+  transition: transform .06s ease, background .2s ease, border-color .2s ease, box-shadow .25s ease, color .2s ease;
+}
+
+#quoteRefresh.btn:hover,
+#newsRefresh.btn:hover {
+  background: color-mix(in oklab, var(--accent) 22%, var(--surface));
+  border-color: color-mix(in oklab, var(--accent) 60%, var(--ring));
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--accent) 18%, transparent),
+    0 8px 22px -8px color-mix(in oklab, var(--accent) 45%, #000);
+  color: var(--text);
+  transform: translateY(-1px) scale(1.01);
+}
+
+#quoteRefresh.btn:active,
+#newsRefresh.btn:active {
+  transform: translateY(0) scale(0.995);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 16%, transparent);
+}
+
+#quoteRefresh.btn:focus-visible,
+#newsRefresh.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 45%, transparent);
+  border-color: color-mix(in oklab, var(--accent) 60%, var(--ring));
+}
 /* Chat */
 .chat-card .messages {
   display: flex;

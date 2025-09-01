@@ -58,7 +58,7 @@ const chatHistories = {
 };
 
 const state = {
-  theme: 'aurora',
+  theme: 'matrix',
   modelKey: 'openai:gpt-5', // populated by modelRegistry defaults
   mode: 'basic'
 };
