@@ -228,6 +228,19 @@ body:not([data-theme="matrix"]) .matrix-viewport { display: none; }
   border-color: color-mix(in oklab, var(--primary) 70%, #000);
 }
 
+/* Icon-only button styles (for refresh) */
+.btn.icon-only {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+}
+
+.btn.icon-only .icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
 /* Emphasized hover for refresh buttons */
 #quoteRefresh.btn,
 #newsRefresh.btn {
@@ -326,6 +339,12 @@ body:not([data-theme="matrix"]) .matrix-viewport { display: none; }
 }
 
 /* News */
+/* Align news tabs and refresh button */
+.news-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
 .tabs { display: inline-flex; gap: 0.25rem; background: var(--surface); padding: 0.25rem; border-radius: 10px; border: 1px solid var(--ring); }
 .tab {
   border: 1px solid var(--ring);
