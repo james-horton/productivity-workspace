@@ -18,6 +18,7 @@ const modeSelect = () => $('#modeSelect');
 const chatForm = () => $('#chatForm');
 const chatInput = () => $('#chatInput');
 const chatMessages = () => $('#chatMessages');
+const chatCopy = () => $('#chatCopy');
 const quoteText = () => $('#quoteText');
 const quoteRefresh = () => $('#quoteRefresh');
 const newsTabs = () => $('#newsTabs');
@@ -92,6 +93,50 @@ function wireControls() {
     renderChat(getChatHistory(m));
   });
 
+
+  // Copy chat to clipboard
+  const copyBtn = chatCopy && chatCopy();
+  if (copyBtn) {
+    copyBtn.addEventListener('click', async () => {
+      const s = getState();
+      const history = getChatHistory(s.mode);
+      const text = formatChatForCopy(history, s.mode);
+      const btn = copyBtn;
+      const originalTitle = btn.title;
+      const originalAria = btn.getAttribute('aria-label') || originalTitle || 'Copy chat';
+
+      function resetLabel() {
+        btn.title = originalTitle;
+        btn.setAttribute('aria-label', originalAria);
+      }
+
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          const ok = document.execCommand('copy');
+          document.body.removeChild(ta);
+          if (!ok) throw new Error('execCommand copy failed');
+        }
+        btn.title = 'Copied!';
+        btn.setAttribute('aria-label', 'Copied!');
+        btn.classList.add('copied');
+        setTimeout(() => { btn.classList.remove('copied'); resetLabel(); }, 1200);
+      } catch (_) {
+        btn.title = 'Copy failed';
+        btn.setAttribute('aria-label', 'Copy failed');
+        setTimeout(() => { resetLabel(); }, 1500);
+      }
+    });
+  }
 
   // Chat submit
   chatForm().addEventListener('submit', async (e) => {
@@ -225,6 +270,19 @@ function showStarterIfEmpty(mode) {
     const starter = MODES[mode]?.starter || 'How can I help?';
     appendChatMessage(mode, { role: 'assistant', content: starter });
   }
+}
+
+function formatChatForCopy(messages, mode) {
+  const modeLabel = MODES[mode]?.label || mode || '';
+  const ts = new Date().toLocaleString();
+  const header = `Chat - ${modeLabel} (${ts})`;
+  const sep = '\n' + '-'.repeat(header.length) + '\n\n';
+  const body = (messages || []).map(m => {
+    const role = m.role === 'user' ? 'User' : 'Assistant';
+    const text = String(m.content || '');
+    return `${role}:\n${text}`;
+  }).join('\n\n');
+  return header + sep + body + '\n';
 }
 
 async function refreshQuote() {
