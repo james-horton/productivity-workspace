@@ -161,6 +161,11 @@ body:not([data-theme="matrix"]) .matrix-viewport { display: none; }
   margin: 0;
   font-size: 1rem;
 }
+/* Slightly larger headings for Chat and News */
+#chatTitle,
+#newsTitle {
+  font-size: 1.5rem;
+}
 /* Normalize header heights so buttons don't make some headers taller */
 .card-head .btn {
   line-height: 1;
