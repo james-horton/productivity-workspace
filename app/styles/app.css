@@ -292,10 +292,12 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
 }
 
 /* Copy button (Chat) */
-#chatCopy.btn {
+#chatCopy.btn,
+#chatReset.btn {
   transition: transform .06s ease, background .2s ease, border-color .2s ease, box-shadow .25s ease, color .2s ease;
 }
-#chatCopy.btn:hover {
+#chatCopy.btn:hover,
+#chatReset.btn:hover {
   background: color-mix(in oklab, var(--accent) 22%, var(--surface));
   border-color: color-mix(in oklab, var(--accent) 60%, var(--ring));
   box-shadow:
@@ -304,11 +306,13 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
   color: var(--text);
   transform: translateY(-1px) scale(1.01);
 }
-#chatCopy.btn:active {
+#chatCopy.btn:active,
+#chatReset.btn:active {
   transform: translateY(0) scale(0.995);
   box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 16%, transparent);
 }
-#chatCopy.btn:focus-visible {
+#chatCopy.btn:focus-visible,
+#chatReset.btn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 45%, transparent);
   border-color: color-mix(in oklab, var(--accent) 60%, var(--ring));

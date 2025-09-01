@@ -1,5 +1,5 @@
 import { applyTheme } from './theme.js';
-import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage } from './state.js';
+import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat } from './state.js';
 import { getModels, providerFor, modelIdFor, getDefaultModelKey } from './services/modelRegistry.js';
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
@@ -19,6 +19,7 @@ const chatForm = () => $('#chatForm');
 const chatInput = () => $('#chatInput');
 const chatMessages = () => $('#chatMessages');
 const chatCopy = () => $('#chatCopy');
+const chatReset = () => $('#chatReset');
 const quoteText = () => $('#quoteText');
 const quoteRefresh = () => $('#quoteRefresh');
 const newsTabs = () => $('#newsTabs');
@@ -103,7 +104,7 @@ function wireControls() {
       const text = formatChatForCopy(history, s.mode);
       const btn = copyBtn;
       const originalTitle = btn.title;
-      const originalAria = btn.getAttribute('aria-label') || originalTitle || 'Copy chat';
+      const originalAria = btn.getAttribute('aria-label') || originalTitle || 'Copy';
 
       function resetLabel() {
         btn.title = originalTitle;
@@ -137,7 +138,33 @@ function wireControls() {
       }
     });
   }
-
+ 
+  // Reset all chats
+  const resetBtn = chatReset && chatReset();
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      const s = getState();
+      const btn = resetBtn;
+      const originalTitle = btn.title;
+      const originalAria = btn.getAttribute('aria-label') || originalTitle || 'Reset';
+      try {
+        // Clear all mode histories
+        Object.keys(MODES).forEach((m) => clearChat(m));
+        // Reset disclaimer + starter for current mode and re-render
+        syncDisclaimerForMode(s.mode);
+        showStarterIfEmpty(s.mode);
+        renderChat(getChatHistory(s.mode));
+        btn.title = 'Reset';
+        btn.setAttribute('aria-label', 'Reset');
+      } finally {
+        setTimeout(() => {
+          btn.title = originalTitle;
+          btn.setAttribute('aria-label', originalAria);
+        }, 1200);
+      }
+    });
+  }
+ 
   // Chat submit
   chatForm().addEventListener('submit', async (e) => {
     e.preventDefault();
