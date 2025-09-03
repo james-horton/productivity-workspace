@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 
 const { openaiChat } = require('../lib/providers/openai');
-const { deepseekChat } = require('../lib/providers/deepseek');
 
 function themeSystemPrompt(theme) {
   if (theme === 'matrix') {
@@ -22,19 +21,6 @@ function themeSystemPrompt(theme) {
   ].join(' ');
 }
 
-async function callLLMWithFallback(messages, reasoningLevel = 'medium') {
-  // Prefer OpenAI, then DeepSeek, but gracefully fall back if key missing
-  try {
-    const res = await openaiChat({ messages, reasoningLevel, temperature: 0.8, maxTokens: 120 });
-    return { ...res, provider: 'openai' };
-  } catch (err) {
-    if (err && err.status === 400 && /key missing/i.test(err.message)) {
-      const res = await deepseekChat({ messages, reasoningLevel, temperature: 0.8, maxTokens: 120 });
-      return { ...res, provider: 'deepseek' };
-    }
-    throw err;
-  }
-}
 
 router.post('/', async (req, res, next) => {
   try {
@@ -50,11 +36,11 @@ router.post('/', async (req, res, next) => {
       { role: 'user', content: 'Generate the quote now.' }
     ];
 
-    const out = await callLLMWithFallback(messages, theme === 'matrix' ? 'high' : 'medium');
+    const out = await openaiChat({ messages, temperature: 0.8, maxTokens: 120 });
 
     res.json({
       quote: out.text,
-      providerUsed: out.provider,
+      providerUsed: 'openai',
       modelUsed: out.modelUsed
     });
   } catch (err) {
