@@ -50,7 +50,7 @@ async function summarizeWithLLM(items, category) {
         { role: 'user', content: user }
       ],
       temperature: 1,
-      maxTokens: 700
+      maxTokens: 4000
     });
     return safeParseArray(out.text, items);
   } catch (err) {

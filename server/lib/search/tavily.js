@@ -89,7 +89,13 @@ async function fetchNews(category, { lat, lon } = {}) {
     locality = loc.display;
   }
   const query = buildNewsQuery(category, locality);
-  return tavilySearch(query, { maxResults: 6, includeAnswer: false, searchDepth: 'advanced' });
+  return tavilySearch(
+    query, 
+    { 
+      maxResults: 6, 
+      includeAnswer: false, 
+      searchDepth: 'advanced' }
+    );
 }
 
 module.exports = {
