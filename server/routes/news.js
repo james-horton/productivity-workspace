@@ -44,12 +44,12 @@ async function summarizeWithLLM(items, category) {
 
   try {
     const out = await openaiChat({
+      model: 'gpt-5-mini',
       messages: [
         { role: 'system', content: sys },
         { role: 'user', content: user }
       ],
-      reasoningLevel: 'medium',
-      temperature: 0.4,
+      temperature: 1,
       maxTokens: 700
     });
     return safeParseArray(out.text, items);
@@ -61,7 +61,7 @@ async function summarizeWithLLM(items, category) {
           { role: 'user', content: user }
         ],
         reasoningLevel: 'medium',
-        temperature: 0.4,
+        temperature: 1,
         maxTokens: 700
       });
       return safeParseArray(out.text, items);

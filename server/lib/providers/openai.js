@@ -16,13 +16,12 @@ function resolveOpenAIModel(requestedModel, reasoningLevel) {
  * @param {Object} params
  * @param {Array<{role: 'system'|'user'|'assistant', content: string}>} params.messages
  * @param {string} [params.model]
- * @param {'high'|'medium'|'low'} [params.reasoningLevel]
  * @param {number} [params.temperature]
  * @param {number} [params.maxTokens]
  * @param {Array<string>} [params.stop]
  * @returns {Promise<{ text: string, raw: any, modelUsed: string }>}
  */
-async function openaiChat({ messages, model, reasoningLevel, temperature = 0.7, maxTokens = 800, stop }) {
+async function openaiChat({ messages, model, reasoningLevel, temperature = 1, maxTokens = 2000, stop }) {
   const apiKey = config.openai.apiKey;
   if (!apiKey) {
     const err = new Error('OpenAI API key missing');
@@ -39,22 +38,24 @@ async function openaiChat({ messages, model, reasoningLevel, temperature = 0.7, 
         model: modelToUse,
         messages,
         temperature,
-        max_tokens: maxTokens,
+        max_completion_tokens: maxTokens,
         stop
       },
       {
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
-        },
-        timeout: 30000
+        }
       }
     );
+
+    console.log(res.data);   
 
     const choice = res.data && res.data.choices && res.data.choices[0];
     const text = (choice && choice.message && choice.message.content || '').trim();
 
     return { text, raw: res.data, modelUsed: modelToUse };
+
   } catch (error) {
     // Normalize error
     const status = error.response ? error.response.status : 500;

@@ -6,7 +6,7 @@ const { openaiChat } = require('../lib/providers/openai');
 function themeSystemPrompt(theme) {
   if (theme === 'matrix') {
     return [
-      'You generate a single short inspirational quote in a Matrix-like vibe: neon-cyberpunk, code, rebellion, waking up, agency, clarity.',
+      'You generate a single short inspirational quote in a neon-cyberpunk, code, rebellion, waking up, agency, clarity.',
       'Audience: Gen Z. Avoid cringe, clichés, and boomer energy. Keep it sharp, modern, and grounded.',
       'Length: one sentence or a very short paragraph (max ~45 words).',
       'No attribution, no emojis, no hashtags.'
@@ -21,22 +21,22 @@ function themeSystemPrompt(theme) {
   ].join(' ');
 }
 
-
 router.post('/', async (req, res, next) => {
   try {
     const { theme = 'aurora' } = req.body || {};
-
-    // Randomizer: inject a small seed to encourage variation
-    const seed = Math.floor(Math.random() * 10_000);
-    const sys = themeSystemPrompt((theme || '').toLowerCase());
+    const sys = themeSystemPrompt(theme.toLowerCase());
 
     const messages = [
       { role: 'system', content: sys },
-      { role: 'system', content: `Creative-variation-seed: ${seed}` },
       { role: 'user', content: 'Generate the quote now.' }
     ];
 
-    const out = await openaiChat({ messages, temperature: 0.8, maxTokens: 120 });
+    const out = await openaiChat({ 
+      model: 'gpt-5-mini',
+      messages, 
+      temperature: 1,
+      maxTokens: 2000 
+    });
 
     res.json({
       quote: out.text,
