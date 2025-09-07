@@ -19,14 +19,16 @@ function withTimeout(promise, ms = 45000) {
  * @param {Array<{role:'user'|'assistant', content:string}>} opts.messages
  * @param {'openai'} [opts.provider]
  * @param {string} [opts.model]
+ * @param {boolean} [opts.webSearch] When true, enables provider-side web search (OpenAI GPT-5 tools). When false, disables provider web search. If omitted, the server uses the mode default.
  * @returns {Promise<{ message:{role:'assistant',content:string}, modelUsed:string, providerUsed:string, disclaimer:string|null, sources:Array<{title:string,url:string,source:string}> }>}
  */
-export async function sendChat({ mode, messages, provider, model }) {
+export async function sendChat({ mode, messages, provider, model, webSearch }) {
   const body = JSON.stringify({
     mode,
     messages,
     provider,
-    model
+    model,
+    webSearch
   });
 
   const { exec } = withTimeout(null, 45000);

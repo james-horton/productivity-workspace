@@ -19,9 +19,10 @@ function resolveOpenAIModel(requestedModel, reasoningLevel) {
  * @param {number} [params.temperature]
  * @param {number} [params.maxTokens]
  * @param {Array<string>} [params.stop]
+ * @param {boolean} [params.webSearch] Enable OpenAI built-in web search tool
  * @returns {Promise<{ text: string, raw: any, modelUsed: string }>}
  */
-async function openaiChat({ messages, model, reasoningLevel, temperature = 1, maxTokens = 2000, stop }) {
+async function openaiChat({ messages, model, reasoningLevel, temperature = 1, maxTokens = 80000, stop, webSearch = false }) {
   const apiKey = config.openai.apiKey;
   if (!apiKey) {
     const err = new Error('OpenAI API key missing');
@@ -32,15 +33,24 @@ async function openaiChat({ messages, model, reasoningLevel, temperature = 1, ma
   const modelToUse = resolveOpenAIModel(model, reasoningLevel);
 
   try {
+    const payload = {
+      model: modelToUse,
+      messages,
+      temperature,
+      max_completion_tokens: maxTokens,
+      stop
+    };
+
+    // Enable built-in web search per OpenAI API:
+    // docs: pass tools: [{ type: 'web_search' }] and tool_choice: 'auto'
+    if (webSearch) {
+      payload.tools = [{ type: 'web_search' }];
+      payload.tool_choice = 'auto';
+    }
+
     const res = await axios.post(
       OPENAI_API_URL,
-      {
-        model: modelToUse,
-        messages,
-        temperature,
-        max_completion_tokens: maxTokens,
-        stop
-      },
+      payload,
       {
         headers: {
           'Authorization': `Bearer ${apiKey}`,
@@ -48,8 +58,6 @@ async function openaiChat({ messages, model, reasoningLevel, temperature = 1, ma
         }
       }
     );
-
-    console.log(res.data);   
 
     const choice = res.data && res.data.choices && res.data.choices[0];
     const text = (choice && choice.message && choice.message.content || '').trim();

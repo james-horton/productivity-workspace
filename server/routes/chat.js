@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 
 const { openaiChat } = require('../lib/providers/openai');
-const { tavilySearch } = require('../lib/search/tavily');
 
 // Mode specifications: reasoning + default search + disclaimers
 const MODE_SPECS = {
@@ -76,36 +75,9 @@ function buildSystemPrompt(mode) {
   }
 }
 
-// Prepare a compact digest of web results as context for the LLM
-function buildWebResultsDigest(results) {
-  if (!Array.isArray(results)) return null;
-  const lines = results.slice(0, 5).map((r, i) => {
-    const host = (function() {
-      try { return new URL(r.url).hostname.replace(/^www\./, ''); } catch (e) { return ''; }
-    })();
-    const content = (r.content || '').replace(/\s+/g, ' ').trim().slice(0, 300);
-    return `- (${i + 1}) ${r.title || host} — ${content}${host ? ` [${host}]` : ''}\n  ${r.url}`;
-  });
-  return lines.length ? `Web results digest:\n${lines.join('\n')}` : null;
-}
+// External Tavily digest path removed; provider web search only.
 
-async function performWebSearchIfNeeded(mode, userQuery) {
-  const spec = MODE_SPECS[mode] || MODE_SPECS.basic;
-  // Never use web search in basic mode; web mode uses it by default.
-  const shouldSearch = mode === 'basic' ? false : spec.defaultSearch;
-  if (!shouldSearch || !userQuery) return { digest: null, sources: [] };
-
-  const { results } = await tavilySearch(userQuery, { maxResults: 6, includeAnswer: false, searchDepth: 'advanced' });
-  const digest = buildWebResultsDigest(results);
-  const sources = results.slice(0, 6).map(r => ({
-    title: r.title || '',
-    url: r.url || '',
-    source: (function() { try { return new URL(r.url).hostname.replace(/^www\./, ''); } catch (e) { return ''; } })()
-  }));
-  return { digest, sources };
-}
-
-async function callPreferredModels({ reasoning, messages, prefer }) {
+async function callPreferredModels({ reasoning, messages, prefer, model, webSearch }) {
   // prefer is an array of provider ids in order; default to OpenAI only
   const attempts = Array.isArray(prefer) && prefer.length ? prefer : ['openai'];
 
@@ -113,7 +85,9 @@ async function callPreferredModels({ reasoning, messages, prefer }) {
     messages,
     reasoningLevel: reasoning,
     temperature: 1,
-    maxTokens: 80000
+    maxTokens: 80000,
+    model,
+    webSearch
   };
 
   let lastErr;
@@ -142,7 +116,8 @@ router.post('/', async (req, res, next) => {
       mode = 'basic',
       messages: rawMessages,
       provider, // 'openai' (preferred)
-      model // optional specific model id for provider
+      model, // optional specific model id for provider
+      webSearch // boolean: if true, use provider web search (GPT-5 tools); if false, disable provider web search
     } = req.body || {};
 
     const spec = MODE_SPECS[mode] || MODE_SPECS.basic;
@@ -158,21 +133,23 @@ router.post('/', async (req, res, next) => {
     const sys = buildSystemPrompt(mode);
     const systemMsg = { role: 'system', content: sys };
 
-    // Optional web search
-    const { digest, sources } = await performWebSearchIfNeeded(mode, latestUserContent);
-    const webMsg = digest ? [{ role: 'system', content: digest }] : [];
+    // Decide how to handle web search:
+    // If explicit webSearch provided, honor it; otherwise fall back to mode default.
+    const effectiveWebSearch = (typeof webSearch === 'boolean') ? webSearch : !!(MODE_SPECS[mode] && MODE_SPECS[mode].defaultSearch);
 
-    // Compose final message list
-    const finalMessages = [systemMsg, ...webMsg, ...userMessages];
+    // Compose final message list (no external search digest; provider tools handle browsing)
+    const finalMessages = [systemMsg, ...userMessages];
 
     // Provider preference: force OpenAI
     const prefer = ['openai'];
 
-    // Allow explicit model override by pinning model on top (wrapper resolves when provided)
+    // Call provider with optional model override and provider web search toggle
     const response = await callPreferredModels({
       reasoning: spec.reasoning,
-      messages: model ? [{ ...finalMessages[0], content: `${finalMessages[0].content} Use model=${model} if applicable.` }, ...finalMessages.slice(1)] : finalMessages,
-      prefer
+      messages: finalMessages,
+      prefer,
+      model,
+      webSearch: effectiveWebSearch
     });
 
     const payload = {
@@ -180,7 +157,7 @@ router.post('/', async (req, res, next) => {
       modelUsed: response.modelUsed,
       providerUsed: response.provider,
       disclaimer: spec.disclaimer || null,
-      sources: sources || []
+      sources: []
     };
 
     res.json(payload);
