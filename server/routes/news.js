@@ -33,7 +33,7 @@ async function summarizeWithLLM(items, category) {
     'Do not begin the summary explaining what the news source is in a meta, 3rd person way.',
     'Only include source content and material.',
     'Return a strict JSON array, where each item has: title, summary, url, source.',
-    'summary should be 1-2 sentences, unbiased, with key facts only. No emojis, no hashtags.',
+    'summary should be 1-2 sentences or up to a short paragraph long, unbiased, with key facts only. No emojis, no hashtags.',
     'If content is too thin, use the title + source to infer a generic but accurate summary, or say "Brief: headline only."',
     'Keep summaries safe and avoid speculation.'
   ].join(' ');
@@ -51,7 +51,7 @@ async function summarizeWithLLM(items, category) {
         { role: 'user', content: user }
       ],
       temperature: 1,
-      maxTokens: 4000
+      maxTokens: 80000
     });
     return safeParseArray(out.text, items);
   } catch (err) {
