@@ -415,6 +415,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
   display: grid;
   gap: 0.8rem;
   padding: 1rem;
+  font-weight: 400; /* ensure body text in news section isn't bold across themes */
 }
 .news-item {
   border: 1px solid var(--ring);
@@ -439,6 +440,8 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
   margin: 0.25rem 0 0.35rem 0;
   color: var(--text);
   opacity: 0.9;
+  font-size: 0.90rem; /* slightly smaller body text */
+  font-weight: 400;   /* ensure normal (not bold) across themes */
 }
 .news-item .meta {
   color: var(--muted);
