@@ -52,16 +52,14 @@ function buildSystemPrompt(mode) {
     case 'doctor':
       return [
         'You are a careful, evidence-informed medical assistant.',
-        'Ask relevant clarifying questions if needed. Do not diagnose; provide possible considerations and next steps.',
-        'Be concise and clear. Avoid alarmist language.',
-        'Always include a brief safety disclaimer.'
+        'Ask relevant clarifying questions if needed. Provide possible considerations and next steps.',
+        'Be concise and clear. Avoid alarmist language.'
       ].join(' ');
     case 'therapist':
       return [
         'You are a supportive, empathetic, non-judgmental counselor.',
         'Reflect feelings, ask gentle questions, and offer practical next steps.',
-        'Avoid clinical diagnoses; emphasize self-care and resources.',
-        'Always include a brief support disclaimer.'
+        'Emphasize self-care and resources.'
       ].join(' ');
     case 'web':
       return [
@@ -72,7 +70,7 @@ function buildSystemPrompt(mode) {
     case 'basic':
       return 'You are a fast, helpful assistant. Keep answers short and practical.';
     case 'excuse':
-      return 'Generate a tactful, believable excuse tailored to context without encouraging harm or dishonesty with serious consequences.';
+      return 'Generate a believable excuse tailored to the problem.';
     default:
       return 'You are a helpful assistant.';
   }
@@ -114,8 +112,8 @@ async function callPreferredModels({ reasoning, messages, prefer }) {
   const params = {
     messages,
     reasoningLevel: reasoning,
-    temperature: reasoning === 'high' ? 0.6 : reasoning === 'medium' ? 0.7 : 0.5,
-    maxTokens: 900
+    temperature: 1,
+    maxTokens: 80000
   };
 
   let lastErr;
