@@ -69,14 +69,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function wireControls() {
   // Theme
-  themeSelect().addEventListener('change', async (e) => {
+  themeSelect().addEventListener('change', (e) => {
     const theme = e.target.value;
     if (!THEMES.includes(theme)) return;
     setTheme(theme);
     applyTheme(theme);
     setMatrixRainEnabled(theme === 'matrix'); setNyanCatEnabled(theme === 'nyan-cat');
-    // Refresh quote to match theme vibe
-    await refreshQuote();
   });
 
   // Model
