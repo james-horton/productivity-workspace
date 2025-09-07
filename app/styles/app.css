@@ -428,11 +428,12 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
   font-size: 1rem;
 }
 .news-item .title a {
-  color: var(--text);
+  color: var(--accent);
   text-decoration: none;
   border-bottom: 1px solid transparent;
 }
-.news-item .title a:hover {
+.news-item .title a:hover,
+.news-item .title a:focus-visible {
   color: var(--accent);
   border-color: var(--accent);
 }
