@@ -3,7 +3,7 @@
 Single-page productivity web app with:
 - Switchable, persistent themes (Matrix, Dark, Aurora)
 - Theme-aware inspirational quote (LLM-generated on demand)
-- Model picker (GPT-5 and DeepSeek)
+- Model picker (GPT-5)
 - Multi-mode chat (Doctor, Therapist, Web Search, Basic Info, Excuse Generator) with in-session history
 - News panel (National, World, Local using geolocation) via Tavily web search + LLM summarization
 - Clock and current date
@@ -21,7 +21,6 @@ Backend keeps all private API keys in a local secrets.json (never sent to the br
     - GET  /api/news?category=national|world|local&lat=..&lon=..
   - Providers:
     - OpenAI (GPT-5)
-    - DeepSeek (Chat, Reasoner)
     - Tavily (web search)
   - CORS allowlist and basic IP rate limiting
   - Reads keys from ./secrets.json (one level above /server)
@@ -39,7 +38,6 @@ Backend keeps all private API keys in a local secrets.json (never sent to the br
 - Node.js >= 18
 - API keys:
   - OpenAI (for GPT-5) — private
-  - DeepSeek (native) — private
   - Tavily — private
 - Optional: Update CORS origins as needed
 
@@ -57,7 +55,6 @@ Then edit secrets.json:
 ```json
 {
   "openai": { "apiKey": "YOUR_OPENAI_API_KEY" },
-  "deepseek": { "apiKey": "YOUR_DEEPSEEK_API_KEY" },
   "tavily": { "apiKey": "YOUR_TAVILY_API_KEY" },
   "cors": {
     "allowedOrigins": [
@@ -94,7 +91,7 @@ Open http://localhost:8787 in your browser.
 ## Usage Overview
 
 - Theme switcher (Matrix/Dark/Aurora): persists in localStorage. Matrix adds a subtle code-rain accent.
-- Model picker: GPT-5 (OpenAI), DeepSeek Reasoner (high reasoning), DeepSeek Chat (medium).
+- Model picker: GPT-5 (OpenAI).
 - Quote widget: LLM-generated. Matrix theme prompts a cyberpunk/Matrix vibe; others use modern, non-cheesy inspiration.
 - Chat modes:
   - Medical Doctor (high reasoning; supportive, not a diagnosis; disclaimer added)
@@ -141,7 +138,7 @@ Open http://localhost:8787 in your browser.
 - Add more themes by extending CSS variables in app/styles/themes.css and setting data-theme on <body>.
 - Extend model options by editing app/scripts/services/modelRegistry.js.
 - Add chat modes by updating app/scripts/state.js (MODES) and adjusting server/routes/chat.js behavior if needed.
-- If you prefer one provider only (e.g., OpenAI OR DeepSeek), set the model picker default and remove the unused provider wrapper.
+- To enable additional providers later, re-add them in app/scripts/services/modelRegistry.js and server/routes/chat.js.
 
 ## Scripts
 

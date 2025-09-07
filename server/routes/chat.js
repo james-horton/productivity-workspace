@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 
 const { openaiChat } = require('../lib/providers/openai');
-const { deepseekChat } = require('../lib/providers/deepseek');
 const { tavilySearch } = require('../lib/search/tavily');
 
 // Mode specifications: reasoning + default search + disclaimers
@@ -109,8 +108,8 @@ async function performWebSearchIfNeeded(mode, userQuery) {
 }
 
 async function callPreferredModels({ reasoning, messages, prefer }) {
-  // prefer is an array of provider ids in order: ['openai','deepseek']
-  const attempts = Array.isArray(prefer) && prefer.length ? prefer : ['openai', 'deepseek'];
+  // prefer is an array of provider ids in order; default to OpenAI only
+  const attempts = Array.isArray(prefer) && prefer.length ? prefer : ['openai'];
 
   const params = {
     messages,
@@ -125,10 +124,6 @@ async function callPreferredModels({ reasoning, messages, prefer }) {
       if (provider === 'openai') {
         const out = await openaiChat(params);
         return { ...out, provider: 'openai' };
-      }
-      if (provider === 'deepseek') {
-        const out = await deepseekChat(params);
-        return { ...out, provider: 'deepseek' };
       }
     } catch (err) {
       // If key missing (we throw 400 with message), try next provider; otherwise rethrow
@@ -148,7 +143,7 @@ router.post('/', async (req, res, next) => {
     const {
       mode = 'basic',
       messages: rawMessages,
-      provider, // 'openai' | 'deepseek' (preferred)
+      provider, // 'openai' (preferred)
       model // optional specific model id for provider
     } = req.body || {};
 
@@ -172,10 +167,8 @@ router.post('/', async (req, res, next) => {
     // Compose final message list
     const finalMessages = [systemMsg, ...webMsg, ...userMessages];
 
-    // Provider preference
-    const prefer = provider === 'deepseek' ? ['deepseek', 'openai'] :
-                   provider === 'openai' ? ['openai', 'deepseek'] :
-                   (spec.reasoning === 'high' ? ['openai', 'deepseek'] : ['deepseek', 'openai']);
+    // Provider preference: force OpenAI
+    const prefer = ['openai'];
 
     // Allow explicit model override by pinning model on top (wrapper resolves when provided)
     const response = await callPreferredModels({

@@ -27,9 +27,6 @@ function loadSecrets() {
     openai: {
       apiKey: (json.openai && json.openai.apiKey) || process.env.OPENAI_API_KEY || ''
     },
-    deepseek: {
-      apiKey: (json.deepseek && json.deepseek.apiKey) || process.env.DEEPSEEK_API_KEY || ''
-    },
     tavily: {
       apiKey: (json.tavily && json.tavily.apiKey) || process.env.TAVILY_API_KEY || ''
     },

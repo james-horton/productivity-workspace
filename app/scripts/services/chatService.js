@@ -17,7 +17,7 @@ function withTimeout(promise, ms = 45000) {
  * @param {Object} opts
  * @param {'doctor'|'therapist'|'web'|'basic'|'excuse'} opts.mode
  * @param {Array<{role:'user'|'assistant', content:string}>} opts.messages
- * @param {'openai'|'deepseek'} [opts.provider]
+ * @param {'openai'} [opts.provider]
  * @param {string} [opts.model]
  * @returns {Promise<{ message:{role:'assistant',content:string}, modelUsed:string, providerUsed:string, disclaimer:string|null, sources:Array<{title:string,url:string,source:string}> }>}
  */

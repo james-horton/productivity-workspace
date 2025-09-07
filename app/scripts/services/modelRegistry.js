@@ -10,20 +10,6 @@ const MODELS = [
     provider: 'openai',
     model: 'gpt-5',
     tier: 'high'
-  },
-  {
-    key: 'deepseek:reasoner',
-    label: 'DeepSeek Reasoner',
-    provider: 'deepseek',
-    model: 'deepseek-reasoner',
-    tier: 'high'
-  },
-  {
-    key: 'deepseek:chat',
-    label: 'DeepSeek Chat',
-    provider: 'deepseek',
-    model: 'deepseek-chat',
-    tier: 'medium'
   }
 ];
 

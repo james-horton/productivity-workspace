@@ -3,7 +3,6 @@ const router = express.Router();
 
 const { tavilySearch, fetchNews } = require('../lib/search/tavily');
 const { openaiChat } = require('../lib/providers/openai');
-const { deepseekChat } = require('../lib/providers/deepseek');
 
 function coerceCategory(cat) {
   const c = String(cat || '').toLowerCase();
@@ -54,17 +53,10 @@ async function summarizeWithLLM(items, category) {
     });
     return safeParseArray(out.text, items);
   } catch (err) {
+    // If OpenAI key is missing, fall back to naive summaries
     if (err && err.status === 400 && /key missing/i.test(err.message)) {
-      const out = await deepseekChat({
-        messages: [
-          { role: 'system', content: sys },
-          { role: 'user', content: user }
-        ],
-        reasoningLevel: 'medium',
-        temperature: 1,
-        maxTokens: 700
-      });
-      return safeParseArray(out.text, items);
+      // Trigger naive fallback path
+      return safeParseArray('not-json', items);
     }
     throw err;
   }
