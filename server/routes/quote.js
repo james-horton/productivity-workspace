@@ -4,15 +4,6 @@ const router = express.Router();
 const { openaiChat } = require('../lib/providers/openai');
 
 function themeSystemPrompt(theme) {
-  if (theme === 'matrix') {
-    return [
-      'You generate a single short inspirational quote in a neon-cyberpunk, code, rebellion, waking up, agency, clarity.',
-      'Audience: Gen Z. Avoid cringe, clichés, and boomer energy. Keep it sharp, modern, and grounded.',
-      'Length: one sentence or a very short paragraph (max ~45 words).',
-      'No attribution, no emojis, no hashtags.'
-    ].join(' ');
-  }
-  // Dark and Aurora (general inspirational)
   return [
     'You generate a single short inspirational quote tailored for Gen Z: concise, modern, authentic, not cheesy.',
     'Tone: encouraging and practical; no clichés, no hustle-porn.',
