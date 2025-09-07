@@ -458,3 +458,86 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
   .controls { width: 100%; justify-content: flex-end; }
   .chat-card .messages { max-height: 50vh; }
 }
+/* Loading indicators and skeletons (theme-aware) */
+.loader {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in oklab, var(--accent) 25%, var(--ring));
+  border-top-color: var(--accent);
+  display: inline-block;
+  animation: spin .8s linear infinite;
+  vertical-align: middle;
+}
+.loader.lg { width: 22px; height: 22px; border-width: 3px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 14px;
+}
+.typing .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: .4;
+  animation: typing-bounce 1.2s ease-in-out infinite;
+}
+.typing .dot:nth-child(2) { animation-delay: .15s; }
+.typing .dot:nth-child(3) { animation-delay: .3s; }
+@keyframes typing-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: .35; }
+  40% { transform: translateY(-3px); opacity: 1; }
+}
+
+/* Chat loading row */
+.msg.assistant.loading .bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+/* Skeletons */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--surface-2) 90%, var(--accent) 10%);
+}
+.skeleton,
+.skeleton-line,
+.skeleton-title,
+.skeleton-meta {
+  border-radius: 8px;
+}
+.skeleton-line { height: 12px; margin: 6px 0; }
+.skeleton-title { height: 18px; margin: 8px 0; }
+.skeleton-meta { height: 10px; margin: 6px 0; opacity: .7; width: 30%; }
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--accent) 24%, rgba(255,255,255,0.04)), transparent);
+  animation: shimmer 1.2s infinite;
+}
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+
+/* Quote (Inspiration) loading placeholder */
+.quote-text.is-loading { padding: 0.75rem; }
+.quote-text.is-loading > .skeleton-line:first-child { width: 80%; }
+.quote-text.is-loading > .skeleton-line:nth-child(2) { width: 90%; }
+.quote-text.is-loading > .skeleton-line:nth-child(3) { width: 70%; }
+
+/* News loading placeholders */
+.news-item.loading .skeleton-title { width: 72%; }
+.news-item.loading .skeleton-line:nth-child(2) { width: 96%; }
+.news-item.loading .skeleton-line:nth-child(3) { width: 75%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .loader { animation: none; }
+  .typing .dot { animation: none; }
+  .skeleton::after { display: none; }
+}

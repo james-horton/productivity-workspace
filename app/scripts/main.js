@@ -4,8 +4,8 @@ import { getModels, providerFor, modelIdFor, getDefaultModelKey } from './servic
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
 import { fetchNews } from './services/newsService.js';
-import { setDisclaimer, setBusy, renderChat } from './ui/chatUI.js';
-import { setNewsBusy, setActiveTab, renderNewsItems } from './ui/newsUI.js';
+import { setDisclaimer, setBusy, renderChat, showAssistantTyping, hideAssistantTyping } from './ui/chatUI.js';
+import { setNewsBusy, setActiveTab, renderNewsItems, renderNewsLoading } from './ui/newsUI.js';
 import { initMatrixRain, setMatrixRainEnabled } from './ui/matrixRain.js';
 import { initNyanCat, setNyanCatEnabled } from './ui/nyanCat.js';
 
@@ -179,6 +179,8 @@ function wireControls() {
 
     // Render pending
     setBusy(true);
+    renderChat(getChatHistory(s.mode));
+    showAssistantTyping();
     chatForm().querySelector('button[type="submit"]').disabled = true;
     input.disabled = true;
 
@@ -194,12 +196,15 @@ function wireControls() {
         model: modelId
       });
 
+      hideAssistantTyping();
+
       if (resp?.disclaimer) setDisclaimer(resp.disclaimer);
       // Append assistant reply
       appendChatMessage(s.mode, resp.message);
       // Re-render with sources (if any)
       renderChat(getChatHistory(s.mode), { sources: resp.sources || [] });
     } catch (err) {
+      hideAssistantTyping();
       // Surface error as assistant message
       appendChatMessage(getState().mode, {
         role: 'assistant',
@@ -207,6 +212,7 @@ function wireControls() {
       });
       renderChat(getChatHistory(getState().mode));
     } finally {
+      hideAssistantTyping();
       setBusy(false);
       chatForm().querySelector('button[type="submit"]').disabled = false;
       input.disabled = false;
@@ -315,18 +321,31 @@ function formatChatForCopy(messages, mode) {
 async function refreshQuote() {
   const box = quoteText();
   const currentTheme = getState().theme;
-  if (box) box.textContent = 'Loading quote...';
+  if (box) {
+    box.classList.add('is-loading');
+    box.innerHTML = `
+      <div class="skeleton-line skeleton"></div>
+      <div class="skeleton-line skeleton"></div>
+      <div class="skeleton-line skeleton"></div>
+    `;
+  }
   try {
     const res = await fetchQuote(currentTheme);
-    if (box) box.textContent = res.quote || '…';
+    if (box) {
+      box.classList.remove('is-loading');
+      box.textContent = res.quote || '…';
+    }
   } catch (err) {
-    if (box) box.textContent = 'Could not load a quote right now. Try again.';
+    if (box) {
+      box.classList.remove('is-loading');
+      box.textContent = 'Could not load a quote right now. Try again.';
+    }
   }
 }
 
 async function loadNews(category) {
   setNewsBusy(true);
-  newsItems().innerHTML = '<div class="news-item">Loading…</div>';
+  renderNewsLoading();
 
   try {
     let geo = {};

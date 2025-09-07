@@ -69,3 +69,37 @@ export function renderChat(messages, { sources } = {}) {
   // Scroll to bottom
   box.scrollTop = box.scrollHeight;
 }
+export function showAssistantTyping() {
+  const box = document.querySelector('#chatMessages');
+  if (!box) return;
+  if (box.querySelector('.msg.assistant.loading')) return;
+
+  const row = document.createElement('div');
+  row.className = 'msg assistant loading';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+
+  // Only show the animated three dots (no spinner)
+  const typing = document.createElement('span');
+  typing.className = 'typing';
+  typing.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+
+  const sr = document.createElement('span');
+  sr.className = 'sr-only';
+  sr.textContent = 'Assistant is responding…';
+
+  bubble.appendChild(typing);
+  bubble.appendChild(sr);
+  row.appendChild(bubble);
+  box.appendChild(row);
+
+  box.scrollTop = box.scrollHeight;
+}
+
+export function hideAssistantTyping() {
+  const box = document.querySelector('#chatMessages');
+  if (!box) return;
+  const row = box.querySelector('.msg.assistant.loading');
+  if (row) row.remove();
+}
