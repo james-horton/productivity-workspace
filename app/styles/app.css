@@ -354,12 +354,12 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
 }
 .msg.user { justify-content: flex-end; }
 .msg.user .bubble {
-  background: color-mix(in oklab, var(--primary) 18%, var(--surface-2));
-  border-color: color-mix(in oklab, var(--primary) 55%, var(--ring));
+  background: color-mix(in oklab, var(--primary) 22%, var(--surface-2));
+  border-color: color-mix(in oklab, var(--primary) 60%, var(--ring));
 }
 .msg.assistant .bubble {
-  background: color-mix(in oklab, var(--accent) 12%, var(--surface-2));
-  border-color: color-mix(in oklab, var(--accent) 45%, var(--ring));
+  background: color-mix(in oklab, var(--accent) 26%, var(--surface-2));
+  border-color: color-mix(in oklab, var(--accent) 58%, var(--ring));
 }
 
 .chat-input {
