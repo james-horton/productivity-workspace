@@ -49,8 +49,8 @@ async function summarizeWithLLM(items, category) {
         { role: 'system', content: sys },
         { role: 'user', content: user }
       ],
-      temperature: 1,
-      maxTokens: 80000
+      maxTokens: 80000,
+      reasoningLevel: 'medium'
     });
     return safeParseArray(out.text, items);
   } catch (err) {

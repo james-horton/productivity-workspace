@@ -6,26 +6,31 @@ const { openaiChat } = require('../lib/providers/openai');
 // Mode specifications: reasoning + default search + disclaimers
 const MODE_SPECS = {
   doctor: {
+    model: 'gpt-5',
     reasoning: 'high',
     defaultSearch: false,
     disclaimer: 'This is not medical advice. For urgent or serious symptoms, contact a licensed clinician or emergency services.'
   },
   therapist: {
+    model: 'gpt-5',
     reasoning: 'high',
     defaultSearch: false,
     disclaimer: 'This is supportive conversation, not a substitute for professional mental health care. If in crisis, contact local emergency services or a crisis hotline.'
   },
   web: {
-    reasoning: 'medium',
+    model: 'gpt-5-mini',
+    reasoning: 'low',
     defaultSearch: true,
     disclaimer: null
   },
   basic: {
+    model: 'gpt-5',
     reasoning: 'low',
     defaultSearch: false,
     disclaimer: null
   },
   excuse: {
+    model: 'gpt-5',
     reasoning: 'medium',
     defaultSearch: false,
     disclaimer: null
@@ -148,7 +153,7 @@ router.post('/', async (req, res, next) => {
       reasoning: spec.reasoning,
       messages: finalMessages,
       prefer,
-      model,
+      model: spec.model,
       webSearch: effectiveWebSearch
     });
 

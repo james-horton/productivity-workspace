@@ -25,8 +25,8 @@ router.post('/', async (req, res, next) => {
     const out = await openaiChat({ 
       model: 'gpt-5-mini',
       messages, 
-      temperature: 1,
-      maxTokens: 2000 
+      maxTokens: 2000,
+      reasoningLevel: 'minimal' 
     });
 
     res.json({
