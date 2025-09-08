@@ -545,3 +545,16 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
   .typing .dot { animation: none; }
   .skeleton::after { display: none; }
 }
+/* Chat message links */
+.msg .bubble a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  overflow-wrap: anywhere; /* allow breaking long URLs */
+  word-break: break-word;
+}
+.msg .bubble a:hover,
+.msg .bubble a:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
