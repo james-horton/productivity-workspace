@@ -30,8 +30,7 @@ async function summarizeWithLLM(items, category) {
 
   const sys = [
     'You summarize current news items for a Gen Z audience in neutral, concise language.',
-    'Do not begin the summary explaining what the news source is in a meta, 3rd person way.',
-    'Only include source content and material.',
+    'Do not begin the summary saying something like "<news source> reports that...", go straight to content.',
     'Return a strict JSON array, where each item has: title, summary, url, source.',
     'summary should be 1-2 sentences or up to a short paragraph long, unbiased, with key facts only. No emojis, no hashtags.',
     'If content is too thin, use the title + source to infer a generic but accurate summary, or say "Brief: headline only."',
