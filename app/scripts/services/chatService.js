@@ -31,7 +31,7 @@ export async function sendChat({ mode, messages, provider, model, webSearch }) {
     webSearch
   });
 
-  const { exec } = withTimeout(null, 45000);
+  const { exec } = withTimeout(null, 180000);
   const res = await exec('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
