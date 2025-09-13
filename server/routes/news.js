@@ -29,7 +29,7 @@ async function summarizeWithLLM(items, category) {
   const list = compactItemsForPrompt(items);
 
   const sys = [
-    'You summarize current news items for a Gen Z audience in neutral, concise language.',
+    'You summarize current news items in neutral, concise language.',
     'Do not begin the summary saying something like "<news source> reports that...", go straight to content.',
     'Return a strict JSON array, where each item has: title, summary, url, source.',
     'summary should be 1-2 sentences or up to a short paragraph long, unbiased, with key facts only. No emojis, no hashtags.',

@@ -5,7 +5,7 @@ const { openaiChat } = require('../lib/providers/openai');
 
 function themeSystemPrompt(theme) {
   return [
-    'You generate a single short inspirational quote tailored for Gen Z: concise, modern, authentic, not cheesy.',
+    'You generate a single short inspirational quote that is concise, modern, authentic, not cheesy.',
     'Tone: encouraging and practical; no clichés, no hustle-porn.',
     'Length: one sentence or a very short paragraph (max ~45 words).',
     'No attribution, no emojis, no hashtags.'
