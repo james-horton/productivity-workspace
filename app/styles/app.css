@@ -110,12 +110,13 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .topbar {
 .matrix-viewport {
   grid-column: 2;
   align-self: center;
+  justify-self: center; /* center horizontally in the gap */
   height: clamp(42px, 6vw, 88px);
-  min-width: 280px;
-  max-width: min(56vw, 820px);
+  /* Constrain width and center instead of stretching edge-to-edge */
+  width: min(100%, clamp(280px, 56vw, 820px));
   display: flex;
   align-items: center;
-  justify-content: stretch;
+  justify-content: center;
   pointer-events: none;
 }
 body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { display: none; }
