@@ -55,10 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setActiveTab('national');
   void loadNews('national');
 
-  // Clock + date + year
+  // Clock + date
   startClock();
-  const yEl = document.getElementById('year');
-  if (yEl) yEl.textContent = String(new Date().getFullYear());
 
   // Wire listeners
   wireControls();
@@ -412,7 +410,7 @@ function startClock() {
   const update = () => {
     const now = new Date();
     if (clockTime()) clockTime().textContent = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    if (clockDate()) clockDate().textContent = now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    if (clockDate()) clockDate().textContent = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
   };
   update();
   setInterval(update, 1000);
