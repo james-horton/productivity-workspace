@@ -85,6 +85,7 @@ export function renderChat(messages, { sources } = {}) {
   const box = $('#chatMessages');
   if (!box) return;
   box.innerHTML = '';
+  let lastAssistantRow = null;
 
   messages.forEach(msg => {
     const row = document.createElement('div');
@@ -97,6 +98,10 @@ export function renderChat(messages, { sources } = {}) {
 
     row.appendChild(bubble);
     box.appendChild(row);
+
+    if (msg.role !== 'user') {
+      lastAssistantRow = row;
+    }
   });
 
   // If we have sources for the last assistant message, render them after the last message
@@ -133,8 +138,20 @@ export function renderChat(messages, { sources } = {}) {
     box.appendChild(wrap);
   }
 
-  // Scroll to bottom
-  box.scrollTop = box.scrollHeight;
+  // Scroll behavior:
+  // - If the last message is from the assistant, align the viewport so the top of that
+  //   assistant message is at the top of the container (not the "Sources" block).
+  // - Otherwise (e.g., after user sends a message), keep legacy behavior and scroll to bottom.
+  const lastMessage = (messages && messages.length) ? messages[messages.length - 1] : null;
+  if (lastMessage && lastMessage.role === 'assistant' && lastAssistantRow) {
+    const containerTop = box.getBoundingClientRect().top;
+    const lastTop = lastAssistantRow.getBoundingClientRect().top;
+    const offset = (lastTop - containerTop) + box.scrollTop;
+    box.scrollTop = offset;
+  } else {
+    // Fallback: scroll to bottom
+    box.scrollTop = box.scrollHeight;
+  }
 }
 export function showAssistantTyping() {
   const box = document.querySelector('#chatMessages');
