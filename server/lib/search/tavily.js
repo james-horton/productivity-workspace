@@ -3,6 +3,37 @@ const { config } = require('../../config');
 
 const TAVILY_URL = 'https://api.tavily.com/search';
 
+// Allowed news domains (as requested)
+const NEWS_SOURCES = [
+  'apnews.com',
+  'cnn.com',
+  'foxnews.com',
+  'meidastouch.com',
+  'msnbc.com'
+];
+
+// Build a boolean site: filter clause for the query
+function buildSiteFilterClause(domains) {
+  if (!Array.isArray(domains) || domains.length === 0) return '';
+  return `(${domains.map(d => `site:${d}`).join(' OR ')})`;
+}
+
+// Host helpers
+function normalizeHost(host) {
+  return String(host || '').replace(/^www\./i, '').toLowerCase();
+}
+function urlHost(url) {
+  try { return normalizeHost(new URL(url).hostname); } catch { return ''; }
+}
+function hostAllowed(url, allowlist) {
+  if (!Array.isArray(allowlist) || allowlist.length === 0) return true;
+  const host = urlHost(url);
+  return allowlist.some(d => {
+    d = String(d).toLowerCase();
+    return host === d || host.endsWith('.' + d);
+  });
+}
+
 // Basic client for Tavily Search API
 async function tavilySearch(query, { maxResults = 6, includeAnswer = false, searchDepth = 'advanced' } = {}) {
   if (!config.tavily.apiKey) {
@@ -79,7 +110,11 @@ function buildNewsQuery(category, locality) {
     world: 'Top global news today',
     local: `Local news near ${locality || 'your area'} today`
   }[category] || 'Top news today';
-  return `${base} site:news`;
+  if (category === 'national' || category === 'world') {
+    const siteClause = buildSiteFilterClause(NEWS_SOURCES);
+    return `${base} ${siteClause}`.trim();
+  }
+  return base;
 }
 
 async function fetchNews(category, { lat, lon } = {}) {
@@ -90,16 +125,18 @@ async function fetchNews(category, { lat, lon } = {}) {
   }
   const query = buildNewsQuery(category, locality);
   return tavilySearch(
-    query, 
-    { 
-      maxResults: 6, 
-      includeAnswer: false, 
-      searchDepth: 'advanced' }
-    );
+    query,
+    {
+      maxResults: 6,
+      includeAnswer: false,
+      searchDepth: 'advanced'
+    }
+  );
 }
 
 module.exports = {
   tavilySearch,
   fetchNews,
-  reverseGeocode
+  reverseGeocode,
+  NEWS_SOURCES
 };
