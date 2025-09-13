@@ -19,6 +19,7 @@ const chatForm = () => $('#chatForm');
 const chatInput = () => $('#chatInput');
 const chatMessages = () => $('#chatMessages');
 const chatCopy = () => $('#chatCopy');
+const chatDownload = () => $('#chatDownload');
 const chatReset = () => $('#chatReset');
 const quoteText = () => $('#quoteText');
 const quoteRefresh = () => $('#quoteRefresh');
@@ -134,6 +135,45 @@ function wireControls() {
         btn.setAttribute('aria-label', 'Copy failed');
         setTimeout(() => { resetLabel(); }, 1500);
       }
+    });
+  }
+ 
+  // Download chat as .txt
+  const downloadBtn = chatDownload && chatDownload();
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', () => {
+      const s = getState();
+      const history = getChatHistory(s.mode);
+      const text = formatChatForCopy(history, s.mode);
+
+      const modeName = (MODES[s.mode]?.label || s.mode || 'chat');
+      const modeSlug = String(modeName).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const ts = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+      const filename = `${modeSlug}_${ts}.txt`;
+
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 0);
+
+      const btn = downloadBtn;
+      const originalTitle = btn.title;
+      const originalAria = btn.getAttribute('aria-label') || originalTitle || 'Download';
+      btn.title = 'Downloaded';
+      btn.setAttribute('aria-label', 'Downloaded');
+      setTimeout(() => {
+        btn.title = originalTitle;
+        btn.setAttribute('aria-label', originalAria);
+      }, 1200);
     });
   }
  
