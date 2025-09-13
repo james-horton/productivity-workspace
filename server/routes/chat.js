@@ -34,6 +34,18 @@ const MODE_SPECS = {
     reasoning: 'medium',
     defaultSearch: false,
     disclaimer: null
+  },
+  grammar: {
+    model: 'gpt-5-nano',
+    reasoning: 'minimal',
+    defaultSearch: false,
+    disclaimer: null
+  },
+  eli5: {
+    model: 'gpt-5',
+    reasoning: 'low',
+    defaultSearch: false,
+    disclaimer: null
   }
 };
 
@@ -75,6 +87,21 @@ function buildSystemPrompt(mode) {
       return 'You are a fast, helpful assistant. Keep answers short and practical.';
     case 'excuse':
       return 'Generate a believable excuse tailored to the problem.';
+    case 'grammar':
+      return [
+        'You are a grammar, spelling, capitalization, and punctuation corrector.',
+        'Return only the corrected text. Do not add explanations, notes, or extra content.',
+        'Preserve the original meaning, tone, formatting, markdown, and line breaks.',
+        'If the input is already correct, output it unchanged.'
+      ].join(' ');
+    case 'eli5':
+      return [
+        'Explain the user input like I am five years old.',
+        'Use simple words and short sentences. Avoid jargon; if you must use it, define it simply.',
+        'Prefer concrete examples or analogies.',
+        'Keep it brief: one or two short paragraphs.',
+        'End with a single-sentence summary that begins with "In short:".'
+      ].join(' ');
     default:
       return 'You are a helpful assistant.';
   }
@@ -150,12 +177,12 @@ router.post('/', async (req, res, next) => {
 
     // Call provider with optional model override and provider web search toggle
     const response = await callPreferredModels({
-      reasoning: spec.reasoning,
-      messages: finalMessages,
-      prefer,
-      model: spec.model,
-      webSearch: effectiveWebSearch
-    });
+        reasoning: spec.reasoning,
+        messages: finalMessages,
+        prefer,
+        model: spec.model,
+        webSearch: effectiveWebSearch
+      });
 
     const payload = {
       message: { role: 'assistant', content: response.text },

@@ -45,6 +45,20 @@ export const MODES = {
     starter: 'What do you need an excuse for, and how believable should it be?',
     disclaimer: '',
     defaultSearch: false
+  },
+  grammar: {
+    id: 'grammar',
+    label: 'Grammar Corrector',
+    starter: 'Paste text to correct. I will return only the corrected text.',
+    disclaimer: '',
+    defaultSearch: false
+  },
+  eli5: {
+    id: 'eli5',
+    label: "ELI5",
+    starter: 'What do you want explained simply?',
+    disclaimer: '',
+    defaultSearch: false
   }
 };
 
@@ -54,7 +68,9 @@ const chatHistories = {
   therapist: [],
   web: [],
   basic: [],
-  excuse: []
+  excuse: [],
+  grammar: [],
+  eli5: []
 };
 
 const state = {

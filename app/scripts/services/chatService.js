@@ -15,7 +15,7 @@ function withTimeout(promise, ms = 45000) {
 /**
  * Send chat request to backend
  * @param {Object} opts
- * @param {'doctor'|'therapist'|'web'|'basic'|'excuse'} opts.mode
+ * @param {'doctor'|'therapist'|'web'|'basic'|'excuse'|'grammar'|'eli5'} opts.mode
  * @param {Array<{role:'user'|'assistant', content:string}>} opts.messages
  * @param {'openai'} [opts.provider]
  * @param {string} [opts.model]
