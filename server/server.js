@@ -17,6 +17,8 @@ const corsOptions = {
   origin: (origin, callback) => {
     // Allow same-origin or non-browser clients (no origin)
     if (!origin) return callback(null, true);
+    // Allow everything if '*' is in allowedOrigins
+    if (allowed.has('*')) return callback(null, true);
     if (allowed.has(origin)) return callback(null, true);
     return callback(new Error('Not allowed by CORS'), false);
   },
