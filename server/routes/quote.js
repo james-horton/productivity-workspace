@@ -5,10 +5,8 @@ const { openaiChat } = require('../lib/providers/openai');
 
 function themeSystemPrompt(theme) {
   return [
-    'You generate a single short inspirational quote that is concise, modern, authentic, not cheesy.',
-    'Tone: encouraging and practical; no clichés, no hustle-porn.',
-    'Length: one sentence or a very short paragraph (max ~45 words).',
-    'No attribution, no emojis, no hashtags.'
+    'You share a random, authentic, and short inspirational quote.',
+    'Include the name of the author at the end of the quote.'
   ].join(' ');
 }
 
@@ -23,7 +21,7 @@ router.post('/', async (req, res, next) => {
     ];
 
     const out = await openaiChat({ 
-      model: 'gpt-5-mini',
+      model: 'gpt-5',
       messages, 
       maxTokens: 2000,
       reasoningLevel: 'minimal' 
