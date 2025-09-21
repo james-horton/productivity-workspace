@@ -507,7 +507,43 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
 
 /* Responsive */
 @media (max-width: 600px) {
-  .controls { width: 100%; justify-content: flex-end; }
+  /* Stack topbar rows: brand, viewport, controls */
+  .topbar {
+    grid-template-columns: 1fr !important; /* override desktop and non-matrix variants */
+    grid-auto-rows: auto;
+    align-items: start;
+    gap: 0.6rem;
+  }
+
+  .brand { grid-column: 1; }
+
+  .matrix-viewport {
+    grid-column: 1;
+    justify-self: center;
+    width: min(100%, 92vw);
+    height: clamp(42px, 10vw, 72px);
+  }
+
+  .controls {
+    grid-column: 1;
+    width: 100%;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  /* Keep both selects and the settings button on the same row below the viewport (wrapping if needed) */
+  .controls .control {
+    flex: 1 1 170px;
+    min-width: 150px;
+    order: 1;
+  }
+  #settingsBtn {
+    order: 3;
+    flex: 0 0 auto;
+  }
+
   .chat-card .messages { max-height: 50vh; }
 }
 /* Loading indicators and skeletons (theme-aware) */
