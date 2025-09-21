@@ -1,9 +1,54 @@
 /**
- * News UI rendering helpers
+ * News UI rendering helpers + News Modal (unsummarized article)
  */
 
 function $(sel) { return document.querySelector(sel); }
 
+// Modal refs
+let _newsModal = null;
+let _newsModalBody = null;
+
+function ensureNewsModalRefs() {
+  if (!_newsModal) _newsModal = document.getElementById('newsModal');
+  if (!_newsModalBody) _newsModalBody = document.getElementById('newsModalBody');
+}
+
+function isNewsModalOpen() {
+  ensureNewsModalRefs();
+  return _newsModal && _newsModal.getAttribute('aria-hidden') === 'false';
+}
+
+function openNewsModalShell() {
+  ensureNewsModalRefs();
+  if (!_newsModal) return;
+  _newsModal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+}
+
+function closeNewsModal() {
+  ensureNewsModalRefs();
+  if (!_newsModal) return;
+  _newsModal.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('modal-open');
+}
+
+// Lightweight HTML escaper to avoid unsafe HTML in raw content
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function hostFromUrl(url) {
+  try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return ''; }
+}
+
+// Marked removed; modal now shows plain text content only.
+
+// Public API
 export function setNewsBusy(on) {
   const box = $('#newsItems');
   if (box) box.setAttribute('aria-busy', on ? 'true' : 'false');
@@ -30,7 +75,7 @@ export function renderNewsItems(items) {
     return;
   }
 
-  items.forEach(item => {
+  items.forEach((item) => {
     const wrap = document.createElement('article');
     wrap.className = 'news-item';
 
@@ -38,10 +83,12 @@ export function renderNewsItems(items) {
     h3.className = 'title';
 
     const a = document.createElement('a');
-    a.href = item.url || '#';
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
+    a.href = '#';
     a.textContent = item.title || 'Untitled';
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      void openNewsModal(item);
+    });
 
     h3.appendChild(a);
 
@@ -51,7 +98,22 @@ export function renderNewsItems(items) {
 
     const meta = document.createElement('div');
     meta.className = 'meta';
-    meta.textContent = item.source ? `source: ${item.source}` : '';
+    const host = (item.source || hostFromUrl(item.url || '') || '').trim();
+    if (host) {
+      meta.textContent = 'source: ';
+      if (item.url) {
+        const link = document.createElement('a');
+        link.href = item.url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = host;
+        meta.appendChild(link);
+      } else {
+        const span = document.createElement('span');
+        span.textContent = host;
+        meta.appendChild(span);
+      }
+    }
 
     wrap.appendChild(h3);
     wrap.appendChild(p);
@@ -59,6 +121,7 @@ export function renderNewsItems(items) {
     box.appendChild(wrap);
   });
 }
+
 export function renderNewsLoading() {
   const box = document.querySelector('#newsItems');
   if (!box) return;
@@ -88,4 +151,40 @@ export function renderNewsLoading() {
 
     box.appendChild(wrap);
   }
+}
+
+// Initialize modal open/close interactions
+export function initNewsModalUI() {
+  ensureNewsModalRefs();
+  const modal = _newsModal;
+  if (!modal) return;
+
+  // Close on backdrop click or any [data-close="true"] control
+  modal.addEventListener('click', (e) => {
+    const t = e.target;
+    if (!t) return;
+    const isBackdrop = t.classList && t.classList.contains('modal-backdrop');
+    const wantsClose = (t.dataset && t.dataset.close === 'true') || (t.closest && t.closest('[data-close="true"]'));
+    if (isBackdrop || wantsClose) {
+      closeNewsModal();
+    }
+  });
+
+  // Close on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isNewsModalOpen()) {
+      closeNewsModal();
+    }
+  });
+}
+
+// Compose + open the modal with unsummarized Tavily content (plain text only)
+async function openNewsModal(item) {
+  ensureNewsModalRefs();
+  if (!_newsModal || !_newsModalBody) return;
+
+  const raw = String(item?.content || '').trim();
+  _newsModalBody.textContent = raw || 'No raw content available.';
+
+  openNewsModalShell();
 }

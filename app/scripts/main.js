@@ -5,7 +5,7 @@ import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
 import { fetchNews } from './services/newsService.js';
 import { setDisclaimer, setBusy, renderChat, showAssistantTyping, hideAssistantTyping } from './ui/chatUI.js';
-import { setNewsBusy, setActiveTab, renderNewsItems, renderNewsLoading } from './ui/newsUI.js';
+import { setNewsBusy, setActiveTab, renderNewsItems, renderNewsLoading, initNewsModalUI } from './ui/newsUI.js';
 import { initMatrixRain, setMatrixRainEnabled } from './ui/matrixRain.js';
 import { initNyanCat, setNyanCatEnabled } from './ui/nyanCat.js';
 
@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
   wireControls();
   wireStateEvents();
   initSettingsUI();
+  initNewsModalUI();
 
   // Render initial chat from state (starter added above if needed)
   renderChat(getChatHistory(s.mode));

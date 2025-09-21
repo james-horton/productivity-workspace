@@ -6,7 +6,7 @@
  * Fetch news items
  * @param {'national'|'world'|'local'} category
  * @param {{city?:string, state?:string}} [location]
- * @returns {Promise<{ category:string, items:Array<{title:string,summary:string,url:string,source:string}> }>}
+ * @returns {Promise<{ category:string, items:Array<{title:string,summary:string,url:string,source:string,content:string}> }>}
  */
 export async function fetchNews(category = 'national', location = {}) {
   const params = new URLSearchParams({ category });

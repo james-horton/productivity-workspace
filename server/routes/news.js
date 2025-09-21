@@ -97,9 +97,18 @@ router.get('/', async (req, res, next) => {
     const { results } = await fetchNews(category, { city, state });
     const summarized = await summarizeWithLLM(results, category);
 
+    // Attach raw (unsummarized) content from search results to each summarized item
+    const byUrl = new Map();
+    results.forEach(r => { if (r && r.url) byUrl.set(r.url, r.content || ''); });
+
+    const items = summarized.map((it, i) => ({
+      ...it,
+      content: (it.url && byUrl.get(it.url)) || (results[i] ? results[i].content || '' : '')
+    }));
+
     res.json({
       category,
-      items: summarized
+      items
     });
   } catch (err) {
     next(err);

@@ -706,3 +706,24 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
   padding-top: .5rem;
 }
 body.modal-open { overflow: hidden; }
+/* News modal body: show raw article content neatly */
+.news-modal-body {
+  white-space: pre-wrap;
+  max-height: 65vh;
+  overflow: auto;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+/* News source link styling (in card meta) */
+.news-item .meta a {
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+.news-item .meta a:hover,
+.news-item .meta a:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+  outline: none;
+}
