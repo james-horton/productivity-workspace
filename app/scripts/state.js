@@ -10,7 +10,7 @@ const LS_KEYS = {
   state: 'pw.state'
 };
 
-export const THEMES = ['matrix', 'dark', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow'];
+export const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow'];
 
 export const MODES = {
   doctor: {

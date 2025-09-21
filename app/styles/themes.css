@@ -45,6 +45,21 @@ body[data-theme="dark"] {
   --coderain-opacity: 0.0;
 }
 
+/* THEME: Dark Black */
+body[data-theme="dark-black"] {
+  --bg: #000000;         /* pure black background */
+  --text: #e5e7eb;       /* off-white for comfort/readability */
+  --muted: #9aa3af;      /* slate-muted text */
+  --surface: #0a0a0a;    /* near-black card/background surface */
+  --surface-2: #0f0f0f;  /* slightly lighter for headers/inputs */
+  --ring: #1f2937;       /* dark slate border/ring for separation on black */
+  --accent: #22d3ee;     /* cyan accent for links, hovers, focus */
+  --primary: #a78bfa;    /* soft violet for primary buttons and highlights */
+  --shadow: 0 12px 34px rgba(0,0,0,0.70);
+  --topbar-bg: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0));
+  --coderain-opacity: 0.0;
+  --coderain-color: #22d3ee;
+}
 /* THEME: Aurora (polished) */
 body[data-theme="aurora"] {
   --bg: #0b0f10;
