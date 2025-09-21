@@ -515,7 +515,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
     gap: 0.6rem;
   }
 
-  .brand { grid-column: 1; }
+  .brand { grid-column: 1; padding-right: 52px; }
 
   .matrix-viewport {
     grid-column: 1;
@@ -542,6 +542,11 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
   #settingsBtn {
     order: 3;
     flex: 0 0 auto;
+    /* Mobile: place gear on same row as title, aligned right */
+    position: absolute;
+    top: 0.75rem;  /* match .topbar vertical padding */
+    right: 1rem;   /* match .topbar horizontal padding */
+    z-index: 2;    /* ensure above decorative layers */
   }
 
   .chat-card .messages { max-height: 50vh; }
