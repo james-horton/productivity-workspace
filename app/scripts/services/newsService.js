@@ -5,14 +5,14 @@
 /**
  * Fetch news items
  * @param {'national'|'world'|'local'} category
- * @param {{lat?:number, lon?:number}} [geo]
+ * @param {{city?:string, state?:string}} [location]
  * @returns {Promise<{ category:string, items:Array<{title:string,summary:string,url:string,source:string}> }>}
  */
-export async function fetchNews(category = 'national', geo = {}) {
+export async function fetchNews(category = 'national', location = {}) {
   const params = new URLSearchParams({ category });
-  if (category === 'local' && typeof geo.lat === 'number' && typeof geo.lon === 'number') {
-    params.set('lat', String(geo.lat));
-    params.set('lon', String(geo.lon));
+  if (category === 'local' && location.city && location.state) {
+    params.set('city', String(location.city));
+    params.set('state', String(location.state));
   }
   const url = `/api/news?${params.toString()}`;
 

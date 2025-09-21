@@ -5,7 +5,7 @@ Single-page productivity web app with:
 - Theme-aware inspirational quote (LLM-generated on demand)
 - Model picker (GPT-5)
 - Multi-mode chat (Doctor, Therapist, Web Search, Basic Info, Excuse Generator) with in-session history
-- News panel (National, World, Local using geolocation) via Tavily web search + LLM summarization
+- News panel (National, World, Local via Settings city/state) via Tavily web search + LLM summarization
 - Clock and current date
 - Mobile-first responsive UI
 
@@ -18,7 +18,7 @@ Backend keeps all private API keys in a local secrets.json (never sent to the br
   - Endpoints:
     - POST /api/chat
     - POST /api/quote
-    - GET  /api/news?category=national|world|local&lat=..&lon=..
+    - GET  /api/news?category=national|world|local&city=..&state=..
   - Providers:
     - OpenAI (GPT-5)
     - Tavily (web search)
@@ -30,7 +30,7 @@ Backend keeps all private API keys in a local secrets.json (never sent to the br
   - Model picker
   - Quote widget with refresh
   - Chat with selectable modes and in-session history
-  - News tabs with refresh and optional geolocation for local
+  - News tabs with refresh. Local uses city/state from Settings.
   - Clock and date
 
 ## Prerequisites
@@ -117,7 +117,7 @@ Open http://localhost:8787 in your browser.
   - Body: { theme: 'matrix' | 'dark' | 'aurora' }
   - Returns: { quote, providerUsed, modelUsed }
 
-- GET /api/news?category=<cat>&lat=<lat>&lon=<lon>
+- GET /api/news?category=<cat>&city=<city>&state=<state>
   - category: national | world | local
   - Returns: { category, items: [{ title, summary, url, source }] }
 
@@ -129,7 +129,7 @@ Open http://localhost:8787 in your browser.
 - CORS errors:
   - Add your frontend origin to secrets.json.cors.allowedOrigins.
 - Local news not showing:
-  - Browser may have blocked geolocation. Refresh with permissions allowed, or switch category.
+  - Enter your city and state in Settings (gear icon), then refresh the Local tab.
 - Quote too long/short:
   - The prompt enforces concise quotes, but creativity varies. Click Refresh.
 

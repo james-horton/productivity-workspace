@@ -67,7 +67,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .topbar {
   grid-column: 3;
   display: flex;
   gap: 0.75rem;
-  align-items: center;
+  align-items: flex-end; /* align bottom edges so buttons line up with dropdown fields */
   flex-wrap: wrap;
 }
 .control { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; }
@@ -285,6 +285,49 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
   border-color: color-mix(in oklab, var(--accent) 60%, var(--ring));
 }
 
+/* Settings button (topbar): match select height, be square, and adopt theme hover/active */
+#settingsBtn.btn.icon-only {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Fixed square to align with native select height (≈42px) */
+  inline-size: 42px;
+  block-size: 42px;
+  padding: 0; /* keep perfectly square */
+  border-radius: 10px; /* match other buttons */
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--ring);
+  /* Subtle always-on accent border glow (thinner than hover) */
+  border-color: color-mix(in oklab, var(--accent) 35%, var(--ring));
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 12%, transparent);
+  /* Enlarge the gear glyph without affecting button size */
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+/* Emphasized hover/active/focus like other icon buttons */
+#settingsBtn.btn {
+  transition: transform .06s ease, background .2s ease, border-color .2s ease, box-shadow .25s ease, color .2s ease;
+}
+#settingsBtn.btn:hover {
+  background: color-mix(in oklab, var(--accent) 22%, var(--surface));
+  border-color: color-mix(in oklab, var(--accent) 60%, var(--ring));
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--accent) 18%, transparent),
+    0 8px 22px -8px color-mix(in oklab, var(--accent) 45%, #000);
+  color: var(--text);
+  transform: translateY(-1px) scale(1.01);
+}
+#settingsBtn.btn:active {
+  transform: translateY(0) scale(0.995);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 16%, transparent);
+}
+#settingsBtn.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 45%, transparent);
+  border-color: color-mix(in oklab, var(--accent) 60%, var(--ring));
+}
 /* Chat header */
 .chat-head-left {
   display: inline-flex;
@@ -563,3 +606,67 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
   border-color: var(--accent);
   outline: none;
 }
+/* Settings modal */
+.modal[aria-hidden="true"] { display: none; }
+.modal {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+}
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(2px);
+}
+.modal-dialog {
+  position: relative;
+  width: min(92vw, 520px);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--ring);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  padding: .75rem .9rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--ring);
+}
+.modal-body {
+  padding: 1rem;
+  display: grid;
+  gap: .75rem;
+}
+.control-row {
+  display: grid;
+  gap: .4rem;
+}
+.control-row .label {
+  color: var(--muted);
+  font-size: .9rem;
+}
+.modal-body input[type="text"],
+.modal-body select {
+  width: 100%;
+  padding: .55rem .7rem;
+  border-radius: 10px;
+  border: 1px solid var(--ring);
+  background: var(--surface-2);
+  color: var(--text);
+  outline: none;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .5rem;
+  padding-top: .5rem;
+}
+body.modal-open { overflow: hidden; }

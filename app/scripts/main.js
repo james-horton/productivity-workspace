@@ -1,5 +1,5 @@
 import { applyTheme } from './theme.js';
-import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat } from './state.js';
+import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation } from './state.js';
 import { getModels, providerFor, modelIdFor, getDefaultModelKey } from './services/modelRegistry.js';
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
@@ -61,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Wire listeners
   wireControls();
   wireStateEvents();
+  initSettingsUI();
 
   // Render initial chat from state (starter added above if needed)
   renderChat(getChatHistory(s.mode));
@@ -384,21 +385,20 @@ async function loadNews(category) {
   renderNewsLoading();
 
   try {
-    let geo = {};
-    if (category === 'local' && navigator.geolocation) {
-      try {
-        const pos = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 });
-        });
-        geo = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-      } catch {
-        // If denied or timed out, proceed without geo
-        geo = {};
+    let data;
+    if (category === 'local') {
+      const { city, state } = getLocation();
+      if (!city || !state) {
+        const msg = '<div class="news-item">Local news requires your city and state. Use the Settings (gear icon) to enter them.</div>';
+        newsItems().innerHTML = msg;
+      } else {
+        data = await fetchNews(category, { city, state });
+        renderNewsItems(data.items || []);
       }
+    } else {
+      data = await fetchNews(category);
+      renderNewsItems(data.items || []);
     }
-
-    const data = await fetchNews(category, geo);
-    renderNewsItems(data.items || []);
   } catch (err) {
     newsItems().innerHTML = '<div class="news-item">Failed to load news. Try refresh.</div>';
   } finally {
@@ -406,6 +406,66 @@ async function loadNews(category) {
   }
 }
 
+function initSettingsUI() {
+  const btn = document.getElementById('settingsBtn');
+  const modal = document.getElementById('settingsModal');
+  const form = document.getElementById('settingsForm');
+  const inputCity = document.getElementById('settingsCity');
+  const selectState = document.getElementById('settingsState');
+  const btnClose = document.getElementById('settingsClose');
+  const btnCancel = document.getElementById('settingsCancel');
+
+  if (!btn || !modal || !form || !inputCity || !selectState) return;
+
+  function prefill() {
+    const { city, state } = getLocation();
+    inputCity.value = city || '';
+    selectState.value = state || '';
+  }
+
+  function open() {
+    prefill();
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+    setTimeout(() => inputCity.focus(), 0);
+  }
+
+  function close() {
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open');
+  }
+
+  btn.addEventListener('click', open);
+  if (btnClose) btnClose.addEventListener('click', close);
+  if (btnCancel) btnCancel.addEventListener('click', close);
+
+  // Click on backdrop closes
+  modal.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal-backdrop') || e.target.dataset.close === 'true') {
+      close();
+    }
+  });
+
+  // Esc closes while open
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') {
+      close();
+    }
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const city = (inputCity.value || '').trim();
+    const state = (selectState.value || '').trim().toUpperCase();
+    setLocation({ city, state });
+    close();
+    const active = document.querySelector('#newsTabs .tab.active')?.dataset.cat;
+    if (active === 'local') {
+      // Refresh local news with newly saved location
+      void loadNews('local');
+    }
+  });
+}
 function startClock() {
   const update = () => {
     const now = new Date();

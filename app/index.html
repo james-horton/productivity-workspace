@@ -36,6 +36,7 @@
           <!-- Populated at runtime from model registry -->
         </select>
       </label>
+      <button id="settingsBtn" class="btn icon-only" type="button" aria-label="Settings" title="Settings">⚙</button>
     </div>
 
     <div class="code-rain" aria-hidden="true"></div>
@@ -148,6 +149,89 @@
   <footer class="footer">
     <small>Workspace AI</small>
   </footer>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close="true"></div>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal-head">
+        <h2 id="settingsTitle">Settings</h2>
+        <button id="settingsClose" class="btn icon-only" type="button" aria-label="Close settings" title="Close">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <form id="settingsForm" class="modal-body">
+        <div class="control-row">
+          <label for="settingsCity" class="label">City</label>
+          <input id="settingsCity" type="text" placeholder="e.g., Boston" autocomplete="address-level2" />
+        </div>
+        <div class="control-row">
+          <label for="settingsState" class="label">State</label>
+          <select id="settingsState" autocomplete="address-level1">
+            <option value="">Select a state</option>
+            <option value="AL">Alabama (AL)</option>
+            <option value="AK">Alaska (AK)</option>
+            <option value="AZ">Arizona (AZ)</option>
+            <option value="AR">Arkansas (AR)</option>
+            <option value="CA">California (CA)</option>
+            <option value="CO">Colorado (CO)</option>
+            <option value="CT">Connecticut (CT)</option>
+            <option value="DE">Delaware (DE)</option>
+            <option value="FL">Florida (FL)</option>
+            <option value="GA">Georgia (GA)</option>
+            <option value="HI">Hawaii (HI)</option>
+            <option value="ID">Idaho (ID)</option>
+            <option value="IL">Illinois (IL)</option>
+            <option value="IN">Indiana (IN)</option>
+            <option value="IA">Iowa (IA)</option>
+            <option value="KS">Kansas (KS)</option>
+            <option value="KY">Kentucky (KY)</option>
+            <option value="LA">Louisiana (LA)</option>
+            <option value="ME">Maine (ME)</option>
+            <option value="MD">Maryland (MD)</option>
+            <option value="MA">Massachusetts (MA)</option>
+            <option value="MI">Michigan (MI)</option>
+            <option value="MN">Minnesota (MN)</option>
+            <option value="MS">Mississippi (MS)</option>
+            <option value="MO">Missouri (MO)</option>
+            <option value="MT">Montana (MT)</option>
+            <option value="NE">Nebraska (NE)</option>
+            <option value="NV">Nevada (NV)</option>
+            <option value="NH">New Hampshire (NH)</option>
+            <option value="NJ">New Jersey (NJ)</option>
+            <option value="NM">New Mexico (NM)</option>
+            <option value="NY">New York (NY)</option>
+            <option value="NC">North Carolina (NC)</option>
+            <option value="ND">North Dakota (ND)</option>
+            <option value="OH">Ohio (OH)</option>
+            <option value="OK">Oklahoma (OK)</option>
+            <option value="OR">Oregon (OR)</option>
+            <option value="PA">Pennsylvania (PA)</option>
+            <option value="RI">Rhode Island (RI)</option>
+            <option value="SC">South Carolina (SC)</option>
+            <option value="SD">South Dakota (SD)</option>
+            <option value="TN">Tennessee (TN)</option>
+            <option value="TX">Texas (TX)</option>
+            <option value="UT">Utah (UT)</option>
+            <option value="VT">Vermont (VT)</option>
+            <option value="VA">Virginia (VA)</option>
+            <option value="WA">Washington (WA)</option>
+            <option value="WV">West Virginia (WV)</option>
+            <option value="WI">Wisconsin (WI)</option>
+            <option value="WY">Wyoming (WY)</option>
+            <option value="DC">District of Columbia (DC)</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button id="settingsCancel" class="btn" type="button">Cancel</button>
+          <button id="settingsSave" class="btn primary" type="submit">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script type="module" src="scripts/main.js"></script>
 </body>

@@ -5,7 +5,9 @@
 const LS_KEYS = {
   theme: 'pw.theme',
   model: 'pw.model',
-  mode: 'pw.mode'
+  mode: 'pw.mode',
+  city: 'pw.city',
+  state: 'pw.state'
 };
 
 export const THEMES = ['matrix', 'dark', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow'];
@@ -142,4 +144,30 @@ export function clearChat(mode) {
 
 function dispatch(type, detail) {
   document.dispatchEvent(new CustomEvent(type, { detail }));
+}
+
+// Location persistence
+export function getLocation() {
+  try {
+    const city = (localStorage.getItem(LS_KEYS.city) || '').trim();
+    const state = (localStorage.getItem(LS_KEYS.state) || '').trim().toUpperCase();
+    return { city, state };
+  } catch {
+    return { city: '', state: '' };
+  }
+}
+
+export function setLocation({ city, state } = {}) {
+  const c = String(city || '').trim();
+  const s = String(state || '').trim().toUpperCase();
+  try {
+    if (c) localStorage.setItem(LS_KEYS.city, c);
+    else localStorage.removeItem(LS_KEYS.city);
+
+    if (s) localStorage.setItem(LS_KEYS.state, s);
+    else localStorage.removeItem(LS_KEYS.state);
+  } finally {
+    // Notify listeners (e.g., UI) that location changed
+    dispatch('pw:location:changed', { city: c, state: s });
+  }
 }

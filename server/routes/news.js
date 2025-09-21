@@ -91,10 +91,10 @@ function safeParseArray(text, fallbackItems) {
 router.get('/', async (req, res, next) => {
   try {
     const category = coerceCategory(req.query.category);
-    const lat = req.query.lat != null ? parseFloat(req.query.lat) : undefined;
-    const lon = req.query.lon != null ? parseFloat(req.query.lon) : undefined;
+    const city = typeof req.query.city === 'string' ? String(req.query.city).trim() : undefined;
+    const state = typeof req.query.state === 'string' ? String(req.query.state).trim() : undefined;
 
-    const { results } = await fetchNews(category, { lat, lon });
+    const { results } = await fetchNews(category, { city, state });
     const summarized = await summarizeWithLLM(results, category);
 
     res.json({

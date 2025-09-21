@@ -77,39 +77,17 @@ async function tavilySearch(query, { maxResults = 6, includeAnswer = false, sear
   }
 }
 
-// Reverse geocode lat/lon to "City, State" (best-effort) using OpenStreetMap Nominatim
-async function reverseGeocode(lat, lon) {
-  try {
-    const res = await axios.get('https://nominatim.openstreetmap.org/reverse', {
-      params: { format: 'jsonv2', lat, lon },
-      headers: {
-        'User-Agent': 'productivity-workspace/1.0 (+https://localhost)',
-        'Accept-Language': 'en-US,en;q=0.8'
-      },
-      timeout: 15000
-    });
-    const addr = res.data && res.data.address ? res.data.address : {};
-    const city = addr.city || addr.town || addr.village || addr.hamlet || '';
-    const state = addr.state || addr.region || '';
-    const country = addr.country || '';
-    return {
-      city,
-      state,
-      country,
-      display: [city, state].filter(Boolean).join(', ') || country || 'your area'
-    };
-  } catch {
-    return { city: '', state: '', country: '', display: 'your area' };
-  }
-}
-
 // Helpers to craft category queries
-function buildNewsQuery(category, locality) {
-  const base = {
-    national: 'Top trending U.S. news today',
-    world: 'Top global news today',
-    local: `Local news near ${locality || 'your area'} today`
-  }[category] || 'Top news today';
+function buildNewsQuery(category, { city, state } = {}) {
+  if (category === 'local') {
+    const parts = ['local news', city, state].filter(Boolean);
+    return parts.join(' ').trim();
+  }
+  const base = category === 'national'
+    ? 'Top trending U.S. news today'
+    : category === 'world'
+      ? 'Top global news today'
+      : 'Top news today';
   if (category === 'national' || category === 'world') {
     const siteClause = buildSiteFilterClause(NEWS_SOURCES);
     return `${base} ${siteClause}`.trim();
@@ -117,13 +95,8 @@ function buildNewsQuery(category, locality) {
   return base;
 }
 
-async function fetchNews(category, { lat, lon } = {}) {
-  let locality;
-  if (category === 'local' && typeof lat === 'number' && typeof lon === 'number') {
-    const loc = await reverseGeocode(lat, lon);
-    locality = loc.display;
-  }
-  const query = buildNewsQuery(category, locality);
+async function fetchNews(category, { city, state } = {}) {
+  const query = buildNewsQuery(category, { city, state });
   return tavilySearch(
     query,
     {
@@ -137,6 +110,5 @@ async function fetchNews(category, { lat, lon } = {}) {
 module.exports = {
   tavilySearch,
   fetchNews,
-  reverseGeocode,
   NEWS_SOURCES
 };
