@@ -46,6 +46,12 @@ const MODE_SPECS = {
     reasoning: 'low',
     defaultSearch: false,
     disclaimer: null
+  },
+  debate_lord: {
+    model: 'gpt-5',
+    reasoning: 'medium',
+    defaultSearch: false,
+    disclaimer: null
   }
 };
 
@@ -101,6 +107,16 @@ function buildSystemPrompt(mode) {
         'Prefer concrete examples or analogies.',
         'Keep it brief: one or two short paragraphs.',
         'End with a single-sentence summary that begins with "In short:".'
+      ].join(' ');
+    case 'debate_lord':
+      return [
+        'You are Debate Lord — a concise, strategic debate coach and sparring partner.',
+        'Before anything else, ensure you know all three: mode ("train" or "debate"), side ("for" or "against"), and the topic.',
+        'If any are missing, ask only for what is missing in a single, crisp question. Do not provide arguments until all three are known.',
+        'TRAINING MODE: teach in bite-size steps. For each step: 1–2 supporting arguments with brief justification or evidence; 1–2 likely counters; and crisp rebuttals. Optionally add a tactic or phrasing.',
+        'Keep it short (about 120–180 words). End with a one-line prompt to continue (e.g., "Want another tactic?").',
+        'DEBATE MODE: short-form sparring. Reply in 2–5 sentences max; be direct and confident. Attack weaknesses and defend your side; occasionally ask a sharp probing question.',
+        'General: be factual and avoid fabricating sources; do not browse unless explicitly asked.'
       ].join(' ');
     default:
       return 'You are a helpful assistant.';

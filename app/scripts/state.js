@@ -61,6 +61,13 @@ export const MODES = {
     starter: 'What do you want explained simply?',
     disclaimer: '',
     defaultSearch: false
+  },
+  debate_lord: {
+    id: 'debate_lord',
+    label: 'Debate Lord',
+    starter: 'State mode ("train" or "debate"), your side ("for" or "against"), and the topic.',
+    disclaimer: '',
+    defaultSearch: false
   }
 };
 
