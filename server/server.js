@@ -8,18 +8,32 @@ const { config } = require('./config');
 const chatRouter = require('./routes/chat');
 const quoteRouter = require('./routes/quote');
 const newsRouter = require('./routes/news');
+const redditRouter = require('./routes/reddit');
 
 const app = express();
 
 // CORS allowlist
-const allowed = new Set(config.cors.allowedOrigins || []);
+// Always allow our own server origin in addition to configured allowlist
+const allowed = new Set([
+  ...(config.cors.allowedOrigins || []),
+  `http://localhost:${config.server.port}`,
+  `https://localhost:${config.server.port}`
+]);
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow same-origin or non-browser clients (no origin)
+    // Allow non-browser clients (no Origin header)
     if (!origin) return callback(null, true);
     // Allow everything if '*' is in allowedOrigins
     if (allowed.has('*')) return callback(null, true);
     if (allowed.has(origin)) return callback(null, true);
+    // Fallback: explicitly allow our own origin computed above
+    try {
+      const oursHttp = `http://localhost:${config.server.port}`;
+      const oursHttps = `https://localhost:${config.server.port}`;
+      if (origin === oursHttp || origin === oursHttps) {
+        return callback(null, true);
+      }
+    } catch {}
     return callback(new Error('Not allowed by CORS'), false);
   },
   credentials: true
@@ -40,6 +54,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use('/api/chat', chatRouter);
 app.use('/api/quote', quoteRouter);
 app.use('/api/news', newsRouter);
+app.use('/api/reddit', redditRouter);
 
 // Serve SPA static assets
 const staticDir = path.resolve(__dirname, '..', 'app');

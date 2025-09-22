@@ -163,9 +163,10 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
   margin: 0;
   font-size: 1rem;
 }
-/* Slightly larger headings for Chat and News */
+/* Slightly larger headings for Chat, News, and Reddit */
 #chatTitle,
-#newsTitle {
+#newsTitle,
+#redditTitle {
   font-size: 1.5rem;
 }
 /* Normalize header heights so buttons don't make some headers taller */
@@ -187,12 +188,13 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
 }
 
 /* Specific card placements */
-.quote-card, .clock-card, .chat-card, .news-card { padding-bottom: 0.25rem; }
+.quote-card, .clock-card, .chat-card, .news-card, .reddit-card { padding-bottom: 0.25rem; }
 @media (min-width: 900px) {
   .quote-card { grid-column: span 6; }
   .clock-card { grid-column: span 6; }
   .chat-card  { grid-column: 1 / -1; }
   .news-card  { grid-column: 1 / -1; }
+  .reddit-card { grid-column: 1 / -1; }
 }
 
 /* Quote */
@@ -257,12 +259,14 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
 }
 /* Emphasized hover for refresh buttons */
 #quoteRefresh.btn,
-#newsRefresh.btn {
+#newsRefresh.btn,
+#redditRefresh.btn {
   transition: transform .06s ease, background .2s ease, border-color .2s ease, box-shadow .25s ease, color .2s ease;
 }
 
 #quoteRefresh.btn:hover,
-#newsRefresh.btn:hover {
+#newsRefresh.btn:hover,
+#redditRefresh.btn:hover {
   background: color-mix(in oklab, var(--accent) 22%, var(--surface));
   border-color: color-mix(in oklab, var(--accent) 60%, var(--ring));
   box-shadow:
@@ -273,13 +277,15 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
 }
 
 #quoteRefresh.btn:active,
-#newsRefresh.btn:active {
+#newsRefresh.btn:active,
+#redditRefresh.btn:active {
   transform: translateY(0) scale(0.995);
   box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 16%, transparent);
 }
 
 #quoteRefresh.btn:focus-visible,
-#newsRefresh.btn:focus-visible {
+#newsRefresh.btn:focus-visible,
+#redditRefresh.btn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 45%, transparent);
   border-color: color-mix(in oklab, var(--accent) 60%, var(--ring));
@@ -440,7 +446,8 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
 
 /* News */
 /* Align news tabs and refresh button */
-.news-controls {
+.news-controls,
+.reddit-controls {
   display: flex;
   align-items: center;
   gap: 0.75rem;

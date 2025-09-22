@@ -7,7 +7,8 @@ const LS_KEYS = {
   model: 'pw.model',
   mode: 'pw.mode',
   city: 'pw.city',
-  state: 'pw.state'
+  state: 'pw.state',
+  redditSubreddit: 'pw.reddit.subreddit'
 };
 
 export const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow'];
@@ -176,5 +177,28 @@ export function setLocation({ city, state } = {}) {
   } finally {
     // Notify listeners (e.g., UI) that location changed
     dispatch('pw:location:changed', { city: c, state: s });
+  }
+}
+
+// Reddit subreddit persistence
+export function getRedditSubreddit() {
+  try {
+    return (localStorage.getItem(LS_KEYS.redditSubreddit) || '').trim();
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Set the preferred subreddit name.
+ * Accepts values like "news" or "/r/news" and normalizes to "news".
+ */
+export function setRedditSubreddit(name) {
+  const n = String(name || '').replace(/^\/?r\//i, '').trim();
+  try {
+    if (n) localStorage.setItem(LS_KEYS.redditSubreddit, n);
+    else localStorage.removeItem(LS_KEYS.redditSubreddit);
+  } finally {
+    dispatch('pw:reddit:changed', { subreddit: n });
   }
 }

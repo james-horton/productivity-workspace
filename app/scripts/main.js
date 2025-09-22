@@ -1,15 +1,18 @@
 import { applyTheme } from './theme.js';
-import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation } from './state.js';
+import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit } from './state.js';
 import { getModels, providerFor, modelIdFor, getDefaultModelKey } from './services/modelRegistry.js';
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
 import { fetchNews } from './services/newsService.js';
+import { fetchReddit } from './services/redditService.js';
 import { setDisclaimer, setBusy, renderChat, showAssistantTyping, hideAssistantTyping } from './ui/chatUI.js';
 import { setNewsBusy, setActiveTab, renderNewsItems, renderNewsLoading, initNewsModalUI } from './ui/newsUI.js';
+import { setRedditBusy, renderRedditItems, renderRedditLoading } from './ui/redditUI.js';
 import { initMatrixRain, setMatrixRainEnabled } from './ui/matrixRain.js';
 import { initNyanCat, setNyanCatEnabled } from './ui/nyanCat.js';
 
 const $ = (sel) => document.querySelector(sel);
+const REDDIT_MAX_POSTS = 8;
 
 // Elements
 const themeSelect = () => $('#themeSelect');
@@ -26,6 +29,9 @@ const quoteRefresh = () => $('#quoteRefresh');
 const newsTabs = () => $('#newsTabs');
 const newsRefresh = () => $('#newsRefresh');
 const newsItems = () => $('#newsItems');
+const redditRefresh = () => $('#redditRefresh');
+const redditItems = () => $('#redditItems');
+const redditTitle = () => $('#redditTitle');
 const clockTime = () => $('#clockTime');
 const clockDate = () => $('#clockDate');
 
@@ -50,10 +56,12 @@ document.addEventListener('DOMContentLoaded', () => {
   syncDisclaimerForMode(s.mode);
   showStarterIfEmpty(s.mode);
 
-  // Initial quote and news
+  // Initial quote and news + reddit
   void refreshQuote();
   setActiveTab('national');
   void loadNews('national');
+  setRedditTitleFromState();
+  void loadReddit();
 
   // Clock + date
   startClock();
@@ -275,6 +283,11 @@ function wireControls() {
     const active = document.querySelector('#newsTabs .tab.active')?.dataset.cat || 'national';
     await loadNews(active);
   });
+
+  // Reddit refresh
+  redditRefresh().addEventListener('click', async () => {
+    await loadReddit();
+  });
 }
 
 function wireStateEvents() {
@@ -297,6 +310,10 @@ function wireStateEvents() {
   document.addEventListener('pw:chat:updated', () => {
     const s = getState();
     renderChat(getChatHistory(s.mode));
+  });
+  document.addEventListener('pw:reddit:changed', () => {
+    setRedditTitleFromState();
+    void loadReddit();
   });
 }
 
@@ -407,12 +424,41 @@ async function loadNews(category) {
   }
 }
 
+async function loadReddit() {
+  setRedditBusy(true);
+  renderRedditLoading();
+
+  try {
+    const sub = (getRedditSubreddit() || '').trim();
+    if (!sub) {
+      const msg = '<div class="news-item">Reddit requires a subreddit. Use the Settings (gear icon) to enter it.</div>';
+      redditItems().innerHTML = msg;
+      return;
+    }
+    const LIMIT = REDDIT_MAX_POSTS;
+    const data = await fetchReddit(sub, { limit: LIMIT });
+    renderRedditItems(data.items || []);
+  } catch (err) {
+    redditItems().innerHTML = '<div class="news-item">Failed to load Reddit. Try refresh.</div>';
+  } finally {
+    setRedditBusy(false);
+  }
+}
+
+function setRedditTitleFromState() {
+  const h = redditTitle && redditTitle();
+  if (!h) return;
+  const sub = (getRedditSubreddit() || '').trim();
+  h.textContent = sub ? `Reddit - /r/${sub}` : 'Reddit';
+}
+
 function initSettingsUI() {
   const btn = document.getElementById('settingsBtn');
   const modal = document.getElementById('settingsModal');
   const form = document.getElementById('settingsForm');
   const inputCity = document.getElementById('settingsCity');
   const selectState = document.getElementById('settingsState');
+  const inputReddit = document.getElementById('settingsRedditSubreddit');
   const btnClose = document.getElementById('settingsClose');
   const btnCancel = document.getElementById('settingsCancel');
 
@@ -422,6 +468,7 @@ function initSettingsUI() {
     const { city, state } = getLocation();
     inputCity.value = city || '';
     selectState.value = state || '';
+    if (inputReddit) inputReddit.value = getRedditSubreddit() || '';
   }
 
   function open() {
@@ -459,12 +506,23 @@ function initSettingsUI() {
     const city = (inputCity.value || '').trim();
     const state = (selectState.value || '').trim().toUpperCase();
     setLocation({ city, state });
+
+    if (inputReddit) {
+      const subreddit = (inputReddit.value || '').trim();
+      setRedditSubreddit(subreddit);
+    }
+
     close();
+
+    // Refresh sections dependent on settings
     const active = document.querySelector('#newsTabs .tab.active')?.dataset.cat;
     if (active === 'local') {
       // Refresh local news with newly saved location
       void loadNews('local');
     }
+
+    setRedditTitleFromState();
+    void loadReddit();
   });
 }
 function startClock() {

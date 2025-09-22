@@ -34,7 +34,8 @@ function loadSecrets() {
       allowedOrigins
     },
     server: {
-      port: (json.server && json.server.port) || parseInt(process.env.PORT || '8787', 10)
+      // Prefer env PORT to allow overriding secrets.json during local dev
+      port: parseInt(process.env.PORT || (json.server && json.server.port) || '8787', 10)
     }
   };
 }
