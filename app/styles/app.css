@@ -677,9 +677,13 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
   align-items: center;
   justify-content: space-between;
   gap: .5rem;
-  padding: .75rem .9rem;
+  padding: .5rem .9rem;
   background: var(--surface-2);
   border-bottom: 1px solid var(--ring);
+}
+.modal-head h2 {
+  margin: 0;
+  line-height: 1.2;
 }
 .modal-body {
   padding: 1rem;
