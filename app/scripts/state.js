@@ -8,7 +8,9 @@ const LS_KEYS = {
   mode: 'pw.mode',
   city: 'pw.city',
   state: 'pw.state',
-  redditSubreddit: 'pw.reddit.subreddit'
+  redditSubreddit: 'pw.reddit.subreddit',
+  redditSubreddit2: 'pw.reddit.subreddit2',
+  redditSubreddit3: 'pw.reddit.subreddit3'
 };
 
 export const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow'];
@@ -180,25 +182,49 @@ export function setLocation({ city, state } = {}) {
   }
 }
 
-// Reddit subreddit persistence
-export function getRedditSubreddit() {
+// Reddit subreddit persistence (up to 3)
+export function getRedditSubredditAt(index = 1) {
   try {
-    return (localStorage.getItem(LS_KEYS.redditSubreddit) || '').trim();
+    const key = index === 2
+      ? LS_KEYS.redditSubreddit2
+      : index === 3
+        ? LS_KEYS.redditSubreddit3
+        : LS_KEYS.redditSubreddit;
+    return (localStorage.getItem(key) || '').trim();
   } catch {
     return '';
   }
 }
 
 /**
- * Set the preferred subreddit name.
+ * Backwards-compatible getter for the first subreddit.
+ */
+export function getRedditSubreddit() {
+  return getRedditSubredditAt(1);
+}
+
+/**
+ * Set the preferred subreddit name at a specific slot (1-3).
  * Accepts values like "news" or "/r/news" and normalizes to "news".
  */
-export function setRedditSubreddit(name) {
+export function setRedditSubredditAt(index = 1, name) {
   const n = String(name || '').replace(/^\/?r\//i, '').trim();
+  const key = index === 2
+    ? LS_KEYS.redditSubreddit2
+    : index === 3
+      ? LS_KEYS.redditSubreddit3
+      : LS_KEYS.redditSubreddit;
   try {
-    if (n) localStorage.setItem(LS_KEYS.redditSubreddit, n);
-    else localStorage.removeItem(LS_KEYS.redditSubreddit);
+    if (n) localStorage.setItem(key, n);
+    else localStorage.removeItem(key);
   } finally {
-    dispatch('pw:reddit:changed', { subreddit: n });
+    dispatch('pw:reddit:changed', { subreddit: n, index });
   }
+}
+
+/**
+ * Backwards-compatible setter for the first subreddit.
+ */
+export function setRedditSubreddit(name) {
+  setRedditSubredditAt(1, name);
 }

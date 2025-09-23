@@ -1,5 +1,5 @@
 import { applyTheme } from './theme.js';
-import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit } from './state.js';
+import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt } from './state.js';
 import { getModels, providerFor, modelIdFor, getDefaultModelKey } from './services/modelRegistry.js';
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
@@ -29,6 +29,7 @@ const quoteRefresh = () => $('#quoteRefresh');
 const newsTabs = () => $('#newsTabs');
 const newsRefresh = () => $('#newsRefresh');
 const newsItems = () => $('#newsItems');
+const redditTabs = () => $('#redditTabs');
 const redditRefresh = () => $('#redditRefresh');
 const redditItems = () => $('#redditItems');
 const redditTitle = () => $('#redditTitle');
@@ -60,8 +61,10 @@ document.addEventListener('DOMContentLoaded', () => {
   void refreshQuote();
   setActiveTab('national');
   void loadNews('national');
-  setRedditTitleFromState();
-  void loadReddit();
+  hydrateRedditTabs();
+  setActiveRedditTab(1);
+  setRedditHeaderFromIndex(1);
+  void loadReddit(1);
 
   // Clock + date
   startClock();
@@ -284,9 +287,22 @@ function wireControls() {
     await loadNews(active);
   });
 
+  // Reddit tabs
+  const rt = redditTabs && redditTabs();
+  if (rt) {
+    rt.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.tab');
+      if (!btn) return;
+      const index = parseInt(btn.dataset.index || '1', 10);
+      setActiveRedditTab(index);
+      setRedditHeaderFromIndex(index);
+      await loadReddit(index);
+    });
+  }
+
   // Reddit refresh
   redditRefresh().addEventListener('click', async () => {
-    await loadReddit();
+    await loadReddit(getActiveRedditTabIndex());
   });
 }
 
@@ -311,9 +327,11 @@ function wireStateEvents() {
     const s = getState();
     renderChat(getChatHistory(s.mode));
   });
-  document.addEventListener('pw:reddit:changed', () => {
-    setRedditTitleFromState();
-    void loadReddit();
+  document.addEventListener('pw:reddit:changed', (e) => {
+    hydrateRedditTabs();
+    const idx = getActiveRedditTabIndex();
+    setRedditHeaderFromIndex(idx);
+    // Do not auto-fetch here; API only on page load, refresh click, or tab click
   });
 }
 
@@ -424,12 +442,42 @@ async function loadNews(category) {
   }
 }
 
-async function loadReddit() {
+function getActiveRedditTabIndex() {
+  const active = document.querySelector('#redditTabs .tab.active');
+  const idx = parseInt(active?.dataset.index || '1', 10);
+  return Number.isFinite(idx) ? idx : 1;
+}
+
+function setActiveRedditTab(index = 1) {
+  const tabs = document.querySelectorAll('#redditTabs .tab');
+  tabs.forEach(btn => {
+    if (parseInt(btn.dataset.index || '1', 10) === index) btn.classList.add('active');
+    else btn.classList.remove('active');
+  });
+}
+
+function hydrateRedditTabs() {
+  const tabs = document.querySelectorAll('#redditTabs .tab');
+  tabs.forEach(btn => {
+    const idx = parseInt(btn.dataset.index || '1', 10);
+    const name = (idx === 2 ? getRedditSubredditAt(2) : idx === 3 ? getRedditSubredditAt(3) : getRedditSubreddit()).trim();
+    btn.textContent = name || String(idx);
+  });
+}
+
+function setRedditHeaderFromIndex(index = getActiveRedditTabIndex()) {
+  const h = redditTitle && redditTitle();
+  if (!h) return;
+  const name = (index === 2 ? getRedditSubredditAt(2) : index === 3 ? getRedditSubredditAt(3) : getRedditSubreddit()).trim();
+  h.textContent = name ? `Reddit - /r/${name}` : 'Reddit';
+}
+
+async function loadReddit(index = getActiveRedditTabIndex()) {
   setRedditBusy(true);
   renderRedditLoading();
 
   try {
-    const sub = (getRedditSubreddit() || '').trim();
+    const sub = (index === 2 ? getRedditSubredditAt(2) : index === 3 ? getRedditSubredditAt(3) : getRedditSubreddit()).trim();
     if (!sub) {
       const msg = '<div class="news-item">Reddit requires a subreddit. Use the Settings (gear icon) to enter it.</div>';
       redditItems().innerHTML = msg;
@@ -446,10 +494,7 @@ async function loadReddit() {
 }
 
 function setRedditTitleFromState() {
-  const h = redditTitle && redditTitle();
-  if (!h) return;
-  const sub = (getRedditSubreddit() || '').trim();
-  h.textContent = sub ? `Reddit - /r/${sub}` : 'Reddit';
+  setRedditHeaderFromIndex(getActiveRedditTabIndex());
 }
 
 function initSettingsUI() {
@@ -459,6 +504,8 @@ function initSettingsUI() {
   const inputCity = document.getElementById('settingsCity');
   const selectState = document.getElementById('settingsState');
   const inputReddit = document.getElementById('settingsRedditSubreddit');
+  const inputReddit2 = document.getElementById('settingsRedditSubreddit2');
+  const inputReddit3 = document.getElementById('settingsRedditSubreddit3');
   const btnClose = document.getElementById('settingsClose');
   const btnCancel = document.getElementById('settingsCancel');
 
@@ -469,6 +516,8 @@ function initSettingsUI() {
     inputCity.value = city || '';
     selectState.value = state || '';
     if (inputReddit) inputReddit.value = getRedditSubreddit() || '';
+    if (inputReddit2) inputReddit2.value = getRedditSubredditAt(2) || '';
+    if (inputReddit3) inputReddit3.value = getRedditSubredditAt(3) || '';
   }
 
   function open() {
@@ -511,6 +560,14 @@ function initSettingsUI() {
       const subreddit = (inputReddit.value || '').trim();
       setRedditSubreddit(subreddit);
     }
+    if (inputReddit2) {
+      const subreddit2 = (inputReddit2.value || '').trim();
+      setRedditSubredditAt(2, subreddit2);
+    }
+    if (inputReddit3) {
+      const subreddit3 = (inputReddit3.value || '').trim();
+      setRedditSubredditAt(3, subreddit3);
+    }
 
     close();
 
@@ -521,8 +578,9 @@ function initSettingsUI() {
       void loadNews('local');
     }
 
-    setRedditTitleFromState();
-    void loadReddit();
+    hydrateRedditTabs();
+    setRedditHeaderFromIndex(getActiveRedditTabIndex());
+    // no automatic Reddit fetch on settings save
   });
 }
 function startClock() {

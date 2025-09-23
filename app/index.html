@@ -151,6 +151,11 @@
       <div class="card-head">
         <h2 id="redditTitle">Reddit</h2>
         <div class="reddit-controls">
+          <nav id="redditTabs" class="tabs" aria-label="Reddit subreddits">
+            <button class="tab active" data-index="1" type="button" title="subreddit 1">1</button>
+            <button class="tab" data-index="2" type="button" title="subreddit 2">2</button>
+            <button class="tab" data-index="3" type="button" title="subreddit 3">3</button>
+          </nav>
           <button id="redditRefresh" class="btn icon-only" type="button" aria-label="Refresh reddit" title="Refresh">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="23 4 23 10 17 10"></polyline>
@@ -246,8 +251,16 @@
           </select>
         </div>
         <div class="control-row">
-          <label for="settingsRedditSubreddit" class="label">Reddit Subreddit</label>
+          <label for="settingsRedditSubreddit" class="label">Reddit Subreddit 1</label>
           <input id="settingsRedditSubreddit" type="text" placeholder="e.g., news or /r/news" autocomplete="off" />
+        </div>
+        <div class="control-row">
+          <label for="settingsRedditSubreddit2" class="label">Reddit Subreddit 2</label>
+          <input id="settingsRedditSubreddit2" type="text" placeholder="e.g., worldnews or /r/worldnews" autocomplete="off" />
+        </div>
+        <div class="control-row">
+          <label for="settingsRedditSubreddit3" class="label">Reddit Subreddit 3</label>
+          <input id="settingsRedditSubreddit3" type="text" placeholder="e.g., technology or /r/technology" autocomplete="off" />
         </div>
         <div class="modal-actions">
           <button id="settingsCancel" class="btn" type="button">Cancel</button>
