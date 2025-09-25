@@ -5,39 +5,50 @@ const { openaiChat } = require('../lib/providers/openai');
 
 function themeSystemPrompt(theme) {
   const groups = [
-    'celebrities',
-    'authors',
-    'philosophers',
-    'scientists',
-    'leaders',
-    'athletes',
-    'artists',
-    'entrepreneurs',
-    'musicians',
-    'youtubers',
-    'gamers',
+    'activists',
     'actors',
+    'artists',
+    'athletes',
+    'authors',
     'books',
+    'celebrities',
+    'comedians',
     'cooks',
-    'presidents',
+    'designers',
     'engineers',
+    'entrepreneurs',
+    'explorers',
+    'gamers',
+    'intellectuals',
     'inventors',
+    'leaders',
+    'musicians',
+    'philosophers',
+    'poets',
+    'presidents',
+    'scientists',
+    'teachers',
     'tv',
-    'designers'
+    'youtubers'
   ];
 
   const adjectives = [
-    'inspirational',
-    'motivational',
-    'uplifting',
+    'brilliant',
+    'creative',
+    'eloquent',
     'empowering',
     'encouraging',
-    'profound',
-    'wise',
-    'thought-provoking',
-    'meaningful',
+    'funny',
+    'humorous',
+    'inspirational',
     'insightful',
-    'funny'
+    'meaningful',
+    'motivational',
+    'profound',
+    'thought-provoking',
+    'uplifting',
+    'visionary',
+    'wise'
   ];
 
   const randomGroup = groups[Math.floor(Math.random() * groups.length)];
