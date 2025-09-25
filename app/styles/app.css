@@ -486,6 +486,9 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
   color: var(--accent);
   text-decoration: none;
   border-bottom: 1px solid transparent;
+  /* Prevent long titles/URLs from overflowing on small screens */
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .news-item .title a:hover,
 .news-item .title a:focus-visible {
@@ -498,6 +501,9 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
   opacity: 0.9;
   font-size: 0.90rem; /* slightly smaller body text */
   font-weight: 400;   /* ensure normal (not bold) across themes */
+  /* Allow breaking very long words/links that can appear in Reddit bodies */
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .news-item .meta {
   color: var(--muted);
@@ -557,6 +563,36 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
   }
 
   .chat-card .messages { max-height: 50vh; }
+
+  /* Reddit header: stack title (row 1) and controls (row 2) */
+  .reddit-card .card-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.4rem;
+    min-height: unset; /* avoid inherited fixed heights on mobile */
+  }
+  .reddit-card #redditTitle {
+    /* Ensure long subreddit names wrap instead of pushing controls off-screen */
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .reddit-card .reddit-controls {
+    width: 100%;
+    justify-content: flex-start;  /* align the whole controls group to the left */
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: nowrap;          /* keep tabs + refresh on the same row */
+  }
+  /* Keep room for the refresh button while letting tabs scroll horizontally if long */
+  .reddit-card .reddit-controls .tabs {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: calc(100% - 48px - 0.5rem); /* reserve ~48px for refresh + gap */
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .reddit-card .reddit-controls .tabs::-webkit-scrollbar { height: 8px; }
 }
 /* Loading indicators and skeletons (theme-aware) */
 .loader {

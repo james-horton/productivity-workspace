@@ -15,6 +15,12 @@ const LS_KEYS = {
 
 export const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow'];
 
+export const UI_CONFIG = {
+  mobileMaxWidthPx: 600,        // Mobile breakpoint (px) used for truncation logic
+  redditBodyCharCap: 240,       // Max chars for Reddit post body in mobile view
+  subredditBtnCharCap: 5        // Max chars for subreddit tab labels in mobile when all 3 are set
+};
+
 export const MODES = {
   doctor: {
     id: 'doctor',

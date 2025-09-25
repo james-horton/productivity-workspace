@@ -1,5 +1,5 @@
 import { applyTheme } from './theme.js';
-import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt } from './state.js';
+import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG } from './state.js';
 import { getModels, providerFor, modelIdFor, getDefaultModelKey } from './services/modelRegistry.js';
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
@@ -7,12 +7,21 @@ import { fetchNews } from './services/newsService.js';
 import { fetchReddit } from './services/redditService.js';
 import { setDisclaimer, setBusy, renderChat, showAssistantTyping, hideAssistantTyping } from './ui/chatUI.js';
 import { setNewsBusy, setActiveTab, renderNewsItems, renderNewsLoading, initNewsModalUI } from './ui/newsUI.js';
-import { setRedditBusy, renderRedditItems, renderRedditLoading } from './ui/redditUI.js';
+import { setRedditBusy, renderRedditItems, renderRedditLoading, updateRedditSummariesForViewport } from './ui/redditUI.js';
 import { initMatrixRain, setMatrixRainEnabled } from './ui/matrixRain.js';
 import { initNyanCat, setNyanCatEnabled } from './ui/nyanCat.js';
 
 const $ = (sel) => document.querySelector(sel);
 const REDDIT_MAX_POSTS = 8;
+
+// Viewport helper
+function isMobileView() {
+  try {
+    return window.matchMedia && window.matchMedia(`(max-width: ${UI_CONFIG.mobileMaxWidthPx}px)`).matches;
+  } catch {
+    return window.innerWidth <= UI_CONFIG.mobileMaxWidthPx;
+  }
+}
 
 // Elements
 const themeSelect = () => $('#themeSelect');
@@ -62,6 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setActiveTab('national');
   void loadNews('national');
   hydrateRedditTabs();
+  // Update subreddit tab labels when viewport crosses mobile threshold
+  window.addEventListener('resize', () => { hydrateRedditTabs(); updateRedditSummariesForViewport(); });
   setActiveRedditTab(1);
   setRedditHeaderFromIndex(1);
   void loadReddit(1);
@@ -458,10 +469,24 @@ function setActiveRedditTab(index = 1) {
 
 function hydrateRedditTabs() {
   const tabs = document.querySelectorAll('#redditTabs .tab');
+  const s1 = (getRedditSubreddit() || '').trim();
+  const s2 = (getRedditSubredditAt(2) || '').trim();
+  const s3 = (getRedditSubredditAt(3) || '').trim();
+  const allSet = !!(s1 && s2 && s3);
+  const mobile = isMobileView();
   tabs.forEach(btn => {
     const idx = parseInt(btn.dataset.index || '1', 10);
-    const name = (idx === 2 ? getRedditSubredditAt(2) : idx === 3 ? getRedditSubredditAt(3) : getRedditSubreddit()).trim();
-    btn.textContent = name || String(idx);
+    let name = idx === 2 ? s2 : idx === 3 ? s3 : s1;
+    name = (name || '').trim();
+    let label = name || String(idx);
+    if (mobile && allSet && name) {
+      const cap = UI_CONFIG.subredditBtnCharCap;
+      if (Number.isFinite(cap) && cap > 0 && label.length > cap) {
+        label = label.slice(0, cap).replace(/\s+$/,'') + '…';
+      }
+    }
+    btn.textContent = label;
+    if (name) btn.title = name;
   });
 }
 
@@ -486,6 +511,7 @@ async function loadReddit(index = getActiveRedditTabIndex()) {
     const LIMIT = REDDIT_MAX_POSTS;
     const data = await fetchReddit(sub, { limit: LIMIT });
     renderRedditItems(data.items || []);
+    updateRedditSummariesForViewport();
   } catch (err) {
     redditItems().innerHTML = '<div class="news-item">Failed to load Reddit. Try refresh.</div>';
   } finally {

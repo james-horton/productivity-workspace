@@ -1,8 +1,24 @@
 /**
  * Reddit UI rendering helpers
  */
+import { UI_CONFIG } from '../state.js';
 
 function $(sel) { return document.querySelector(sel); }
+
+// Mobile helpers
+function isMobileView() {
+  try {
+    return window.matchMedia && window.matchMedia(`(max-width: ${UI_CONFIG.mobileMaxWidthPx}px)`).matches;
+  } catch {
+    return window.innerWidth <= UI_CONFIG.mobileMaxWidthPx;
+  }
+}
+
+function truncateText(str, max) {
+  const s = String(str || '').trim();
+  if (!Number.isFinite(max) || max <= 0) return s;
+  return s.length > max ? s.slice(0, max).replace(/\s+$/,'') + '…' : s;
+}
 
 // Public API
 export function setRedditBusy(on) {
@@ -40,7 +56,13 @@ export function renderRedditItems(items) {
 
     const p = document.createElement('p');
     p.className = 'summary';
-    p.textContent = String(item.body || '').trim();
+    const fullText = String(item.body || '').trim();
+    let bodyText = fullText;
+    if (isMobileView()) {
+      bodyText = truncateText(fullText, UI_CONFIG.redditBodyCharCap);
+    }
+    p.setAttribute('data-full-text', fullText);
+    p.textContent = bodyText;
 
     wrap.appendChild(h3);
     if (p.textContent) wrap.appendChild(p);
@@ -73,4 +95,24 @@ export function renderRedditLoading() {
 
     box.appendChild(wrap);
   }
+}
+
+/**
+ * Re-apply Reddit body truncation responsively on viewport changes.
+ * - On mobile: truncate to UI_CONFIG.redditBodyCharCap with ellipsis.
+ * - On desktop: restore the original full text.
+ */
+export function updateRedditSummariesForViewport() {
+  const max = UI_CONFIG.redditBodyCharCap;
+  const mobile = isMobileView();
+  const nodes = document.querySelectorAll('#redditItems .summary');
+  nodes.forEach((p) => {
+    const full = (p.getAttribute('data-full-text') || '').trim();
+    if (!full) return;
+    if (mobile) {
+      p.textContent = truncateText(full, max);
+    } else {
+      p.textContent = full;
+    }
+  });
 }
