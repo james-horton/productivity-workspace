@@ -63,14 +63,23 @@ function loadSecrets() {
       defaultLimit: parseInt(process.env.REDDIT_DEFAULT_LIMIT || (json.reddit && json.reddit.defaultLimit) || '6', 10),
       maxLimit: parseInt(process.env.REDDIT_MAX_LIMIT || (json.reddit && json.reddit.maxLimit) || '25', 10),
       timeoutMs: parseInt(process.env.REDDIT_TIMEOUT_MS || (json.reddit && json.reddit.timeoutMs) || '10000', 10),
-      userAgent: (json.reddit && json.reddit.userAgent) || process.env.REDDIT_USER_AGENT || 'WorkspaceAI/0.1 (+http://localhost)'
+      userAgent: (json.reddit && json.reddit.userAgent) || process.env.REDDIT_USER_AGENT || 'WorkspaceAI/0.1 (+https://localhost)'
     },
     cors: {
       allowedOrigins
     },
     server: {
       // Prefer env PORT to allow overriding secrets.json during local dev
-      port: parseInt(process.env.PORT || (json.server && json.server.port) || '8787', 10)
+      port: parseInt(process.env.PORT || (json.server && json.server.port) || '8787', 10),
+      // HTTPS configuration
+      https: {
+        enabled: (json.server && json.server.https && json.server.https.enabled !== undefined)
+          ? json.server.https.enabled
+          : (process.env.HTTPS_ENABLED === 'true'),
+        port: parseInt(process.env.HTTPS_PORT || (json.server && json.server.https && json.server.https.port) || '8443', 10),
+        key: (json.server && json.server.https && json.server.https.key) || process.env.HTTPS_KEY_PATH || '',
+        cert: (json.server && json.server.https && json.server.https.cert) || process.env.HTTPS_CERT_PATH || ''
+      }
     }
   };
 }

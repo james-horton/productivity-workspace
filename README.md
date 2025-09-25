@@ -63,7 +63,15 @@ Then edit secrets.json:
       "http://localhost:5173"
     ]
   },
-  "server": { "port": 8787 }
+  "server": {
+    "port": 8787,
+    "https": {
+      "enabled": false,
+      "port": 8443,
+      "key": "./ssl/private.key",
+      "cert": "./ssl/certificate.crt"
+    }
+  }
 }
 ```
 
@@ -84,9 +92,52 @@ npm install
 npm start
 ```
 
-The server starts (default http://localhost:8787) and serves the SPA from ../app.
+The server starts on HTTP (default http://localhost:8787) and optionally HTTPS (default https://localhost:8443) if configured.
 
-Open http://localhost:8787 in your browser.
+Open http://localhost:8787 in your browser (or https://localhost:8443 if HTTPS is enabled).
+
+## HTTPS Configuration (Optional)
+
+To enable HTTPS support, set up SSL certificates and configure the server:
+
+1. **Generate SSL certificates** (for development):
+   ```bash
+   # Create ssl directory
+   mkdir -p ssl
+
+   # Generate self-signed certificate (Linux/Mac)
+   openssl req -x509 -newkey rsa:4096 -keyout ssl/private.key -out ssl/certificate.crt -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
+
+   # Or for Windows, you can use:
+   # openssl req -x509 -newkey rsa:4096 -keyout ssl/private.key -out ssl/certificate.crt -days 365 -nodes
+   ```
+
+2. **Enable HTTPS in secrets.json**:
+   ```json
+   {
+     "server": {
+       "port": 8787,
+       "https": {
+         "enabled": true,
+         "port": 8443,
+         "key": "./ssl/private.key",
+         "cert": "./ssl/certificate.crt"
+       }
+     }
+   }
+   ```
+
+3. **Environment variables** (alternative to secrets.json):
+   ```bash
+   export HTTPS_ENABLED=true
+   export HTTPS_PORT=8443
+   export HTTPS_KEY_PATH=./ssl/private.key
+   export HTTPS_CERT_PATH=./ssl/certificate.crt
+   ```
+
+4. **Restart the server** - HTTPS will be available alongside HTTP.
+
+**Note**: For production, use certificates from a trusted Certificate Authority (CA) instead of self-signed certificates.
 
 ## Usage Overview
 

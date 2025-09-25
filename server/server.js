@@ -2,6 +2,8 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const https = require('https');
+const fs = require('fs');
 const { config } = require('./config');
 
 // Routers
@@ -89,7 +91,41 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Server startup
 const port = config.server.port || 8787;
-app.listen(port, () => {
-  console.log(`Server listening on http://localhost:${port}`);
+const httpsConfig = config.server.https;
+
+// Start HTTP server
+const httpServer = app.listen(port, () => {
+  console.log(`HTTP server listening on http://localhost:${port}`);
 });
+
+// Start HTTPS server if enabled and certificates are provided
+if (httpsConfig.enabled && httpsConfig.key && httpsConfig.cert) {
+  try {
+    // Check if certificate files exist
+    if (fs.existsSync(httpsConfig.key) && fs.existsSync(httpsConfig.cert)) {
+      const httpsOptions = {
+        key: fs.readFileSync(httpsConfig.key),
+        cert: fs.readFileSync(httpsConfig.cert)
+      };
+
+      const httpsPort = httpsConfig.port;
+      const httpsServer = https.createServer(httpsOptions, app);
+
+      httpsServer.listen(httpsPort, () => {
+        console.log(`HTTPS server listening on https://localhost:${httpsPort}`);
+      });
+
+      console.log(`SSL certificates loaded from ${httpsConfig.key} and ${httpsConfig.cert}`);
+    } else {
+      console.warn('HTTPS enabled but certificate files not found. HTTPS server not started.');
+      console.warn(`Expected key: ${httpsConfig.key}`);
+      console.warn(`Expected cert: ${httpsConfig.cert}`);
+    }
+  } catch (error) {
+    console.error('Error starting HTTPS server:', error.message);
+  }
+} else if (httpsConfig.enabled) {
+  console.warn('HTTPS enabled but key or cert not configured. HTTPS server not started.');
+}
