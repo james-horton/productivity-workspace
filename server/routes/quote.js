@@ -4,8 +4,25 @@ const router = express.Router();
 const { openaiChat } = require('../lib/providers/openai');
 
 function themeSystemPrompt(theme) {
+  const groups = [
+    'celebrities',
+    'authors',
+    'philosophers',
+    'scientists',
+    'leaders',
+    'athletes',
+    'artists',
+    'entrepreneurs',
+    'musicians',
+    'youtubers',
+    'gamers',
+    'actors'
+  ];
+
+  const randomGroup = groups[Math.floor(Math.random() * groups.length)];
+
   return [
-    'You share a random, authentic, and short inspirational quote.',
+    `You share a random, authentic, and short inspirational quote from ${randomGroup}.`,
     'Include the name of the author at the end of the quote.'
   ].join(' ');
 }
