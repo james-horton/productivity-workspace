@@ -16,13 +16,35 @@ function themeSystemPrompt(theme) {
     'musicians',
     'youtubers',
     'gamers',
-    'actors'
+    'actors',
+    'books',
+    'cooks',
+    'presidents',
+    'engineers',
+    'inventors',
+    'tv',
+    'designers'
+  ];
+
+  const adjectives = [
+    'inspirational',
+    'motivational',
+    'uplifting',
+    'empowering',
+    'encouraging',
+    'profound',
+    'wise',
+    'thought-provoking',
+    'meaningful',
+    'insightful',
+    'funny'
   ];
 
   const randomGroup = groups[Math.floor(Math.random() * groups.length)];
+  const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
 
   return [
-    `You share a random, authentic, and short inspirational quote from ${randomGroup}.`,
+    `You share a random, authentic, and short ${randomAdjective} quote from ${randomGroup}.`,
     'Include the name of the author at the end of the quote.'
   ].join(' ');
 }
