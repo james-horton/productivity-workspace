@@ -3,6 +3,7 @@
  */
 
 import { $, hostFromUrl } from '../utils/helpers.js';
+import { UI_DEFAULTS } from '../config.js';
 
 // Modal refs
 let _newsModal = null;
@@ -115,7 +116,7 @@ export function renderNewsLoading() {
   if (!box) return;
 
   box.innerHTML = '';
-  const count = 5;
+  const count = UI_DEFAULTS.skeletonItemCount;
   for (let i = 0; i < count; i++) {
     const wrap = document.createElement('article');
     wrap.className = 'news-item loading';

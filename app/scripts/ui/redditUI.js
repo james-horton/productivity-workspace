@@ -2,6 +2,7 @@
  * Reddit UI rendering helpers
  */
 import { UI_CONFIG } from '../state.js';
+import { UI_DEFAULTS } from '../config.js';
 import { $, isMobileView, truncateText } from '../utils/helpers.js';
 
 
@@ -60,7 +61,7 @@ export function renderRedditLoading() {
   if (!box) return;
 
   box.innerHTML = '';
-  const count = 5;
+  const count = UI_DEFAULTS.skeletonItemCount;
   for (let i = 0; i < count; i++) {
     const wrap = document.createElement('article');
     wrap.className = 'news-item loading';

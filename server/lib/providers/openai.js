@@ -2,7 +2,7 @@ const axios = require('axios');
 const { config } = require('../../config');
 
 
-const OPENAI_RESPONSES_API_URL = 'https://api.openai.com/v1/responses';
+const OPENAI_RESPONSES_API_URL = config.openai.responsesUrl || 'https://api.openai.com/v1/responses';
 
 function resolveOpenAIModel(requestedModel, reasoningLevel) {
   if (requestedModel) return requestedModel;
@@ -29,8 +29,8 @@ async function openaiChat({
   messages,
   model,
   reasoningLevel,
-  temperature = 1,
-  maxTokens = 80000,
+  temperature = (config.openai?.defaultTemperature ?? 1),
+  maxTokens = (config.openai?.defaultMaxTokens ?? 80000),
   stop,
   webSearch = false
 }) {
@@ -92,7 +92,7 @@ async function openaiChat({
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         },
-        timeout: 300000
+        timeout: (config.openai?.timeoutMs || 300000)
       }
     );
 

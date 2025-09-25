@@ -4,6 +4,7 @@ const router = express.Router();
 const { fetchNews } = require('../lib/search/tavily');
 const { openaiChat } = require('../lib/providers/openai');
 const { hostFromUrl } = require('../lib/util/url');
+const { config } = require('../config');
 
 function coerceCategory(cat) {
   const c = String(cat || '').toLowerCase();
@@ -13,9 +14,9 @@ function coerceCategory(cat) {
 
 function compactItemsForPrompt(items) {
   // Reduce to minimal context for the LLM
-  return items.slice(0, 6).map((r, i) => {
+  return items.slice(0, config.news.maxItems).map((r, i) => {
     const host = hostFromUrl(r.url);
-    const content = (r.content || '').replace(/\s+/g, ' ').trim().slice(0, 400);
+    const content = (r.content || '').replace(/\s+/g, ' ').trim().slice(0, config.news.excerptLen);
     return {
       idx: i + 1,
       title: r.title || host || 'Untitled',
@@ -45,13 +46,13 @@ async function summarizeWithLLM(items, category) {
 
   try {
     const out = await openaiChat({
-      model: 'gpt-5-mini',
+      model: config.news.summarizerModel,
       messages: [
         { role: 'system', content: sys },
         { role: 'user', content: user }
       ],
-      maxTokens: 80000,
-      reasoningLevel: 'medium'
+      maxTokens: config.openai.defaultMaxTokens,
+      reasoningLevel: config.news.summarizerReasoning
     });
     return safeParseArray(out.text, items);
   } catch (err) {
@@ -70,7 +71,7 @@ function safeParseArray(text, fallbackItems) {
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
     if (Array.isArray(parsed)) {
-      return parsed.slice(0, 6).map((it, i) => ({
+      return parsed.slice(0, config.news.maxItems).map((it, i) => ({
         title: String(it.title || (fallbackItems[i] ? fallbackItems[i].title : '') || 'Untitled'),
         summary: String(it.summary || '').trim() || 'Brief: headline only.',
         url: String(it.url || (fallbackItems[i] ? fallbackItems[i].url : '') || ''),
@@ -81,9 +82,9 @@ function safeParseArray(text, fallbackItems) {
     // fallthrough to naive fallback
   }
   // Fallback: naive summaries from content excerpts
-  return fallbackItems.slice(0, 6).map(r => ({
+  return fallbackItems.slice(0, config.news.maxItems).map(r => ({
     title: r.title || 'Untitled',
-    summary: (r.content || '').replace(/\s+/g, ' ').trim().slice(0, 220) || 'Brief: headline only.',
+    summary: (r.content || '').replace(/\s+/g, ' ').trim().slice(0, config.news.naiveSummaryLen) || 'Brief: headline only.',
     url: r.url || '',
     source: hostFromUrl(r.url)
   }));

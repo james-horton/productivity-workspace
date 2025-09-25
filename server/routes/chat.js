@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const { openaiChat } = require('../lib/providers/openai');
-
+const { config } = require('../config');
 // Mode specifications: reasoning + default search + disclaimers
 const MODE_SPECS = {
   doctor: {
@@ -123,8 +123,6 @@ function buildSystemPrompt(mode) {
   }
 }
 
-// External Tavily digest path removed; provider web search only.
-
 async function callPreferredModels({ reasoning, messages, prefer, model, webSearch }) {
   // prefer is an array of provider ids in order; default to OpenAI only
   const attempts = Array.isArray(prefer) && prefer.length ? prefer : ['openai'];
@@ -132,8 +130,8 @@ async function callPreferredModels({ reasoning, messages, prefer, model, webSear
   const params = {
     messages,
     reasoningLevel: reasoning,
-    temperature: 1,
-    maxTokens: 80000,
+    temperature: config.openai.defaultTemperature,
+    maxTokens: config.openai.defaultMaxTokens,
     model,
     webSearch
   };

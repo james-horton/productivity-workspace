@@ -2,7 +2,9 @@
  * quoteService: client wrapper for POST /api/quote
  */
 
-function withTimeout(ms = 20000) {
+import { ENDPOINTS, TIMEOUTS, JSON_HEADERS } from '../config.js';
+
+function withTimeout(ms = TIMEOUTS.defaultMs) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
   return {
@@ -20,10 +22,10 @@ function withTimeout(ms = 20000) {
 export async function fetchQuote(theme) {
   const body = JSON.stringify({ theme });
 
-  const { exec } = withTimeout(20000);
-  const res = await exec('/api/quote', {
+  const { exec } = withTimeout(TIMEOUTS.quoteMs);
+  const res = await exec(ENDPOINTS.quote, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: JSON_HEADERS,
     body
   });
 

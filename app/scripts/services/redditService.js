@@ -2,6 +2,8 @@
  * redditService: client wrapper for GET /api/reddit
  */
 
+import { ENDPOINTS } from '../config.js';
+
 /**
  * Fetch subreddit hot posts (ordered as Reddit displays)
  * @param {string} subreddit - e.g., "news" or "/r/news"
@@ -16,7 +18,7 @@ export async function fetchReddit(subreddit, opts = {}) {
   if (sub) params.set('subreddit', sub);
   if (limit) params.set('limit', limit);
 
-  const url = `/api/reddit?${params.toString()}`;
+  const url = `${ENDPOINTS.reddit}?${params.toString()}`;
 
   const res = await fetch(url, { method: 'GET' });
   if (!res.ok) {

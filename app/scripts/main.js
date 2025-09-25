@@ -11,8 +11,9 @@ import { setRedditBusy, renderRedditItems, renderRedditLoading, updateRedditSumm
 import { initMatrixRain, setMatrixRainEnabled } from './ui/matrixRain.js';
 import { initNyanCat, setNyanCatEnabled } from './ui/nyanCat.js';
 import { $, isMobileView } from './utils/helpers.js';
+import { REDDIT, NEWS, UI_DEFAULTS } from './config.js';
 
-const REDDIT_MAX_POSTS = 8;
+const REDDIT_MAX_POSTS = REDDIT.maxPosts;
 
 // Elements
 const themeSelect = () => $('#themeSelect');
@@ -59,8 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial quote and news + reddit
   void refreshQuote();
-  setActiveTab('national');
-  void loadNews('national');
+  setActiveTab(NEWS.defaultCategory);
+  void loadNews(NEWS.defaultCategory);
   hydrateRedditTabs();
   // Update subreddit tab labels when viewport crosses mobile threshold
   window.addEventListener('resize', () => { hydrateRedditTabs(); updateRedditSummariesForViewport(); });
@@ -142,11 +143,11 @@ function wireControls() {
         btn.title = 'Copied!';
         btn.setAttribute('aria-label', 'Copied!');
         btn.classList.add('copied');
-        setTimeout(() => { btn.classList.remove('copied'); resetLabel(); }, 1200);
+        setTimeout(() => { btn.classList.remove('copied'); resetLabel(); }, UI_DEFAULTS.copySuccessDelayMs);
       } catch (_) {
         btn.title = 'Copy failed';
         btn.setAttribute('aria-label', 'Copy failed');
-        setTimeout(() => { resetLabel(); }, 1500);
+        setTimeout(() => { resetLabel(); }, UI_DEFAULTS.copyFailDelayMs);
       }
     });
   }
@@ -186,7 +187,7 @@ function wireControls() {
       setTimeout(() => {
         btn.title = originalTitle;
         btn.setAttribute('aria-label', originalAria);
-      }, 1200);
+      }, UI_DEFAULTS.copySuccessDelayMs);
     });
   }
  
@@ -211,7 +212,7 @@ function wireControls() {
         setTimeout(() => {
           btn.title = originalTitle;
           btn.setAttribute('aria-label', originalAria);
-        }, 1200);
+        }, UI_DEFAULTS.copySuccessDelayMs);
       }
     });
   }
@@ -285,7 +286,7 @@ function wireControls() {
 
   // News refresh
   newsRefresh().addEventListener('click', async () => {
-    const active = document.querySelector('#newsTabs .tab.active')?.dataset.cat || 'national';
+    const active = document.querySelector('#newsTabs .tab.active')?.dataset.cat || NEWS.defaultCategory;
     await loadNews(active);
   });
 
@@ -604,5 +605,5 @@ function startClock() {
     if (clockDate()) clockDate().textContent = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
   };
   update();
-  setInterval(update, 1000);
+  setInterval(update, UI_DEFAULTS.clockTickMs);
 }

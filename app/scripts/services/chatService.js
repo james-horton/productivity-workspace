@@ -2,7 +2,9 @@
  * chatService: client wrapper for POST /api/chat
  */
 
-function withTimeout(promise, ms = 45000) {
+import { ENDPOINTS, TIMEOUTS, JSON_HEADERS } from '../config.js';
+
+function withTimeout(promise, ms = TIMEOUTS.defaultMs) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
   return {
@@ -31,10 +33,10 @@ export async function sendChat({ mode, messages, provider, model, webSearch }) {
     webSearch
   });
 
-  const { exec } = withTimeout(null, 180000);
-  const res = await exec('/api/chat', {
+  const { exec } = withTimeout(null, TIMEOUTS.chatMs);
+  const res = await exec(ENDPOINTS.chat, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: JSON_HEADERS,
     body
   });
 

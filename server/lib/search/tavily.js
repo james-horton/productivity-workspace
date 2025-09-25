@@ -1,16 +1,10 @@
 const axios = require('axios');
 const { config } = require('../../config');
 
-const TAVILY_URL = 'https://api.tavily.com/search';
+const TAVILY_URL = config.tavily.url || 'https://api.tavily.com/search';
 
-// Allowed news domains (as requested)
-const NEWS_SOURCES = [
-  'apnews.com',
-  'cnn.com',
-  'foxnews.com',
-  'meidastouch.com',
-  'msnbc.com'
-];
+// Allowed news domains (configurable)
+const NEWS_SOURCES = config.news.allowedSources;
 
 // Build a boolean site: filter clause for the query
 function buildSiteFilterClause(domains) {
@@ -35,7 +29,7 @@ function hostAllowed(url, allowlist) {
 }
 
 // Basic client for Tavily Search API
-async function tavilySearch(query, { maxResults = 6, includeAnswer = false, searchDepth = 'advanced' } = {}) {
+async function tavilySearch(query, { maxResults = config.tavily.maxResults, includeAnswer = config.tavily.includeAnswer, searchDepth = config.tavily.searchDepth } = {}) {
   if (!config.tavily.apiKey) {
     const err = new Error('Tavily API key missing');
     err.status = 400;
@@ -52,7 +46,7 @@ async function tavilySearch(query, { maxResults = 6, includeAnswer = false, sear
         include_answer: includeAnswer,
         max_results: maxResults
       },
-      { timeout: 30000 }
+      { timeout: config.tavily.timeoutMs || 30000 }
     );
 
     // Normalize
@@ -100,9 +94,9 @@ async function fetchNews(category, { city, state } = {}) {
   return tavilySearch(
     query,
     {
-      maxResults: 6,
-      includeAnswer: false,
-      searchDepth: 'advanced'
+      maxResults: config.tavily.maxResults,
+      includeAnswer: config.tavily.includeAnswer,
+      searchDepth: config.tavily.searchDepth
     }
   );
 }

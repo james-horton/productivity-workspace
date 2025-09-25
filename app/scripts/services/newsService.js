@@ -2,19 +2,21 @@
  * newsService: client wrapper for GET /api/news
  */
 
+import { ENDPOINTS, NEWS } from '../config.js';
+
 /**
  * Fetch news items
  * @param {'national'|'world'|'local'} category
  * @param {{city?:string, state?:string}} [location]
  * @returns {Promise<{ category:string, items:Array<{title:string,summary:string,url:string,source:string,content:string}> }>}
  */
-export async function fetchNews(category = 'national', location = {}) {
+export async function fetchNews(category = NEWS.defaultCategory, location = {}) {
   const params = new URLSearchParams({ category });
   if (category === 'local' && location.city && location.state) {
     params.set('city', String(location.city));
     params.set('state', String(location.state));
   }
-  const url = `/api/news?${params.toString()}`;
+  const url = `${ENDPOINTS.news}?${params.toString()}`;
 
   const res = await fetch(url, { method: 'GET' });
   if (!res.ok) {

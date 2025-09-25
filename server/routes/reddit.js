@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 
 const router = express.Router();
+const { config } = require('../config');
 
 function normalizeSubreddit(name) {
   return String(name || '').replace(/^\/?r\//i, '').trim();
@@ -9,10 +10,10 @@ function normalizeSubreddit(name) {
 
 function coerceLimit(v) {
   const n = parseInt(String(v || ''), 10);
-  const def = 6;
+  const def = config.reddit.defaultLimit;
   if (!Number.isFinite(n) || n < 1) return def;
   // Reasonable upper bound to avoid huge payloads
-  return Math.min(n, 25);
+  return Math.min(n, config.reddit.maxLimit);
 }
 
 /**
@@ -39,13 +40,14 @@ router.get('/', async (req, res, next) => {
     }
 
     // Preserve Reddit ordering by taking results as-is from /hot.json
-    const url = `https://www.reddit.com/r/${encodeURIComponent(subreddit)}/hot.json?limit=${limit}&raw_json=1`;
+    const base = config.reddit.baseUrl || 'https://www.reddit.com';
+    const url = `${base}/r/${encodeURIComponent(subreddit)}/hot.json?limit=${limit}&raw_json=1`;
 
     const { data } = await axios.get(url, {
       headers: {
-        'User-Agent': 'WorkspaceAI/0.1 (+http://localhost)'
+        'User-Agent': config.reddit.userAgent
       },
-      timeout: 10000
+      timeout: config.reddit.timeoutMs
     });
 
     const children = data && data.data && Array.isArray(data.data.children)
