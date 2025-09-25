@@ -2,7 +2,7 @@
  * Chat UI rendering helpers
  */
 
-function $(sel) { return document.querySelector(sel); }
+import { $ } from '../utils/helpers.js';
 
 /**
  * Render plain text to a DocumentFragment with clickable links:

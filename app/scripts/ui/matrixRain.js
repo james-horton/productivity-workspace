@@ -8,7 +8,6 @@ let running = false;
 let rafId = 0;
 let cols = [];
 let fontSize = 16;
-let spacing = 0;
 let width = 0, height = 0;
 let lastTime = 0;
 
@@ -97,7 +96,6 @@ function reset() {
   // Evenly distribute columns across full width (density-tunable)
   const baseCols = width / Math.max(10, fontSize * COL_SPACING_FACTOR);
   const colCount = Math.max(MIN_COLS, Math.ceil(baseCols * DENSITY));
-  spacing = 0; // not used when distributing by step
   cols = Array.from({ length: colCount }, () => ({
     y: -Math.random() * ch * RESPAWN_ABOVE_VIEW,
     speed: pickStreamSpeed('init'),

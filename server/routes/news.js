@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 
-const { tavilySearch, fetchNews } = require('../lib/search/tavily');
+const { fetchNews } = require('../lib/search/tavily');
 const { openaiChat } = require('../lib/providers/openai');
+const { hostFromUrl } = require('../lib/util/url');
 
 function coerceCategory(cat) {
   const c = String(cat || '').toLowerCase();
@@ -13,7 +14,7 @@ function coerceCategory(cat) {
 function compactItemsForPrompt(items) {
   // Reduce to minimal context for the LLM
   return items.slice(0, 6).map((r, i) => {
-    const host = (function() { try { return new URL(r.url).hostname.replace(/^www\./, ''); } catch (e) { return ''; } })();
+    const host = hostFromUrl(r.url);
     const content = (r.content || '').replace(/\s+/g, ' ').trim().slice(0, 400);
     return {
       idx: i + 1,
@@ -73,7 +74,7 @@ function safeParseArray(text, fallbackItems) {
         title: String(it.title || (fallbackItems[i] ? fallbackItems[i].title : '') || 'Untitled'),
         summary: String(it.summary || '').trim() || 'Brief: headline only.',
         url: String(it.url || (fallbackItems[i] ? fallbackItems[i].url : '') || ''),
-        source: String(it.source || ((fallbackItems[i] && fallbackItems[i].url) ? new URL(fallbackItems[i].url).hostname.replace(/^www\./, '') : '') || '')
+        source: String(it.source || ((fallbackItems[i] && fallbackItems[i].url) ? hostFromUrl(fallbackItems[i].url) : '') || '')
       }));
     }
   } catch (_) {
@@ -84,7 +85,7 @@ function safeParseArray(text, fallbackItems) {
     title: r.title || 'Untitled',
     summary: (r.content || '').replace(/\s+/g, ' ').trim().slice(0, 220) || 'Brief: headline only.',
     url: r.url || '',
-    source: (function() { try { return new URL(r.url).hostname.replace(/^www\./, ''); } catch (e) { return ''; } })()
+    source: hostFromUrl(r.url)
   }));
 }
 

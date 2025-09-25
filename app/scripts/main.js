@@ -10,18 +10,9 @@ import { setNewsBusy, setActiveTab, renderNewsItems, renderNewsLoading, initNews
 import { setRedditBusy, renderRedditItems, renderRedditLoading, updateRedditSummariesForViewport } from './ui/redditUI.js';
 import { initMatrixRain, setMatrixRainEnabled } from './ui/matrixRain.js';
 import { initNyanCat, setNyanCatEnabled } from './ui/nyanCat.js';
+import { $, isMobileView } from './utils/helpers.js';
 
-const $ = (sel) => document.querySelector(sel);
 const REDDIT_MAX_POSTS = 8;
-
-// Viewport helper
-function isMobileView() {
-  try {
-    return window.matchMedia && window.matchMedia(`(max-width: ${UI_CONFIG.mobileMaxWidthPx}px)`).matches;
-  } catch {
-    return window.innerWidth <= UI_CONFIG.mobileMaxWidthPx;
-  }
-}
 
 // Elements
 const themeSelect = () => $('#themeSelect');
@@ -519,9 +510,6 @@ async function loadReddit(index = getActiveRedditTabIndex()) {
   }
 }
 
-function setRedditTitleFromState() {
-  setRedditHeaderFromIndex(getActiveRedditTabIndex());
-}
 
 function initSettingsUI() {
   const btn = document.getElementById('settingsBtn');

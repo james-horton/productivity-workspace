@@ -2,7 +2,7 @@
  * News UI rendering helpers + News Modal (unsummarized article)
  */
 
-function $(sel) { return document.querySelector(sel); }
+import { $, hostFromUrl } from '../utils/helpers.js';
 
 // Modal refs
 let _newsModal = null;
@@ -32,19 +32,7 @@ function closeNewsModal() {
   document.body.classList.remove('modal-open');
 }
 
-// Lightweight HTML escaper to avoid unsafe HTML in raw content
-function escapeHtml(str) {
-  return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
 
-function hostFromUrl(url) {
-  try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return ''; }
-}
 
 // Marked removed; modal now shows plain text content only.
 

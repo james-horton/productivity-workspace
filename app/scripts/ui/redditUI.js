@@ -2,23 +2,8 @@
  * Reddit UI rendering helpers
  */
 import { UI_CONFIG } from '../state.js';
+import { $, isMobileView, truncateText } from '../utils/helpers.js';
 
-function $(sel) { return document.querySelector(sel); }
-
-// Mobile helpers
-function isMobileView() {
-  try {
-    return window.matchMedia && window.matchMedia(`(max-width: ${UI_CONFIG.mobileMaxWidthPx}px)`).matches;
-  } catch {
-    return window.innerWidth <= UI_CONFIG.mobileMaxWidthPx;
-  }
-}
-
-function truncateText(str, max) {
-  const s = String(str || '').trim();
-  if (!Number.isFinite(max) || max <= 0) return s;
-  return s.length > max ? s.slice(0, max).replace(/\s+$/,'') + '…' : s;
-}
 
 // Public API
 export function setRedditBusy(on) {
