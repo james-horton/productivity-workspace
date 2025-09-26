@@ -12,6 +12,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+html { scroll-behavior: smooth; }
 
 /* Utility */
 .sr-only {
@@ -138,6 +139,21 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
     gap: 1.25rem;
     padding: 1.25rem;
   }
+}
+
+/* Menu bar below header */
+.menu-bar {
+  grid-column: 1 / -1; /* span full grid width on desktop */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.menu-bar .tabs {
+  flex-wrap: wrap;
+}
+.menu-bar .tab {
+  text-decoration: none; /* anchors: remove underline */
+  display: inline-block;
 }
 
 /* Cards */
@@ -593,6 +609,11 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
     white-space: nowrap;
   }
   .reddit-card .reddit-controls .tabs::-webkit-scrollbar { height: 8px; }
+
+  /* Menu bar: left-aligned on mobile */
+  .menu-bar {
+    justify-content: left;
+  }
 }
 /* Loading indicators and skeletons (theme-aware) */
 .loader {
