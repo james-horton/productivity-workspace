@@ -3,7 +3,7 @@
  */
 import { UI_CONFIG } from '../state.js';
 import { UI_DEFAULTS } from '../config.js';
-import { $, isMobileView, truncateText } from '../utils/helpers.js';
+import { $, isMobileView, truncateText, renderContentWithLinks } from '../utils/helpers.js';
 
 
 // Public API
@@ -43,12 +43,16 @@ export function renderRedditItems(items) {
     const p = document.createElement('p');
     p.className = 'summary';
     const fullText = String(item.body || '').trim();
-    let bodyText = fullText;
+    let displayText = fullText;
     if (isMobileView()) {
-      bodyText = truncateText(fullText, UI_CONFIG.redditBodyCharCap);
+      displayText = truncateText(fullText, UI_CONFIG.redditBodyCharCap);
     }
     p.setAttribute('data-full-text', fullText);
-    p.textContent = bodyText;
+    
+    // Clear any existing content and append the fragment with links
+    p.innerHTML = '';
+    const frag = renderContentWithLinks(displayText);
+    p.appendChild(frag);
 
     wrap.appendChild(h3);
     if (p.textContent) wrap.appendChild(p);
@@ -95,10 +99,14 @@ export function updateRedditSummariesForViewport() {
   nodes.forEach((p) => {
     const full = (p.getAttribute('data-full-text') || '').trim();
     if (!full) return;
+    let displayText = full;
     if (mobile) {
-      p.textContent = truncateText(full, max);
-    } else {
-      p.textContent = full;
+      displayText = truncateText(full, max);
     }
+    
+    // Clear existing content and re-render with links
+    p.innerHTML = '';
+    const frag = renderContentWithLinks(displayText);
+    p.appendChild(frag);
   });
 }
