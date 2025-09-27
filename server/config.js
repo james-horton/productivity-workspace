@@ -80,6 +80,12 @@ function loadSecrets() {
         key: (json.server && json.server.https && json.server.https.key) || process.env.HTTPS_KEY_PATH || '',
         cert: (json.server && json.server.https && json.server.https.cert) || process.env.HTTPS_CERT_PATH || ''
       }
+    },
+    updater: {
+      // Update check interval in minutes (default: 5 minutes)
+      checkIntervalMinutes: parseInt(process.env.UPDATER_CHECK_INTERVAL_MINUTES || (json.updater && json.updater.checkIntervalMinutes) || '5', 10),
+      // PM2 process name to restart after update
+      pm2ProcessName: (json.updater && json.updater.pm2ProcessName) || process.env.UPDATER_PM2_PROCESS_NAME || 'workspace-ai'
     }
   };
 }
