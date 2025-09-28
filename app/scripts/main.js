@@ -268,7 +268,11 @@ function wireControls() {
       setBusy(false);
       chatForm().querySelector('button[type="submit"]').disabled = false;
       input.disabled = false;
-      input.focus();
+      
+      // Only focus input on desktop to prevent mobile keyboard from appearing
+      if (!isMobileView()) {
+        input.focus();
+      }
     }
   });
 
