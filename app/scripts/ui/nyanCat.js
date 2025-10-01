@@ -1,6 +1,6 @@
 // Nyan Cat style header animation sharing the same canvas viewport as Matrix
 // Renders stars, a rainbow trail, and a simple Nyan Cat sprite.
-// Uses the existing <canvas id="matrixCanvas"> inside .matrix-viewport.
+// Uses the existing <canvas id="themeCanvas"> inside .theme-viewport.
 //
 // API mirrors matrixRain.js:
 //   nyanCat.initNyanCat()
@@ -40,7 +40,7 @@ const CAT = {
 };
 
 export function initNyanCat() {
-  canvas = document.getElementById('matrixCanvas');
+  canvas = document.getElementById('themeCanvas');
   if (!canvas) return;
   container = canvas.parentElement;
   ctx = canvas.getContext('2d', { alpha: true });

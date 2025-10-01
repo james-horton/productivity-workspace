@@ -41,7 +41,7 @@ const HEAD_SHADOW_BLUR = 6;
 const TRAIL_FADE_ALPHA = 0.18;
 
 export function initMatrixRain() {
-  canvas = document.getElementById('matrixCanvas');
+  canvas = document.getElementById('themeCanvas');
   if (!canvas) return;
   container = canvas.parentElement;
   ctx = canvas.getContext('2d', { alpha: true });
