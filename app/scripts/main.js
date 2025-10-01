@@ -228,6 +228,10 @@ function wireControls() {
     // Append user message to history
     appendChatMessage(s.mode, { role: 'user', content: text });
     input.value = '';
+    // If textarea, trigger auto-resize shrink after clearing
+    if (input.tagName && input.tagName.toLowerCase() === 'textarea') {
+      input.dispatchEvent(new Event('input'));
+    }
 
     // Render pending
     setBusy(true);
@@ -268,6 +272,9 @@ function wireControls() {
       setBusy(false);
       chatForm().querySelector('button[type="submit"]').disabled = false;
       input.disabled = false;
+      if (input.tagName && input.tagName.toLowerCase() === 'textarea') {
+        input.dispatchEvent(new Event('input'));
+      }
       
       // Only focus input on desktop to prevent mobile keyboard from appearing
       if (!isMobileView()) {
@@ -275,6 +282,31 @@ function wireControls() {
       }
     }
   });
+
+  // Enhance chat input when using textarea: auto-grow and Enter-to-send (Shift+Enter for newline)
+  const inputEl = chatInput && chatInput();
+  if (inputEl && inputEl.tagName.toLowerCase() === 'textarea') {
+    const autoGrow = () => {
+      const el = inputEl;
+      if (!el) return;
+      el.style.height = 'auto';
+      const cs = window.getComputedStyle(el);
+      const maxH = parseFloat(cs.maxHeight || '0') || Infinity;
+      const newH = Math.min(el.scrollHeight, maxH);
+      el.style.height = newH + 'px';
+    };
+    inputEl.setAttribute('rows', '1');
+    inputEl.style.height = 'auto';
+    inputEl.addEventListener('input', autoGrow);
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        chatForm().dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+      }
+    });
+    // Initialize height
+    autoGrow();
+  }
 
   // Quote refresh
   quoteRefresh().addEventListener('click', () => void refreshQuote());

@@ -258,6 +258,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
   background: var(--primary);
   color: #06110a;
   border-color: color-mix(in oklab, var(--primary) 70%, #000);
+  font-weight: bold;
 }
 
 /* Icon-only button styles (for refresh) */
@@ -438,7 +439,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
   gap: 0.6rem;
   padding: 0.9rem 1rem 1.1rem 1rem;
 }
-.chat-input input[type="text"] {
+.chat-input textarea {
   width: 100%;
   padding: 0.65rem 0.8rem;
   border-radius: 10px;
@@ -446,6 +447,14 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .matrix-viewport { 
   background: var(--surface-2);
   color: var(--text);
   outline: none;
+  resize: none;
+  min-height: 44px;
+  max-height: 35vh;
+  overflow: auto;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
 }
 .chat-controls {
   display: flex;
