@@ -402,8 +402,6 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
   flex-direction: column;
   gap: 0.6rem;
   padding: 1rem;
-  max-height: 42vh;
-  overflow: auto;
   scrollbar-width: thin;
 }
 .chat-card .messages::-webkit-scrollbar { width: 10px; }
@@ -590,7 +588,6 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
     z-index: 2;    /* ensure above decorative layers */
   }
 
-  .chat-card .messages { max-height: 50vh; }
 
   /* Reddit header: stack title (row 1) and controls (row 2) */
   .reddit-card .card-head {
