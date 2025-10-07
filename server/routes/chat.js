@@ -52,6 +52,14 @@ const MODE_SPECS = {
     reasoning: 'medium',
     defaultSearch: false,
     disclaimer: null
+  },
+  big_brain: {
+    model: 'gpt-5-pro',
+    reasoning: 'high',
+    defaultSearch: false,
+    disclaimer: 'High-reasoning mode. No web search and no code interpreter is available.',
+    maxInputTokens: 4000,
+    maxOutputTokens: 4000
   }
 };
 
@@ -118,12 +126,17 @@ function buildSystemPrompt(mode) {
         'DEBATE MODE: short-form sparring. Reply in 2–5 sentences max; be direct and confident. Attack weaknesses and defend your side; occasionally ask a sharp probing question.',
         'General: be factual and avoid fabricating sources; do not browse unless explicitly asked.'
       ].join(' ');
+    case 'big_brain':
+      return [
+        'You are a meticulous, high-reasoning assistant.',
+        'Reason carefully internally. Provide a concise, well-structured final answer.'
+      ].join(' ');
     default:
       return 'You are a helpful assistant.';
   }
 }
 
-async function callPreferredModels({ reasoning, messages, prefer, model, webSearch }) {
+async function callPreferredModels({ reasoning, messages, prefer, model, webSearch, maxTokens }) {
   // prefer is an array of provider ids in order; default to OpenAI only
   const attempts = Array.isArray(prefer) && prefer.length ? prefer : ['openai'];
 
@@ -131,7 +144,7 @@ async function callPreferredModels({ reasoning, messages, prefer, model, webSear
     messages,
     reasoningLevel: reasoning,
     temperature: config.openai.defaultTemperature,
-    maxTokens: config.openai.defaultMaxTokens,
+    maxTokens: (Number.isFinite(maxTokens) ? maxTokens : config.openai.defaultMaxTokens),
     model,
     webSearch
   };
@@ -181,9 +194,11 @@ router.post('/', async (req, res, next) => {
 
     // Decide how to handle web search:
     // If explicit webSearch provided, honor it; otherwise fall back to mode default.
-    const effectiveWebSearch = (typeof webSearch === 'boolean') ? webSearch : !!(MODE_SPECS[mode] && MODE_SPECS[mode].defaultSearch);
+    const effectiveWebSearch = (typeof webSearch === 'boolean') 
+      ? webSearch 
+      : !!(MODE_SPECS[mode] && MODE_SPECS[mode].defaultSearch);
 
-    // Compose final message list (no external search digest; provider tools handle browsing)
+    // Compose final message list
     const finalMessages = [systemMsg, ...userMessages];
 
     // Provider preference: force OpenAI
@@ -195,7 +210,8 @@ router.post('/', async (req, res, next) => {
         messages: finalMessages,
         prefer,
         model: spec.model,
-        webSearch: effectiveWebSearch
+        webSearch: effectiveWebSearch,
+        maxTokens: (spec && spec.maxOutputTokens) ? spec.maxOutputTokens : undefined
       });
 
     const payload = {
