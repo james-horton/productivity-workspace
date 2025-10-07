@@ -276,8 +276,10 @@ function wireControls() {
         input.dispatchEvent(new Event('input'));
       }
       
-      // Only focus input on desktop to prevent mobile keyboard from appearing
-      if (!isMobileView()) {
+      // Keep the viewport at the top of a newly received assistant message.
+      // Only autofocus the input on desktop when the last message is NOT from the assistant.
+      const last = (getChatHistory(getState().mode) || []).slice(-1)[0];
+      if (!isMobileView() && (!last || last.role !== 'assistant')) {
         input.focus();
       }
     }
