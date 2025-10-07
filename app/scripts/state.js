@@ -77,6 +77,13 @@ export const MODES = {
     starter: 'State mode ("train" or "debate"), your side ("for" or "against"), and the topic.',
     disclaimer: '',
     defaultSearch: false
+  },
+  big_brain: {
+    id: 'big_brain',
+    label: 'Big Brain',
+    starter: 'What complex problem should we think through with deep reasoning?',
+    disclaimer: 'High-reasoning mode. No web search and no code interpreter are available.',
+    defaultSearch: false
   }
 };
 
@@ -88,7 +95,8 @@ const chatHistories = {
   basic: [],
   excuse: [],
   grammar: [],
-  eli5: []
+  eli5: [],
+  big_brain: []
 };
 
 const state = {
