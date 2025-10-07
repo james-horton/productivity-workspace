@@ -179,3 +179,48 @@ body[data-theme="rainbow"] {
   );
   --coderain-opacity: 0.0;
 }
+
+/* THEME: Bumblebee */
+body[data-theme="bumblebee"] {
+  --bg: #fff6a3;          /* warm pale yellow background */
+  --text: #0a0a0a;        /* black foreground text */
+  --muted: #4b5563;       /* slate for subdued text */
+  --surface: #fffdf2;     /* soft off-white card background */
+  --surface-2: #fff3b8;   /* pale honey for headers/inputs */
+  --ring: #e9d75a;        /* golden border/ring */
+  --accent: #d97706;      /* amber accent for links and hovers */
+  --primary: #ffd400;     /* bright yellow for primary buttons */
+  --shadow: 0 12px 34px rgba(0, 0, 0, 0.08);
+  --topbar-bg: linear-gradient(180deg, rgba(0,0,0,0.03), rgba(0,0,0,0));
+  --coderain-opacity: 0.0;
+}
+
+/* THEME: Orangeade */
+body[data-theme="orangeade"] {
+  --bg: #fff1e6;          /* light orange background */
+  --text: #0a0a0a;        /* black foreground text */
+  --muted: #4b5563;       /* slate for subdued text */
+  --surface: #ffffff;     /* white card background */
+  --surface-2: #ffe4cc;   /* pale orange for headers/inputs */
+  --ring: #ffd4b3;        /* soft orange ring/border */
+  --accent: #f97316;      /* vivid orange accent for links */
+  --primary: #ffb347;     /* soft orange for primary buttons */
+  --shadow: 0 12px 34px rgba(0, 0, 0, 0.06);
+  --topbar-bg: linear-gradient(180deg, rgba(249,115,22,0.12), rgba(0,0,0,0));
+  --coderain-opacity: 0.0;
+}
+
+/* THEME: Sky Blue */
+body[data-theme="sky-blue"] {
+  --bg: #e6f6ff;          /* sky-blue background */
+  --text: #0a0a0a;        /* black foreground text */
+  --muted: #475569;       /* slate for subdued text */
+  --surface: #ffffff;     /* white card background */
+  --surface-2: #dff1ff;   /* pale sky for headers/inputs */
+  --ring: #cfe8ff;        /* light blue ring/border */
+  --accent: #0ea5e9;      /* sky accent for links */
+  --primary: #60a5fa;     /* light blue for primary buttons */
+  --shadow: 0 12px 34px rgba(2, 6, 23, 0.06);
+  --topbar-bg: linear-gradient(180deg, rgba(14,165,233,0.12), rgba(0,0,0,0));
+  --coderain-opacity: 0.0;
+}
