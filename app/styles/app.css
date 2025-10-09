@@ -400,7 +400,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
 .chat-card .messages {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: calc(0.6rem + 10px);
   padding: 1rem;
   scrollbar-width: thin;
 }
@@ -622,6 +622,16 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
   /* Menu bar: left-aligned on mobile */
   .menu-bar {
     justify-content: left;
+  }
+
+  /* Chat bubble edge gap on mobile: keep ~5% breathing room on the far edge */
+  .chat-card .messages .msg.assistant .bubble {
+    margin-right: 5%;
+    max-width: 95%;
+  }
+  .chat-card .messages .msg.user .bubble {
+    margin-left: 5%;
+    max-width: 95%;
   }
 }
 /* Loading indicators and skeletons (theme-aware) */
