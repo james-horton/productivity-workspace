@@ -224,6 +224,8 @@ function wireControls() {
     const text = (input.value || '').trim();
     if (!text) return;
 
+    // Scroll anchoring handled after assistant typing bubble is inserted.
+
     const s = getState();
     // Append user message to history
     appendChatMessage(s.mode, { role: 'user', content: text });
@@ -237,6 +239,42 @@ function wireControls() {
     setBusy(true);
     renderChat(getChatHistory(s.mode));
     showAssistantTyping();
+
+    // Anchor the assistant typing message to the top of the viewport
+    (() => {
+      const row = document.querySelector('#chatMessages .msg.assistant.loading');
+      if (!row) return;
+      let headerOffset = 0;
+      const header = document.getElementById('top');
+      if (header) {
+        const pos = window.getComputedStyle(header).position;
+        if (pos === 'fixed' || pos === 'sticky') {
+          headerOffset = header.getBoundingClientRect().height || 0;
+        }
+      }
+      const rect = row.getBoundingClientRect();
+      const y = window.scrollY + rect.top - headerOffset;
+      window.scrollTo({ top: Math.max(0, y), left: 0, behavior: 'auto' });
+    })();
+
+    // Helper: keep the latest assistant message aligned to the top (avoids bottom-scrolling)
+    const anchorLatestAssistantToTop = () => {
+      const rows = document.querySelectorAll('#chatMessages .msg.assistant');
+      const el = rows[rows.length - 1];
+      if (!el) return;
+      let headerOffset = 0;
+      const header = document.getElementById('top');
+      if (header) {
+        const pos = window.getComputedStyle(header).position;
+        if (pos === 'fixed' || pos === 'sticky') {
+          headerOffset = header.getBoundingClientRect().height || 0;
+        }
+      }
+      const rect = el.getBoundingClientRect();
+      const y = window.scrollY + rect.top - headerOffset;
+      window.scrollTo({ top: Math.max(0, y), left: 0, behavior: 'auto' });
+    };
+
     chatForm().querySelector('button[type="submit"]').disabled = true;
     input.disabled = true;
 
@@ -259,6 +297,8 @@ function wireControls() {
       appendChatMessage(s.mode, resp.message);
       // Re-render with sources (if any)
       renderChat(getChatHistory(s.mode), { sources: resp.sources || [] });
+      // Maintain top anchoring on the final assistant message (avoid bottom scrolling)
+      requestAnimationFrame(() => { anchorLatestAssistantToTop(); });
     } catch (err) {
       hideAssistantTyping();
       // Surface error as assistant message
@@ -267,6 +307,8 @@ function wireControls() {
         content: `Error: ${err.message || 'Something went wrong.'}`
       });
       renderChat(getChatHistory(getState().mode));
+      // Maintain top anchoring on the error assistant message as well
+      requestAnimationFrame(() => { anchorLatestAssistantToTop(); });
     } finally {
       hideAssistantTyping();
       setBusy(false);

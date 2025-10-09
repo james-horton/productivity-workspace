@@ -39,6 +39,11 @@ export function renderChat(messages, { sources } = {}) {
     }
   });
 
+  // Mark the last assistant message for anchoring (used to pin at top)
+  if (lastAssistantRow) {
+    lastAssistantRow.setAttribute('data-last-assistant', 'true');
+  }
+
   // If we have sources for the last assistant message, render them after the last message
   if (Array.isArray(sources) && sources.length) {
     const wrap = document.createElement('div');
@@ -73,28 +78,8 @@ export function renderChat(messages, { sources } = {}) {
     box.appendChild(wrap);
   }
 
-  // Scroll behavior:
-  // - If the last message is from the assistant AND we're currently "receiving" (aria-busy = true),
-  //   snap the viewport so the TOP of that assistant message is visible.
-  // - If the last message is from the user, keep that message in view without jumping the entire page.
-  // - Otherwise (initial render, no messages, or assistant while not busy): do nothing.
-  const lastMessage = (messages && messages.length) ? messages[messages.length - 1] : null;
-  const isBusy = box.getAttribute('aria-busy') === 'true';
-
-  if (lastMessage && lastMessage.role === 'assistant' && lastAssistantRow) {
-    if (isBusy) {
-      // Use scrollIntoView on the row itself so we scroll the page, not just the container.
-      lastAssistantRow.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'auto' });
-    }
-  } else if (lastMessage && lastMessage.role === 'user') {
-    // Keep the user's latest message visible, but avoid jumping to the bottom of the entire page.
-    const lastRow = box.lastElementChild;
-    if (lastRow) lastRow.scrollIntoView({ block: 'end', inline: 'nearest', behavior: 'auto' });
-    // If #chatMessages is a scroll container, also pin it to its bottom.
-    if (box.scrollHeight > box.clientHeight) {
-      box.scrollTop = box.scrollHeight;
-    }
-  }
+  // Intentionally do not auto-scroll during render.
+  // Scrolling is handled by the chat submit handler after user-initiated sends.
 }
 export function showAssistantTyping() {
   const box = document.querySelector('#chatMessages');
@@ -121,8 +106,7 @@ export function showAssistantTyping() {
   row.appendChild(bubble);
   box.appendChild(row);
 
-  // Ensure the loading row is visible even when #chatMessages isn't scrollable.
-  row.scrollIntoView({ block: 'end', inline: 'nearest', behavior: 'auto' });
+  // Do not auto-scroll here; scrolling is handled by the submit handler.
 }
 
 export function hideAssistantTyping() {
