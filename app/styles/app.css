@@ -800,9 +800,16 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
 body.modal-open { overflow: hidden; }
 /* News modal body: show raw article content neatly */
 .news-modal-body {
+  /* Preserve newlines from raw content while allowing safe breaks */
   white-space: pre-wrap;
+  /* Break extremely long tokens (filenames, URLs, image IDs, etc.) to avoid horizontal overflow */
+  overflow-wrap: anywhere;
+  word-break: break-word; /* compat for older engines */
+  hyphens: auto;
   max-height: 65vh;
-  overflow: auto;
+  /* Only vertical scrolling; prevent horizontal scrollbar in edge cases */
+  overflow-y: auto;
+  overflow-x: hidden;
   font-size: 0.95rem;
   line-height: 1.45;
 }
