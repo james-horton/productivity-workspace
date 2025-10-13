@@ -512,11 +512,11 @@ async function loadNews(category) {
         newsItems().innerHTML = msg;
       } else {
         data = await fetchNews(category, { city, state });
-        renderNewsItems(data.items || []);
+        renderNewsItems(data.items || [], { answer: data.answer });
       }
     } else {
       data = await fetchNews(category);
-      renderNewsItems(data.items || []);
+      renderNewsItems(data.items || [], { answer: data.answer });
     }
   } catch (err) {
     newsItems().innerHTML = '<div class="news-item">Failed to load news. Try refresh.</div>';

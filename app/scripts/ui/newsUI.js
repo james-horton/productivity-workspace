@@ -51,11 +51,23 @@ export function setActiveTab(cat) {
   });
 }
 
-export function renderNewsItems(items) {
+export function renderNewsItems(items, { answer } = {}) {
   const box = $('#newsItems');
   if (!box) return;
 
   box.innerHTML = '';
+
+  // Overall summary from Tavily "answer" at the top
+  const summary = typeof answer === 'string' ? answer.trim() : '';
+  if (summary) {
+    const sum = document.createElement('div');
+    sum.className = 'news-summary';
+    const p = document.createElement('p');
+    p.textContent = summary;
+    sum.appendChild(p);
+    box.appendChild(sum);
+  }
+
   if (!Array.isArray(items) || items.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'news-item';
@@ -72,40 +84,72 @@ export function renderNewsItems(items) {
     h3.className = 'title';
 
     const a = document.createElement('a');
-    a.href = '#';
+    a.href = item.url || '#';
     a.textContent = item.title || 'Untitled';
-    a.addEventListener('click', (e) => {
-      e.preventDefault();
-      void openNewsModal(item);
-    });
+    if (item.url) {
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+    }
 
     h3.appendChild(a);
-
-    const p = document.createElement('p');
-    p.className = 'summary';
-    p.textContent = item.summary || '';
 
     const meta = document.createElement('div');
     meta.className = 'meta';
     const host = (item.source || hostFromUrl(item.url || '') || '').trim();
     if (host) {
-      meta.textContent = 'source: ';
-      if (item.url) {
-        const link = document.createElement('a');
-        link.href = item.url;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.textContent = host;
-        meta.appendChild(link);
-      } else {
-        const span = document.createElement('span');
-        span.textContent = host;
-        meta.appendChild(span);
+      // Favicon (show if available; add graceful fallbacks if initial fails)
+      if (item.favicon || item.url) {
+        const img = document.createElement('img');
+        img.alt = '';
+        img.width = 16;
+        img.height = 16;
+        img.loading = 'lazy';
+        img.referrerPolicy = 'no-referrer';
+        img.style.verticalAlign = 'text-bottom';
+        img.style.margin = '0 6px 0 6px';
+
+        let triedDomainIco = false;
+        let triedDDG = false;
+        img.onerror = () => {
+          if (!triedDomainIco && item && item.url) {
+            triedDomainIco = true;
+            try {
+              const u = new URL(item.url);
+              img.src = `${u.origin}/favicon.ico`;
+              return;
+            } catch {}
+          }
+          if (!triedDDG && item && item.url) {
+            triedDDG = true;
+            try {
+              const u = new URL(item.url);
+              img.src = `https://icons.duckduckgo.com/ip3/${u.hostname}.ico`;
+              return;
+            } catch {}
+          }
+          // If all attempts fail, remove the broken image
+          img.remove();
+        };
+
+        if (item.favicon) {
+          img.src = item.favicon;
+        } else if (item && item.url) {
+          try {
+            const u = new URL(item.url);
+            img.src = `${u.origin}/favicon.ico`;
+          } catch {}
+        }
+
+        meta.appendChild(img);
       }
+
+      // Plain text host (non-clickable)
+      const span = document.createElement('span');
+      span.textContent = host;
+      meta.appendChild(span);
     }
 
     wrap.appendChild(h3);
-    wrap.appendChild(p);
     wrap.appendChild(meta);
     box.appendChild(wrap);
   });
@@ -124,18 +168,10 @@ export function renderNewsLoading() {
     const title = document.createElement('div');
     title.className = 'skeleton-title skeleton';
 
-    const line1 = document.createElement('div');
-    line1.className = 'skeleton-line skeleton';
-
-    const line2 = document.createElement('div');
-    line2.className = 'skeleton-line skeleton';
-
     const meta = document.createElement('div');
     meta.className = 'skeleton-meta skeleton';
 
     wrap.appendChild(title);
-    wrap.appendChild(line1);
-    wrap.appendChild(line2);
     wrap.appendChild(meta);
 
     box.appendChild(wrap);

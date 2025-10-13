@@ -59,7 +59,8 @@ async function tavilySearch(query, { maxResults = config.tavily.maxResults, incl
         url: r.url || '',
         content: r.content || '',
         score: typeof r.score === 'number' ? r.score : undefined,
-        published_date: r.published_date || undefined
+        published_date: r.published_date || undefined,
+        favicon: r.favicon || r.icon || undefined
       }))
     };
   } catch (error) {
@@ -95,8 +96,8 @@ async function fetchNews(category, { city, state } = {}) {
     query,
     {
       maxResults: config.tavily.maxResults,
-      includeAnswer: config.tavily.includeAnswer,
-      searchDepth: config.tavily.searchDepth
+      includeAnswer: true,
+      searchDepth: 'advanced'
     }
   );
 }
