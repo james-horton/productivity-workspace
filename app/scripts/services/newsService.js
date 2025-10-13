@@ -8,7 +8,7 @@ import { ENDPOINTS, NEWS } from '../config.js';
  * Fetch news items
  * @param {'national'|'world'|'local'} category
  * @param {{city?:string, state?:string}} [location]
- * @returns {Promise<{ category:string, items:Array<{title:string,summary:string,url:string,source:string,content:string}> }>}
+ * @returns {Promise<{ category:string, answer:string, items:Array<{title:string,url:string,source:string,favicon?:string}> }>}
  */
 export async function fetchNews(category = NEWS.defaultCategory, location = {}) {
   const params = new URLSearchParams({ category });
