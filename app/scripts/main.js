@@ -8,6 +8,8 @@ import { fetchReddit } from './services/redditService.js';
 import { setDisclaimer, setBusy, renderChat, showAssistantTyping, hideAssistantTyping } from './ui/chatUI.js';
 import { setNewsBusy, setActiveTab, renderNewsItems, renderNewsLoading, initNewsModalUI } from './ui/newsUI.js';
 import { setRedditBusy, renderRedditItems, renderRedditLoading, updateRedditSummariesForViewport } from './ui/redditUI.js';
+import { webSearch } from './services/webSearchService.js';
+import { setWebSearchBusy, renderWebSearchResults, renderWebSearchLoading } from './ui/webSearchUI.js';
 import { initMatrixRain, setMatrixRainEnabled } from './ui/matrixRain.js';
 import { initNyanCat, setNyanCatEnabled } from './ui/nyanCat.js';
 import { $, isMobileView } from './utils/helpers.js';
@@ -30,6 +32,9 @@ const quoteRefresh = () => $('#quoteRefresh');
 const newsTabs = () => $('#newsTabs');
 const newsRefresh = () => $('#newsRefresh');
 const newsItems = () => $('#newsItems');
+const webSearchForm = () => $('#webSearchForm');
+const webSearchInput = () => $('#webSearchInput');
+const webSearchItems = () => $('#webSearchItems');
 const redditTabs = () => $('#redditTabs');
 const redditRefresh = () => $('#redditRefresh');
 const redditItems = () => $('#redditItems');
@@ -350,6 +355,69 @@ function wireControls() {
     });
     // Initialize height
     autoGrow();
+  }
+
+  // Web Search submit
+  {
+    const wsForm = webSearchForm && webSearchForm();
+    if (wsForm) {
+      wsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const input = webSearchInput && webSearchInput();
+        const text = (input && input.value || '').trim();
+        if (!text) return;
+
+        setWebSearchBusy(true);
+        renderWebSearchLoading();
+
+        const btnEl = wsForm.querySelector('button[type="submit"]');
+        if (btnEl) btnEl.disabled = true;
+        if (input) input.disabled = true;
+
+        try {
+          const data = await webSearch(text);
+          renderWebSearchResults((data && data.items) || [], { answer: data && data.answer });
+        } catch (err) {
+          const box = webSearchItems && webSearchItems();
+          if (box) {
+            box.innerHTML = '<div class="news-item">Failed to search the web. Try again.</div>';
+          }
+        } finally {
+          setWebSearchBusy(false);
+          if (btnEl) btnEl.disabled = false;
+          if (input) {
+            input.disabled = false;
+            if (input.tagName && input.tagName.toLowerCase() === 'textarea') {
+              input.dispatchEvent(new Event('input'));
+            }
+          }
+        }
+      });
+
+      // Enhance web search input: auto-grow and Enter-to-submit (Shift+Enter for newline)
+      const inputEl = webSearchInput && webSearchInput();
+      if (inputEl && inputEl.tagName.toLowerCase() === 'textarea') {
+        const autoGrowWS = () => {
+          const el = inputEl;
+          if (!el) return;
+          el.style.height = 'auto';
+          const cs = window.getComputedStyle(el);
+          const maxH = parseFloat(cs.maxHeight || '0') || Infinity;
+          const newH = Math.min(el.scrollHeight, maxH);
+          el.style.height = newH + 'px';
+        };
+        inputEl.setAttribute('rows', '1');
+        inputEl.style.height = 'auto';
+        inputEl.addEventListener('input', autoGrowWS);
+        inputEl.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            wsForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+          }
+        });
+        autoGrowWS();
+      }
+    }
   }
 
   // Quote refresh

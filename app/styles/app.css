@@ -182,9 +182,10 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
   margin: 0;
   font-size: 1rem;
 }
-/* Slightly larger headings for Chat, News, and Reddit */
+/* Slightly larger headings for Chat, News, Web Search, and Reddit */
 #chatTitle,
 #newsTitle,
+#webSearchTitle,
 #redditTitle {
   font-size: 1.5rem;
 }
@@ -207,12 +208,13 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
 }
 
 /* Specific card placements */
-.quote-card, .clock-card, .chat-card, .news-card, .reddit-card { padding-bottom: 0.25rem; }
+.quote-card, .clock-card, .chat-card, .news-card, .search-card, .reddit-card { padding-bottom: 0.25rem; }
 @media (min-width: 900px) {
   .quote-card { grid-column: span 6; }
   .clock-card { grid-column: span 6; }
   .chat-card  { grid-column: 1 / -1; }
   .news-card  { grid-column: 1 / -1; }
+  .search-card { grid-column: 1 / -1; }
   .reddit-card { grid-column: 1 / -1; }
 }
 
@@ -534,6 +536,19 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
 .news-item .meta {
   color: var(--muted);
   font-size: 0.8rem;
+}
+
+/* Overall summary shown above the list (used by News and Web Search) */
+.news-summary {
+  border: 1px solid var(--ring);
+  background: var(--surface-2);
+  border-radius: 12px;
+  padding: 0.8rem;
+}
+.news-summary p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
 }
 
 /* Footer */

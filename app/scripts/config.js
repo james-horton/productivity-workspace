@@ -8,6 +8,7 @@ export const API_BASE = '/api';
 export const ENDPOINTS = Object.freeze({
   chat: `${API_BASE}/chat`,
   news: `${API_BASE}/news`,
+  websearch: `${API_BASE}/websearch`,
   reddit: `${API_BASE}/reddit`,
   quote: `${API_BASE}/quote`
 });
