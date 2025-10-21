@@ -52,6 +52,7 @@
       <div class="tabs">
         <a class="tab" href="#chat">Chat</a>
         <a class="tab" href="#news">News</a>
+        <a class="tab" href="#websearch">Web Search</a>
         <a class="tab" href="#reddit">Reddit</a>
       </div>
     </nav>
@@ -157,6 +158,22 @@
       <div id="newsItems" class="news-items" aria-live="polite" aria-busy="false">
         <!-- News items render here -->
       </div>
+    </section>
+
+    <section id="websearch" class="card search-card" aria-labelledby="webSearchTitle">
+      <div class="card-head">
+        <h2 id="webSearchTitle">Web Search</h2>
+      </div>
+
+      <div id="webSearchItems" class="news-items" aria-live="polite" aria-busy="false">
+        <!-- Web search results render here -->
+      </div>
+
+      <form id="webSearchForm" class="chat-input" autocomplete="off">
+        <label class="sr-only" for="webSearchInput">Your query</label>
+        <textarea id="webSearchInput" placeholder="Type your search..." required rows="1"></textarea>
+        <button id="webSearchSend" class="btn primary" type="submit">Search</button>
+      </form>
     </section>
 
     <section id="reddit" class="card reddit-card" aria-labelledby="redditTitle">

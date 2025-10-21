@@ -11,6 +11,7 @@ const chatRouter = require('./routes/chat');
 const quoteRouter = require('./routes/quote');
 const newsRouter = require('./routes/news');
 const redditRouter = require('./routes/reddit');
+const searchRouter = require('./routes/search');
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use('/api/chat', chatRouter);
 app.use('/api/quote', quoteRouter);
 app.use('/api/news', newsRouter);
+app.use('/api/websearch', searchRouter);
 app.use('/api/reddit', redditRouter);
 
 // Serve SPA static assets
