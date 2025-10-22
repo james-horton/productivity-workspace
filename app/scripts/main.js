@@ -377,6 +377,10 @@ function wireControls() {
         try {
           const data = await webSearch(text);
           renderWebSearchResults((data && data.items) || [], { answer: data && data.answer });
+          // Clear the search input only after a response is received and processed
+          if (input) {
+            input.value = '';
+          }
         } catch (err) {
           const box = webSearchItems && webSearchItems();
           if (box) {
