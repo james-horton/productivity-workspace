@@ -500,16 +500,8 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
   padding: 1rem;
   font-weight: 400; /* ensure body text in news section isn't bold across themes */
 }
-/* Web Search: reduce header-to-input gap when no results yet */
 #websearch #webSearchItems {
-  /* Smaller default spacing so the search bar sits closer under the header before the first search */
-  padding: 0.3rem 1rem;
-}
-
-/* When Web Search has content (summary or items), restore normal spacing */
-#websearch #webSearchItems:has(> .news-summary),
-#websearch #webSearchItems:has(> .news-item) {
-  padding: 1rem;
+  padding: 0rem 1rem;
 }
 .news-item {
   border: 1px solid var(--ring);

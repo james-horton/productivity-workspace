@@ -161,19 +161,21 @@
     </section>
 
     <section id="websearch" class="card search-card" aria-labelledby="webSearchTitle">
+
       <div class="card-head">
         <h2 id="webSearchTitle">Web Search</h2>
       </div>
-
-      <div id="webSearchItems" class="news-items" aria-live="polite" aria-busy="false">
-        <!-- Web search results render here -->
-      </div>
-
+      
       <form id="webSearchForm" class="chat-input" autocomplete="off">
         <label class="sr-only" for="webSearchInput">Your query</label>
         <textarea id="webSearchInput" placeholder="Type your search..." required rows="1"></textarea>
         <button id="webSearchSend" class="btn primary" type="submit">Search</button>
       </form>
+      
+      <div id="webSearchItems" class="news-items" aria-live="polite" aria-busy="false">
+        <!-- Web search results render here -->
+      </div>
+
     </section>
 
     <section id="reddit" class="card reddit-card" aria-labelledby="redditTitle">
