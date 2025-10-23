@@ -4,6 +4,179 @@
 
 import { $, renderContentWithLinks } from '../utils/helpers.js';
 
+// Coder mode rendering and highlighting helpers
+function hljsAvailable() {
+  return typeof window !== 'undefined' && window.hljs && (typeof window.hljs.highlightElement === 'function' || typeof window.hljs.highlightAuto === 'function');
+}
+
+// Canonicalize language names to what highlight.js expects
+const HLJS_LANGUAGE_ALIASES = {
+  js: 'javascript',
+  jsx: 'javascript',
+  mjs: 'javascript',
+  ts: 'typescript',
+  tsx: 'tsx',
+  py: 'python',
+  csharp: 'csharp',
+  'c#': 'csharp',
+  cs: 'csharp',
+  'c++': 'cpp',
+  cpp: 'cpp',
+  c: 'c',
+  html: 'xml',
+  svg: 'xml',
+  md: 'markdown',
+  sh: 'bash',
+  shell: 'bash',
+  rb: 'ruby',
+  yml: 'yaml',
+  kt: 'kotlin',
+  rs: 'rust',
+  go: 'go',
+  golang: 'go'
+};
+
+function normalizeLanguage(lang) {
+  const key = String(lang || '').toLowerCase().trim();
+  return HLJS_LANGUAGE_ALIASES[key] || key;
+}
+
+function sanitizeFilename(name) {
+  const s = String(name || '').trim();
+  if (!s) return '';
+  // Remove directory separators and illegal characters on Windows/Unix
+  return s.replace(/[/\\?%*:|"<>]/g, '').replace(/\s+/g, ' ').slice(0, 180);
+}
+
+// Match Chat Download naming when no filename provided (mode name + timestamp)
+function defaultExportFilename() {
+  const modeSlug = 'coder';
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const ts = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+  return `${modeSlug}_${ts}.txt`;
+}
+
+function triggerDownload(text, filename) {
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 0);
+}
+
+/**
+ * Render Coder blocks from JSON (coder_blocks_v1).
+ * Fallback to plain text rendering when parsing fails or schema invalid.
+ * @param {string} raw
+ * @returns {DocumentFragment}
+ */
+function renderCoderBlocks(raw) {
+  try {
+    const obj = JSON.parse(String(raw || ''));
+    if (!obj || obj.format !== 'coder_blocks_v1' || !Array.isArray(obj.blocks)) {
+      return renderContentWithLinks(String(raw || ''));
+    }
+    const frag = document.createDocumentFragment();
+    obj.blocks.forEach(b => {
+      if (!b || typeof b !== 'object') return;
+      if (b.type === 'paragraph') {
+        const p = document.createElement('p');
+        p.className = 'coder-paragraph';
+        p.appendChild(renderContentWithLinks(String(b.text || '')));
+        frag.appendChild(p);
+      } else if (b.type === 'code') {
+        const wrap = document.createElement('div');
+        wrap.className = 'coder-block';
+
+        // Always render a header so we can provide the export button consistently
+        const header = document.createElement('div');
+        header.className = 'coder-filename';
+
+        const left = document.createElement('div');
+        left.className = 'left';
+        const fileSpan = document.createElement('span');
+        const safeName = sanitizeFilename(b.filename);
+        if (safeName) fileSpan.textContent = safeName;
+        left.appendChild(fileSpan);
+
+        const right = document.createElement('div');
+        right.className = 'right';
+
+        const langText = String(b.language || '').trim();
+        if (langText) {
+          const lg = document.createElement('span');
+          lg.className = 'coder-lang';
+          lg.textContent = langText;
+          right.appendChild(lg);
+        }
+
+        const exportBtn = document.createElement('button');
+        exportBtn.className = 'btn icon-only coder-export';
+        exportBtn.type = 'button';
+        exportBtn.title = 'Download';
+        exportBtn.setAttribute('aria-label', 'Download code');
+        exportBtn.innerHTML = `
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+        `;
+        exportBtn.addEventListener('click', () => {
+          const filename = sanitizeFilename(b.filename) || defaultExportFilename();
+          triggerDownload(String(b.code || ''), filename);
+        });
+        right.appendChild(exportBtn);
+
+        header.appendChild(left);
+        header.appendChild(right);
+        wrap.appendChild(header);
+
+        const pre = document.createElement('pre');
+        const code = document.createElement('code');
+        const lang = normalizeLanguage(b.language);
+        code.className = 'hljs' + (lang ? ' language-' + lang : '');
+        code.textContent = String(b.code || '');
+        pre.appendChild(code);
+        wrap.appendChild(pre);
+        frag.appendChild(wrap);
+      }
+    });
+    return frag;
+  } catch {
+    return renderContentWithLinks(String(raw || ''));
+  }
+}
+
+function applyHighlight(root) {
+  try {
+    if (!hljsAvailable()) return;
+    root.querySelectorAll('pre code').forEach(el => {
+      const classes = Array.from(el.classList);
+      const langClass = classes.find(c => c.startsWith('language-'));
+      const lang = langClass ? langClass.slice('language-'.length) : '';
+      // If specified language isn't registered, fall back to auto
+      if (lang && typeof window.hljs.getLanguage === 'function' && !window.hljs.getLanguage(lang)) {
+        const res = window.hljs.highlightAuto(el.textContent || '');
+        el.innerHTML = res.value;
+        el.classList.add('hljs');
+      } else if (typeof window.hljs.highlightElement === 'function') {
+        window.hljs.highlightElement(el);
+      } else if (typeof window.hljs.highlightAuto === 'function') {
+        const res = window.hljs.highlightAuto(el.textContent || '');
+        el.innerHTML = res.value;
+        el.classList.add('hljs');
+      }
+    });
+  } catch {}
+}
 
 export function setDisclaimer(text) {
   const el = $('#chatDisclaimer');
@@ -16,19 +189,26 @@ export function setBusy(on) {
   if (box) box.setAttribute('aria-busy', on ? 'true' : 'false');
 }
 
-export function renderChat(messages, { sources } = {}) {
+export function renderChat(messages, { sources, mode } = {}) {
   const box = $('#chatMessages');
   if (!box) return;
   box.innerHTML = '';
+  const isCoder = mode === 'coder';
+  if (isCoder) box.classList.add('coder-mode'); else box.classList.remove('coder-mode');
   let lastAssistantRow = null;
 
-  messages.forEach(msg => {
+  (messages || []).forEach(msg => {
     const row = document.createElement('div');
     row.className = `msg ${msg.role === 'user' ? 'user' : 'assistant'}`;
 
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
-    const frag = renderContentWithLinks(String(msg.content || ''));
+    let frag;
+    if (isCoder && msg.role !== 'user') {
+      frag = renderCoderBlocks(String(msg.content || ''));
+    } else {
+      frag = renderContentWithLinks(String(msg.content || ''));
+    }
     bubble.appendChild(frag);
 
     row.appendChild(bubble);
@@ -76,6 +256,10 @@ export function renderChat(messages, { sources } = {}) {
     bubble.appendChild(list);
     wrap.appendChild(bubble);
     box.appendChild(wrap);
+  }
+
+  if (isCoder) {
+    applyHighlight(box);
   }
 
   // Intentionally do not auto-scroll during render.

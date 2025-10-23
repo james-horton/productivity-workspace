@@ -60,6 +60,12 @@ const MODE_SPECS = {
     disclaimer: 'High-reasoning mode. No web search and no code interpreter is available.',
     maxInputTokens: 4000,
     maxOutputTokens: 4000
+  },
+  coder: {
+    model: 'gpt-5',
+    reasoning: 'high',
+    defaultSearch: false,
+    disclaimer: ''
   }
 };
 
@@ -130,6 +136,18 @@ function buildSystemPrompt(mode) {
       return [
         'You are a meticulous, high-reasoning assistant.',
         'Reason carefully internally. Provide a concise, well-structured final answer.'
+      ].join(' ');
+    case 'coder':
+      return [
+        'You are a senior coding assistant. Return only JSON with the following schema:',
+        '{ "format": "coder_blocks_v1", "blocks": [ { "type": "paragraph", "text": "..." }, { "type": "code", "language": "<language>", "filename": "<optional>", "code": "<code-without-backticks>" } ] }',
+        'Rules:',
+        '- Output strictly valid JSON. No Markdown fences or backticks. No surrounding prose.',
+        '- Prefer multiple small code blocks over one huge block.',
+        '- Use language keys compatible with highlight.js common languages (e.g., javascript, typescript, python, bash, json, html, css, markdown, java, csharp, go, rust, php, ruby, kotlin, swift, sql, yaml, dockerfile).',
+        '- If you include a filename, keep it simple (e.g., "index.html").',
+        '- Keep paragraphs brief and technical.',
+        'Do not browse the web or include URLs unless asked.'
       ].join(' ');
     default:
       return 'You are a helpful assistant.';
@@ -214,8 +232,37 @@ router.post('/', async (req, res, next) => {
         maxTokens: (spec && spec.maxOutputTokens) ? spec.maxOutputTokens : undefined
       });
 
+    // Ensure Coder mode returns strict JSON for client-side rendering
+    let assistantContent = response.text || '';
+    if (mode === 'coder') {
+      try {
+        let t = String(assistantContent || '').trim();
+        // Strip common triple-fence wrappers if model ignored instructions
+        if (/^```/m.test(t)) {
+          t = t.replace(/^```[a-zA-Z0-9_-]*\s*\n?/, '').replace(/```$/, '');
+        }
+        const parsed = JSON.parse(t);
+        // Basic shape guard for our UI renderer
+        if (parsed && parsed.format === 'coder_blocks_v1' && Array.isArray(parsed.blocks)) {
+          assistantContent = JSON.stringify(parsed);
+        } else {
+          throw new Error('Invalid coder_blocks_v1 shape');
+        }
+      } catch {
+        // Fallback: wrap raw output into a minimal valid schema
+        const fallback = {
+          format: 'coder_blocks_v1',
+          blocks: [
+            { type: 'paragraph', text: 'Output could not be parsed as JSON; showing raw content as text.' },
+            { type: 'code', language: 'text', filename: null, code: String(assistantContent || '') }
+          ]
+        };
+        assistantContent = JSON.stringify(fallback);
+      }
+    }
+
     const payload = {
-      message: { role: 'assistant', content: response.text },
+      message: { role: 'assistant', content: assistantContent },
       modelUsed: response.modelUsed,
       providerUsed: response.provider,
       disclaimer: spec.disclaimer || null,
