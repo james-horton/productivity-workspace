@@ -909,6 +909,11 @@ body.modal-open { overflow: hidden; }
 #chatMessages.coder-mode .coder-filename .btn.icon-only:active {
   transform: translateY(0);
 }
+#chatMessages.coder-mode .coder-filename .btn.icon-only.copied {
+  background: color-mix(in oklab, var(--primary) 35%, #0e1116);
+  border-color: color-mix(in oklab, var(--primary) 60%, #30363d);
+  color: #e6edf3;
+}
 #chatMessages.coder-mode .coder-filename .coder-lang {
   opacity: .85;
   font-weight: 500;
