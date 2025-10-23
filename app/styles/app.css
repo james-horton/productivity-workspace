@@ -844,3 +844,116 @@ body.modal-open { overflow: hidden; }
   border-color: var(--accent);
   outline: none;
 }
+
+/* Coder mode: force stable, readable colors independent of theme and honor highlight.js tokens */
+#chatMessages.coder-mode .msg .bubble {
+  background: #0e1116 !important;  /* dark neutral */
+  color: #e6edf3 !important;       /* light neutral */
+  border-color: #30363d !important; /* subtle border */
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* coder-friendly default */
+}
+
+#chatMessages.coder-mode .msg.user .bubble {
+  background: #161b22 !important;   /* differentiate user bubbles but keep dark neutral */
+  color: #e6edf3 !important;
+  border-color: #30363d !important;
+}
+
+#chatMessages.coder-mode .coder-paragraph {
+  margin: 0.35rem 0;
+  line-height: 1.5;
+}
+
+#chatMessages.coder-mode .coder-block {
+  margin: 0.5rem 0 0.85rem 0;
+}
+
+#chatMessages.coder-mode .coder-filename {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  padding: .4rem .6rem;
+  background: #0b0f14;
+  color: #9aa8ac;
+  border: 1px solid #30363d;
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+/* Layout helpers for filename row */
+#chatMessages.coder-mode .coder-filename .left,
+#chatMessages.coder-mode .coder-filename .right {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+}
+/* Export button styling to match other icon-only buttons, slightly smaller */
+#chatMessages.coder-mode .coder-filename .btn.icon-only {
+  inline-size: 26px;
+  block-size: 26px;
+  padding: 0;
+  border-radius: 8px;
+  background: #0e1116;
+  color: #9aa8ac;
+  border: 1px solid #30363d;
+  transition: transform .06s ease, background .2s ease, border-color .2s ease, box-shadow .25s ease, color .2s ease;
+}
+#chatMessages.coder-mode .coder-filename .btn.icon-only:hover {
+  background: #10161b;
+  color: #e6edf3;
+  transform: translateY(-1px);
+}
+#chatMessages.coder-mode .coder-filename .btn.icon-only:active {
+  transform: translateY(0);
+}
+#chatMessages.coder-mode .coder-filename .coder-lang {
+  opacity: .85;
+  font-weight: 500;
+}
+
+#chatMessages.coder-mode pre {
+  margin: 0;
+}
+
+#chatMessages.coder-mode pre code.hljs {
+  display: block;
+  background: #0d1117 !important; /* align with GitHub Dark Dimmed baseline */
+  color: #c9d1d9 !important;      /* base text; tokens will override */
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: .8rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  /* ensure code tokens are readable even if themes attempt to cascade colors */
+  text-shadow: none;
+}
+#chatMessages.coder-mode .coder-block pre code.hljs {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+#chatMessages.coder-mode .msg .bubble a {
+  color: #58a6ff !important; /* readable link color on dark base */
+  border-bottom-color: transparent;
+  text-decoration: none;
+}
+#chatMessages.coder-mode .msg .bubble a:hover,
+#chatMessages.coder-mode .msg .bubble a:focus-visible {
+  border-bottom: 1px solid #58a6ff !important;
+  outline: none;
+}
+
+/* Keep spacing consistent with existing chat layout on small screens */
+@media (max-width: 600px) {
+  #chatMessages.coder-mode .msg.assistant .bubble {
+    margin-right: 5%;
+    max-width: 95%;
+  }
+  #chatMessages.coder-mode .msg.user .bubble {
+    margin-left: 5%;
+    max-width: 95%;
+  }
+}

@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initNewsModalUI();
 
   // Render initial chat from state (starter added above if needed)
-  renderChat(getChatHistory(s.mode));
+  renderChat(getChatHistory(s.mode), { mode: s.mode });
 });
 
 function wireControls() {
@@ -109,7 +109,7 @@ function wireControls() {
     setMode(m);
     syncDisclaimerForMode(m);
     showStarterIfEmpty(m);
-    renderChat(getChatHistory(m));
+    renderChat(getChatHistory(m), { mode: m });
   });
 
 
@@ -242,7 +242,7 @@ function wireControls() {
 
     // Render pending
     setBusy(true);
-    renderChat(getChatHistory(s.mode));
+    renderChat(getChatHistory(s.mode), { mode: s.mode });
     showAssistantTyping();
 
     // Anchor the assistant typing message to the top of the viewport
@@ -301,7 +301,7 @@ function wireControls() {
       // Append assistant reply
       appendChatMessage(s.mode, resp.message);
       // Re-render with sources (if any)
-      renderChat(getChatHistory(s.mode), { sources: resp.sources || [] });
+      renderChat(getChatHistory(s.mode), { sources: resp.sources || [], mode: s.mode });
       // Maintain top anchoring on the final assistant message (avoid bottom scrolling)
       requestAnimationFrame(() => { anchorLatestAssistantToTop(); });
     } catch (err) {
@@ -311,7 +311,7 @@ function wireControls() {
         role: 'assistant',
         content: `Error: ${err.message || 'Something went wrong.'}`
       });
-      renderChat(getChatHistory(getState().mode));
+      renderChat(getChatHistory(getState().mode), { mode: getState().mode });
       // Maintain top anchoring on the error assistant message as well
       requestAnimationFrame(() => { anchorLatestAssistantToTop(); });
     } finally {
@@ -476,11 +476,11 @@ function wireStateEvents() {
     hydrateModeSelect(mode);
     syncDisclaimerForMode(mode);
     showStarterIfEmpty(mode);
-    renderChat(getChatHistory(mode));
+    renderChat(getChatHistory(mode), { mode });
   });
   document.addEventListener('pw:chat:updated', () => {
     const s = getState();
-    renderChat(getChatHistory(s.mode));
+    renderChat(getChatHistory(s.mode), { mode: s.mode });
   });
   document.addEventListener('pw:reddit:changed', (e) => {
     hydrateRedditTabs();

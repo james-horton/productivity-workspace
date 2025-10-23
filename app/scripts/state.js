@@ -84,6 +84,13 @@ export const MODES = {
     starter: 'What complex problem should we think through with deep reasoning?',
     disclaimer: 'High-reasoning mode. No web search and no code interpreter are available.',
     defaultSearch: false
+  },
+  coder: {
+    id: 'coder',
+    label: 'Coder',
+    starter: 'Whatcha wanna code?',
+    disclaimer: '',
+    defaultSearch: false
   }
 };
 
@@ -96,7 +103,8 @@ const chatHistories = {
   excuse: [],
   grammar: [],
   eli5: [],
-  big_brain: []
+  big_brain: [],
+  coder: []
 };
 
 const state = {
