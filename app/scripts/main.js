@@ -157,12 +157,51 @@ function wireControls() {
     });
   }
  
-  // Download chat as .txt
+  // Download chat or coder files
   const downloadBtn = chatDownload && chatDownload();
   if (downloadBtn) {
-    downloadBtn.addEventListener('click', () => {
+    downloadBtn.addEventListener('click', async () => {
       const s = getState();
       const history = getChatHistory(s.mode);
+
+      if (s.mode === 'coder') {
+        const files = collectCoderFiles(history);
+        try {
+          if (files && files.length) {
+            try {
+              await downloadCoderZip(files);
+            } catch (err) {
+              // Fallback: single text file when zipping is not available
+              downloadCoderText(files, s.mode);
+            }
+          } else {
+            // No code files parsed; fallback to conversation text export (JSON excluded by formatter)
+            const text = formatChatForCopy(history, s.mode);
+            const modeName = (MODES[s.mode]?.label || s.mode || 'chat');
+            const modeSlug = String(modeName).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            const ts = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+            const filename = `${modeSlug}_${ts}.txt`;
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            triggerBlobDownload(blob, filename);
+          }
+        } finally {
+          // Button feedback
+          const btn = downloadBtn;
+          const originalTitle = btn.title;
+          const originalAria = btn.getAttribute('aria-label') || originalTitle || 'Download';
+          btn.title = 'Downloaded';
+          btn.setAttribute('aria-label', 'Downloaded');
+          setTimeout(() => {
+            btn.title = originalTitle;
+            btn.setAttribute('aria-label', originalAria);
+          }, UI_DEFAULTS.copySuccessDelayMs);
+        }
+        return;
+      }
+
+      // Non-coder modes: download plain text export
       const text = formatChatForCopy(history, s.mode);
 
       const modeName = (MODES[s.mode]?.label || s.mode || 'chat');
@@ -173,16 +212,7 @@ function wireControls() {
       const filename = `${modeSlug}_${ts}.txt`;
 
       const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 0);
+      triggerBlobDownload(blob, filename);
 
       const btn = downloadBtn;
       const originalTitle = btn.title;
@@ -534,6 +564,10 @@ function showStarterIfEmpty(mode) {
 }
 
 function formatChatForCopy(messages, mode) {
+  // Special formatting for coder mode: include messages and code by filename, but never include raw JSON
+  if (mode === 'coder') {
+    return formatChatForCoderCopy(messages);
+  }
   const modeLabel = MODES[mode]?.label || mode || '';
   const ts = new Date().toLocaleString();
   const header = `Chat - ${modeLabel} (${ts})`;
@@ -544,6 +578,150 @@ function formatChatForCopy(messages, mode) {
     return `${role}:\n${text}`;
   }).join('\n\n');
   return header + sep + body + '\n';
+}
+
+// Build a copyable text for coder mode without including any JSON from the API
+function formatChatForCoderCopy(messages) {
+  const modeLabel = MODES['coder']?.label || 'Coder';
+  const ts = new Date().toLocaleString();
+  const header = `Chat - ${modeLabel} (${ts})`;
+  const sep = '\n' + '-'.repeat(header.length) + '\n\n';
+  const parts = [];
+  (messages || []).forEach(m => {
+    if (m.role === 'user') {
+      parts.push(`User:\n${String(m.content || '')}`);
+    } else {
+      const blocks = tryParseCoderBlocks(String(m.content || ''));
+      if (blocks) {
+        blocks.forEach(b => {
+          if (!b || typeof b !== 'object') return;
+          if (b.type === 'paragraph') {
+            parts.push(`Assistant:\n${String(b.text || '')}`);
+          } else if (b.type === 'code') {
+            const fname = sanitizeFilename(b.filename) || '(untitled)';
+            const lang = (b.language || '').toString().trim();
+            const label = `Assistant - File: ${fname}` + (lang ? ` [${lang}]` : '');
+            parts.push(`${label}\n${String(b.code || '')}`);
+          }
+        });
+      } else {
+        // Not coder JSON; include as plain assistant text
+        parts.push(`Assistant:\n${String(m.content || '')}`);
+      }
+    }
+  });
+  return header + sep + parts.join('\n\n') + '\n';
+}
+
+// Attempt to parse coder_blocks_v1 from assistant content; return blocks or null
+function tryParseCoderBlocks(raw) {
+  try {
+    const obj = JSON.parse(String(raw || ''));
+    if (obj && obj.format === 'coder_blocks_v1' && Array.isArray(obj.blocks)) {
+      return obj.blocks;
+    }
+  } catch {}
+  return null;
+}
+
+// Sanitize filenames for safe downloads
+function sanitizeFilename(name) {
+  const s = String(name || '').trim();
+  if (!s) return '';
+  return s.replace(/[/\\?%*:|"<>]/g, '').replace(/\s+/g, ' ').slice(0, 180);
+}
+
+// Collect the latest code block for each filename across the conversation (assistant messages only)
+function collectCoderFiles(messages) {
+  const map = new Map(); // filename -> { language, code }
+  const order = [];
+  (messages || []).forEach(m => {
+    if (m.role !== 'assistant') return;
+    const blocks = tryParseCoderBlocks(String(m.content || ''));
+    if (!blocks) return;
+    blocks.forEach(b => {
+      if (!b || b.type !== 'code') return;
+      const fname = sanitizeFilename(b.filename || '') || '';
+      if (!fname) return;
+      if (!map.has(fname)) order.push(fname);
+      map.set(fname, {
+        language: String(b.language || '').trim(),
+        code: String(b.code || '')
+      });
+    });
+  });
+  return order.map(fname => ({ filename: fname, ...(map.get(fname) || { language: '', code: '' }) }));
+}
+
+// Derive a zip filename from the first code filename (exclude extension)
+function fileBaseNameForZip(files) {
+  const first = files && files[0] && files[0].filename;
+  const base = sanitizeFilename(first || 'export');
+  const name = base.replace(/\.[^.]+$/, '') || 'export';
+  return name;
+}
+
+// Ensure JSZip is available (load from CDN if needed)
+async function ensureJSZip() {
+  if (window.JSZip) return window.JSZip;
+  await new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('Failed to load JSZip'));
+    document.head.appendChild(s);
+  });
+  return window.JSZip;
+}
+
+// Generic blob download helper
+function triggerBlobDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 0);
+}
+
+// Build and download a zip of all code files (coder mode)
+async function downloadCoderZip(files) {
+  const JSZip = await ensureJSZip();
+  const zip = new JSZip();
+  files.forEach(f => {
+    const name = f.filename || 'snippet.txt';
+    zip.file(name, String(f.code || ''));
+  });
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const zipName = fileBaseNameForZip(files) + '.zip';
+  triggerBlobDownload(blob, zipName);
+}
+
+// Fallback: download a single .txt containing all code files with headers
+function downloadCoderText(files, mode) {
+  const modeLabel = MODES[mode]?.label || mode || 'chat';
+  const ts = new Date().toLocaleString();
+  const header = `Chat - ${modeLabel} (${ts})`;
+  const sep = '\n' + '-'.repeat(header.length) + '\n\n';
+  const body = (files || []).map(f => {
+    const fname = f.filename || '(untitled)';
+    return `=== ${fname} ===\n${String(f.code || '')}`;
+  }).join('\n\n');
+  const text = header + sep + body + '\n';
+
+  const modeName = (MODES[mode]?.label || mode || 'chat');
+  const modeSlug = String(modeName).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const ts2 = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+  const filename = `${modeSlug}_${ts2}.txt`;
+
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  triggerBlobDownload(blob, filename);
 }
 
 async function refreshQuote() {

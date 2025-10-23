@@ -71,6 +71,49 @@ function triggerDownload(text, filename) {
   }, 0);
 }
 
+async function copyTextToClipboard(text, btn) {
+  const t = String(text || '');
+  const button = btn;
+  const originalTitle = button ? button.title : '';
+  const originalAria = button ? (button.getAttribute('aria-label') || originalTitle || 'Copy') : '';
+  const reset = () => {
+    if (button) {
+      button.title = originalTitle;
+      button.setAttribute('aria-label', originalAria);
+      button.classList.remove('copied');
+    }
+  };
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(t);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = t;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (!ok) throw new Error('execCommand copy failed');
+    }
+    if (button) {
+      button.title = 'Copied!';
+      button.setAttribute('aria-label', 'Copied!');
+      button.classList.add('copied');
+      setTimeout(() => { reset(); }, 1200);
+    }
+  } catch {
+    if (button) {
+      button.title = 'Copy failed';
+      button.setAttribute('aria-label', 'Copy failed');
+      setTimeout(() => { reset(); }, 1500);
+    }
+  }
+}
+
 /**
  * Render Coder blocks from JSON (coder_blocks_v1).
  * Fallback to plain text rendering when parsing fails or schema invalid.
@@ -116,6 +159,22 @@ function renderCoderBlocks(raw) {
           lg.textContent = langText;
           right.appendChild(lg);
         }
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'btn icon-only coder-copy';
+        copyBtn.type = 'button';
+        copyBtn.title = 'Copy';
+        copyBtn.setAttribute('aria-label', 'Copy code');
+        copyBtn.innerHTML = `
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect>
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+          </svg>
+        `;
+        copyBtn.addEventListener('click', async () => {
+          await copyTextToClipboard(String(b.code || ''), copyBtn);
+        });
+        right.appendChild(copyBtn);
 
         const exportBtn = document.createElement('button');
         exportBtn.className = 'btn icon-only coder-export';
