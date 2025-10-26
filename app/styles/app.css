@@ -330,7 +330,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
 /* In collapsed mode, show the quick equals button to the right of the input */
 .calculator-card.collapsed .calc-quick-equals {
   display: inline-flex;
-  animation: calcQuickIn 400ms ease-out;
+  animation: calcQuickIn 320ms ease-out;
 }
 
 /* Quick equals slide/fade in animation */
@@ -368,6 +368,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
   /* Enable smooth slide animations and prevent overflow during transitions */
   overflow: hidden;
   transition: max-height 240ms ease;
+  contain: paint; /* isolate painting to prevent subpixel bleed when collapsed */
 }
 
 /* Default expanded state (no cap); JS will manage max-height for accurate animation */
@@ -376,6 +377,10 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
 /* Collapsed state: hide keys with slide-up (paired with JS for height measurement) */
 .calculator-card.collapsed .calc-keys { max-height: 0; }
 
+/* After collapse completes (aria-hidden=true set by JS), stop painting keys to avoid 1px flicker */
+.calculator-card.collapsed .calc-keys[aria-hidden="true"] {
+  visibility: hidden; /* hide paint without affecting layout/animation timing */
+}
 /* Fallback behavior for browsers without inert support */
 [inert] {
   pointer-events: none;
@@ -442,6 +447,18 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
   color: #06110a;
   border-color: color-mix(in oklab, var(--primary) 70%, #000);
   font-weight: bold;
+}
+
+/* Stabilize essential buttons: prevent 1px hover lift (no vertical jitter) */
+.calculator .calc-btn:hover,
+.calculator .calc-btn:active,
+#calcEqualsQuick.btn:hover,
+#calcEqualsQuick.btn:active,
+#chatSend.btn:hover,
+#chatSend.btn:active,
+#webSearchSend.btn:hover,
+#webSearchSend.btn:active {
+  transform: none;
 }
 
 /* Icon-only button styles (for refresh) */
