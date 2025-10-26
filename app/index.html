@@ -83,6 +83,48 @@
       </div>
     </section>
 
+    <section id="calculator" class="card calculator-card collapsed" aria-labelledby="calculatorTitle">
+      <div class="card-head">
+        <h2 id="calculatorTitle">Calculator</h2>
+        <button id="calcToggle" class="btn icon-only" type="button" aria-label="Show buttons" title="Show buttons" aria-expanded="false">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+      </div>
+      <div class="calculator" id="calculatorRoot">
+        <label class="sr-only" for="calcDisplay">Expression</label>
+        <div class="calc-display-row">
+          <input id="calcDisplay" class="calc-display" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="0" aria-label="Calculator display" />
+          <button id="calcEqualsQuick" class="btn primary calc-btn equals calc-quick-equals" type="button" data-key="=" aria-label="Equals">=</button>
+        </div>
+        <div class="calc-keys" id="calcKeys" role="group" aria-label="Calculator keys" aria-hidden="true" inert style="max-height: 0;">
+          <button type="button" class="btn calc-btn action" data-key="C">C</button>
+          <button type="button" class="btn calc-btn action" data-key="⌫" aria-label="Backspace">⌫</button>
+          <button type="button" class="btn calc-btn op" data-key="÷">÷</button>
+          <button type="button" class="btn calc-btn op" data-key="×">×</button>
+
+          <button type="button" class="btn calc-btn" data-key="7">7</button>
+          <button type="button" class="btn calc-btn" data-key="8">8</button>
+          <button type="button" class="btn calc-btn" data-key="9">9</button>
+          <button type="button" class="btn calc-btn op" data-key="-">-</button>
+
+          <button type="button" class="btn calc-btn" data-key="4">4</button>
+          <button type="button" class="btn calc-btn" data-key="5">5</button>
+          <button type="button" class="btn calc-btn" data-key="6">6</button>
+          <button type="button" class="btn calc-btn op" data-key="+">+</button>
+
+          <button type="button" class="btn calc-btn" data-key="1">1</button>
+          <button type="button" class="btn calc-btn" data-key="2">2</button>
+          <button type="button" class="btn calc-btn" data-key="3">3</button>
+          <button type="button" class="btn primary calc-btn equals" data-key="=" aria-label="Equals">=</button>
+
+          <button type="button" class="btn calc-btn zero" data-key="0">0</button>
+          <button type="button" class="btn calc-btn" data-key=".">.</button>
+        </div>
+      </div>
+    </section>
+
     <section id="chat" class="card chat-card" aria-labelledby="chatTitle">
       <div class="card-head">
         <div class="chat-head-left">
