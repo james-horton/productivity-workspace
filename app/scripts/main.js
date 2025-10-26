@@ -14,6 +14,7 @@ import { initMatrixRain, setMatrixRainEnabled } from './ui/matrixRain.js';
 import { initNyanCat, setNyanCatEnabled } from './ui/nyanCat.js';
 import { $, isMobileView } from './utils/helpers.js';
 import { REDDIT, NEWS, UI_DEFAULTS } from './config.js';
+import { initCalculatorUI } from './ui/calculatorUI.js';
 
 const REDDIT_MAX_POSTS = REDDIT.maxPosts;
 
@@ -82,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
   wireStateEvents();
   initSettingsUI();
   initNewsModalUI();
+  initCalculatorUI();
 
   // Render initial chat from state (starter added above if needed)
   renderChat(getChatHistory(s.mode), { mode: s.mode });

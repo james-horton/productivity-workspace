@@ -14,6 +14,11 @@ body {
 }
 html { scroll-behavior: smooth; }
 
+:root {
+  /* Desktop starting height for Quote, Clock, and Collapsed Calculator cards */
+  --mini-card-start-height: 170px;
+}
+
 /* Utility */
 .sr-only {
   position: absolute !important;
@@ -200,18 +205,47 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
   padding: 0;
 }
 
-/* Hard-cap header height for Inspiration and Now to be visually equal */
+/* Hard-cap header height for Inspiration, Now, and Calculator to be visually equal */
 .quote-card .card-head,
-.clock-card .card-head {
+.clock-card .card-head,
+.calculator-card .card-head {
   block-size: 48px;            /* fixed header height */
   padding-block: 0.4rem;       /* balanced to fit 30px icon/text */
 }
 
 /* Specific card placements */
-.quote-card, .clock-card, .chat-card, .news-card, .search-card, .reddit-card { padding-bottom: 0.25rem; }
+.quote-card, .clock-card, .calculator-card, .chat-card, .news-card, .search-card, .reddit-card { padding-bottom: 0.25rem; }
 @media (min-width: 900px) {
-  .quote-card { grid-column: span 6; }
-  .clock-card { grid-column: span 6; }
+  /* Three-up row: Quote (left), Clock (center), Calculator (right) */
+  .quote-card { grid-column: 1 / span 4; }
+  .clock-card { grid-column: 5 / span 4; }
+  .calculator-card { grid-column: 9 / span 4; }
+
+  /* Increase initial height of Quote/Clock cards for better readability on desktop */
+  .quote-card,
+  .clock-card {
+    block-size: var(--mini-card-start-height, 220px);
+    align-self: start;       /* prevent stretching to the calculator's height */
+    display: flex;           /* allow header + body layout */
+    flex-direction: column;
+  }
+
+  /* Let long quotes scroll within the reduced card height */
+  .quote-card .quote-text {
+    flex: 1 1 auto;
+    overflow: auto;
+  }
+
+  /* Ensure clock content centers nicely within the reduced card */
+  .clock-card .clock {
+    flex: 1 1 auto;
+    align-content: center;
+    justify-items: center;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  /* Remaining sections span full width */
   .chat-card  { grid-column: 1 / -1; }
   .news-card  { grid-column: 1 / -1; }
   .search-card { grid-column: 1 / -1; }
@@ -222,7 +256,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
 .quote-text {
   margin: 0;
   padding: 0.75rem;
-  font-size: 0.92rem;
+  font-size: 0.85rem;
   color: var(--text);
 }
 
@@ -232,7 +266,8 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
   display: grid;
   gap: 0.2rem;
   align-items: center;
-  justify-items: start;
+  justify-items: center; /* center horizontally */
+  text-align: center;    /* center text within the grid cells */
 }
 .time {
   font-feature-settings: "tnum";
@@ -245,6 +280,149 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
   color: var(--muted);
   font-size: 0.85rem;
 }
+
+/* Calculator */
+.calculator {
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.calc-display {
+  width: 100%;
+  padding: 0.65rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid var(--ring);
+  background: var(--surface-2);
+  color: var(--text);
+  outline: none;
+  font-size: 1.1rem;
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+.calc-display::placeholder { color: var(--muted); opacity: .7; }
+.calc-display.calc-invalid {
+  border-color: color-mix(in oklab, crimson 45%, var(--ring));
+  box-shadow: 0 0 0 3px color-mix(in oklab, crimson 20%, transparent);
+}
+
+/* Calculator display row: holds input and the quick equals button */
+.calc-display-row {
+  display: grid;
+  grid-template-columns: 1fr; /* expanded: full-width input */
+  align-items: center;
+  position: relative; /* allow absolute-positioned quick equals during slide-out */
+}
+
+/* In collapsed mode, lay out the input and quick equals side-by-side */
+.calculator-card.collapsed .calc-display-row {
+  grid-template-columns: 1fr auto;
+  column-gap: 0.5rem;
+}
+
+/* Quick equals button (sits to the right of the input in collapsed mode) */
+.calc-quick-equals {
+  display: none;          /* hidden when not collapsed */
+  position: static;       /* participate in normal flow */
+  min-height: 42px;       /* match .calc-btn height */
+}
+
+/* In collapsed mode, show the quick equals button to the right of the input */
+.calculator-card.collapsed .calc-quick-equals {
+  display: inline-flex;
+  animation: calcQuickIn 400ms ease-out;
+}
+
+/* Quick equals slide/fade in animation */
+@keyframes calcQuickIn {
+  from { opacity: 0; transform: translateX(10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Quick equals slide-out when expanding (complement to collapse) */
+.calculator-card .calc-quick-equals.animating-out {
+  display: inline-flex !important; /* keep visible during animation even when expanded */
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  animation: calcQuickOut 320ms ease-in forwards;
+  pointer-events: none; /* do not block the input while sliding out */
+}
+
+@keyframes calcQuickOut {
+  from { opacity: 1; transform: translateY(-50%) translateX(0); }
+  to   { opacity: 0; transform: translateY(-50%) translateX(12px); }
+}
+
+/* Reduced motion: disable equals animation */
+@media (prefers-reduced-motion: reduce) {
+  .calculator-card.collapsed .calc-quick-equals { animation: none; }
+  .calculator-card .calc-quick-equals.animating-out { animation: none; }
+}
+
+.calc-keys {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  /* Enable smooth slide animations and prevent overflow during transitions */
+  overflow: hidden;
+  transition: max-height 240ms ease;
+}
+
+/* Default expanded state (no cap); JS will manage max-height for accurate animation */
+.calculator-card .calc-keys { max-height: none; }
+
+/* Collapsed state: hide keys with slide-up (paired with JS for height measurement) */
+.calculator-card.collapsed .calc-keys { max-height: 0; }
+
+/* Fallback behavior for browsers without inert support */
+[inert] {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* When collapsed on desktop, match quote/clock heights (50% of the row) */
+@media (min-width: 900px) {
+  .calculator-card.collapsed {
+    block-size: var(--mini-card-start-height, 220px);
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Vertically center the calculator display within the card body when collapsed */
+  .calculator-card.collapsed .calculator {
+    /* Fill the body area below the fixed header so we can center within it */
+    flex: 1 1 auto;
+    /* Override grid to simplify vertical centering while collapsed */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* vertical center in column layout */
+  }
+}
+
+.calc-btn {
+  min-height: 42px;
+  font-weight: 600;
+}
+.calc-btn.op {
+  background: color-mix(in oklab, var(--accent) 14%, var(--surface));
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--ring));
+}
+.calc-btn.action {
+  background: color-mix(in oklab, var(--primary) 12%, var(--surface));
+  border-color: color-mix(in oklab, var(--primary) 45%, var(--ring));
+}
+.calc-btn.equals {
+  grid-row: span 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-weight: 800; /* emphasize equals buttons */
+}
+.calc-btn.zero { grid-column: span 2; }
 
 /* Buttons */
 .btn {
@@ -396,6 +574,29 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
 #chatCopy.btn.copied {
   background: color-mix(in oklab, var(--primary) 35%, var(--surface));
   border-color: color-mix(in oklab, var(--primary) 60%, var(--ring));
+}
+
+/* Calculator collapse/expand toggle: match themed hover/active/focus like other icon buttons */
+#calcToggle.btn {
+  transition: transform .06s ease, background .2s ease, border-color .2s ease, box-shadow .25s ease, color .2s ease;
+}
+#calcToggle.btn:hover {
+  background: color-mix(in oklab, var(--accent) 22%, var(--surface));
+  border-color: color-mix(in oklab, var(--accent) 60%, var(--ring));
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--accent) 18%, transparent),
+    0 8px 22px -8px color-mix(in oklab, var(--accent) 45%, #000);
+  color: var(--text);
+  transform: translateY(-1px) scale(1.01);
+}
+#calcToggle.btn:active {
+  transform: translateY(0) scale(0.995);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 16%, transparent);
+}
+#calcToggle.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 45%, transparent);
+  border-color: color-mix(in oklab, var(--accent) 60%, var(--ring));
 }
 
 /* Chat */
@@ -961,4 +1162,15 @@ body.modal-open { overflow: hidden; }
     margin-left: 5%;
     max-width: 95%;
   }
+}
+
+/* Ensure quick equals doesn't span grid rows from .calc-btn.equals (keys grid rule) */
+.calc-btn.equals.calc-quick-equals { grid-row: auto; }
+
+
+/* Expanded mode: ensure the quick equals button is fully hidden once the slide-out completes.
+   Reason: .calc-btn.equals sets display:inline-flex, which overrides .calc-quick-equals { display:none }.
+   Keep it visible only during the slide-out (.animating-out) while the card is expanding. */
+.calculator-card:not(.collapsed) .calc-quick-equals:not(.animating-out) {
+  display: none !important; /* override .calc-btn.equals */
 }
