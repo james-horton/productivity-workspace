@@ -213,6 +213,9 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
   padding-block: 0.4rem;       /* balanced to fit 30px icon/text */
 }
 
+/* Hide Clock card on mobile (default). It will reappear on desktop (>=900px) where .clock-card is set to display:flex. */
+.clock-card { display: none; }
+
 /* Specific card placements */
 .quote-card, .clock-card, .calculator-card, .chat-card, .news-card, .search-card, .reddit-card { padding-bottom: 0.25rem; }
 @media (min-width: 900px) {
