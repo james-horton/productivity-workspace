@@ -53,8 +53,8 @@
     <nav class="menu-bar" aria-label="Sections">
       <div class="tabs">
         <a class="tab" href="#chat">Chat</a>
-        <a class="tab" href="#news">News</a>
         <a class="tab" href="#websearch">Web Search</a>
+        <a class="tab" href="#news">News</a>
         <a class="tab" href="#reddit">Reddit</a>
       </div>
     </nav>
@@ -95,7 +95,7 @@
       <div class="calculator" id="calculatorRoot">
         <label class="sr-only" for="calcDisplay">Expression</label>
         <div class="calc-display-row">
-          <input id="calcDisplay" class="calc-display" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="0" aria-label="Calculator display" />
+          <input id="calcDisplay" class="calc-display" type="text" autocomplete="off" spellcheck="false" placeholder="0" aria-label="Calculator display" />
           <button id="calcEqualsQuick" class="btn primary calc-btn equals calc-quick-equals" type="button" data-key="=" aria-label="Equals">=</button>
         </div>
         <div class="calc-keys" id="calcKeys" role="group" aria-label="Calculator keys" aria-hidden="true" inert style="max-height: 0;">
@@ -182,6 +182,25 @@
       </form>
     </section>
 
+    <section id="websearch" class="card search-card" aria-labelledby="webSearchTitle">
+    
+      <div class="card-head">
+        <h2 id="webSearchTitle">Web Search</h2>
+      </div>
+      
+      <form id="webSearchForm" class="chat-input" autocomplete="off">
+        <label class="sr-only" for="webSearchInput">Your query</label>
+        <textarea id="webSearchInput" placeholder="Type your search..." required rows="1"></textarea>
+        <button id="webSearchSend" class="btn primary" type="submit">Search</button>
+      </form>
+      
+      <div id="webSearchItems" class="news-items" aria-live="polite" aria-busy="false">
+        <!-- Web search results render here -->
+      </div>
+    
+    </section>
+
+    
     <section id="news" class="card news-card" aria-labelledby="newsTitle">
       <div class="card-head">
         <h2 id="newsTitle">News</h2>
@@ -199,30 +218,11 @@
           </button>
         </div>
       </div>
-
+      
       <div id="newsItems" class="news-items" aria-live="polite" aria-busy="false">
         <!-- News items render here -->
       </div>
     </section>
-
-    <section id="websearch" class="card search-card" aria-labelledby="webSearchTitle">
-
-      <div class="card-head">
-        <h2 id="webSearchTitle">Web Search</h2>
-      </div>
-      
-      <form id="webSearchForm" class="chat-input" autocomplete="off">
-        <label class="sr-only" for="webSearchInput">Your query</label>
-        <textarea id="webSearchInput" placeholder="Type your search..." required rows="1"></textarea>
-        <button id="webSearchSend" class="btn primary" type="submit">Search</button>
-      </form>
-      
-      <div id="webSearchItems" class="news-items" aria-live="polite" aria-busy="false">
-        <!-- Web search results render here -->
-      </div>
-
-    </section>
-
     <section id="reddit" class="card reddit-card" aria-labelledby="redditTitle">
       <div class="card-head">
         <h2 id="redditTitle">Reddit</h2>

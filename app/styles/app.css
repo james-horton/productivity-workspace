@@ -413,6 +413,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
 .calc-btn {
   min-height: 42px;
   font-weight: 600;
+  font-size: 18px;
 }
 .calc-btn.op {
   background: color-mix(in oklab, var(--accent) 14%, var(--surface));
