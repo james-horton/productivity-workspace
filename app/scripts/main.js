@@ -67,6 +67,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial quote and news + reddit
   void refreshQuote();
   setActiveTab(NEWS.defaultCategory);
+
+  // Collapsible toggles are rendered inline below summaries in News and Web Search.
+
   void loadNews(NEWS.defaultCategory);
   hydrateRedditTabs();
   // Update subreddit tab labels when viewport crosses mobile threshold
