@@ -568,6 +568,17 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
   gap: 0.5rem;
 }
 
+/* Chat controls: place "Mode" label left of the dropdown to reduce header height */
+.chat-controls .control {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+.chat-controls .control .label {
+  white-space: nowrap;
+  line-height: 1;
+}
+
 /* Copy button (Chat) */
 #chatCopy.btn,
 #chatReset.btn,
