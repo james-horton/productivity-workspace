@@ -2,7 +2,7 @@
  * Tavily Web Search UI rendering (summary + list of links)
  */
 
-import { $, hostFromUrl } from '../utils/helpers.js';
+import { $, hostFromUrl, initCollapsible } from '../utils/helpers.js';
 import { UI_DEFAULTS } from '../config.js';
 
 export function setWebSearchBusy(on) {
@@ -32,7 +32,50 @@ export function renderWebSearchResults(items, { answer } = {}) {
     empty.className = 'news-item';
     empty.textContent = 'No results found. Try another search.';
     box.appendChild(empty);
+    // Remove header toggle if present since there's nothing to collapse
+    try {
+      const head = document.querySelector('#websearch .card-head');
+      const left = head && head.querySelector('.card-head-left');
+      const btn = left && left.querySelector('#webSearchSourcesToggle');
+      if (btn) btn.remove();
+    } catch {}
     return;
+  }
+
+  // Ensure chevron toggle appears in header next to "Web Search" when links exist
+  const head = document.querySelector('#websearch .card-head');
+  const titleEl = document.getElementById('webSearchTitle');
+  if (head && titleEl) {
+    // Create/ensure left group container (title + adjacent controls)
+    let left = head.querySelector('.card-head-left');
+    if (!left) {
+      left = document.createElement('div');
+      left.className = 'card-head-left';
+      head.insertBefore(left, head.firstChild);
+    }
+    // Move title into left group if not already there
+    if (titleEl.parentElement !== left) {
+      left.insertBefore(titleEl, left.firstChild);
+    }
+    // Remove any existing toggle to avoid duplicates
+    const existing = left.querySelector('#webSearchSourcesToggle');
+    if (existing) existing.remove();
+    // Create toggle button
+    const sourcesToggle = document.createElement('button');
+    sourcesToggle.id = 'webSearchSourcesToggle';
+    sourcesToggle.type = 'button';
+    sourcesToggle.className = 'btn icon-only chevron-toggle';
+    sourcesToggle.setAttribute('aria-label', 'show sources');
+    sourcesToggle.title = 'show sources';
+    sourcesToggle.setAttribute('aria-expanded', 'false');
+    sourcesToggle.innerHTML = `
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    `;
+    left.appendChild(sourcesToggle);
+    // Initialize collapsible behavior on the whole results box (hides link items only)
+    initCollapsible(sourcesToggle, box, { defaultCollapsed: true, expandedLabel: 'hide sources', collapsedLabel: 'show sources' });
   }
 
   items.forEach((item) => {
@@ -118,6 +161,21 @@ export function renderWebSearchLoading() {
   if (!box) return;
 
   box.innerHTML = '';
+
+  // Summary skeleton (shimmer enabled)
+  const sum = document.createElement('div');
+  sum.className = 'news-summary is-loading';
+  const l1 = document.createElement('div');
+  l1.className = 'skeleton-line skeleton';
+  const l2 = document.createElement('div');
+  l2.className = 'skeleton-line skeleton';
+  const l3 = document.createElement('div');
+  l3.className = 'skeleton-line skeleton';
+  sum.appendChild(l1);
+  sum.appendChild(l2);
+  sum.appendChild(l3);
+  box.appendChild(sum);
+
   const count = UI_DEFAULTS.skeletonItemCount;
   for (let i = 0; i < count; i++) {
     const wrap = document.createElement('article');

@@ -95,3 +95,56 @@ export function renderContentWithLinks(input) {
   }
   return frag;
 }
+// Simple reusable collapsible initializer for lists (News/Web Search)
+// Usage: initCollapsible(buttonEl, contentEl, { defaultCollapsed: true })
+export function initCollapsible(toggleBtn, contentEl, { defaultCollapsed = true, expandedLabel = 'Hide links', collapsedLabel = 'Show links' } = {}) {
+  try {
+    if (!toggleBtn || !contentEl) return () => {};
+    let collapsed = !!defaultCollapsed;
+
+    function apply() {
+      contentEl.setAttribute('data-collapsible', 'true');
+      contentEl.setAttribute('aria-hidden', collapsed ? 'true' : 'false');
+      toggleBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      const label = collapsed ? collapsedLabel : expandedLabel;
+      toggleBtn.setAttribute('aria-label', label);
+      toggleBtn.title = label;
+
+      // Associate control with collapsible region for a11y
+      if (contentEl && contentEl.id) {
+        toggleBtn.setAttribute('aria-controls', contentEl.id);
+      }
+
+      // Rotate chevron icon if present (match calculator)
+      const poly = toggleBtn.querySelector('svg polyline');
+      if (poly) {
+        // Down chevron when collapsed; up chevron when expanded
+        poly.setAttribute('points', collapsed ? '6 9 12 15 18 9' : '6 15 12 9 18 15');
+      }
+
+      // If the button has no element children (no icon), reflect state in visible text
+      if (!toggleBtn.firstElementChild) {
+        toggleBtn.textContent = label;
+      }
+    }
+
+    function setCollapsed(next) {
+      collapsed = !!next;
+      apply();
+    }
+
+    function toggle() {
+      setCollapsed(!collapsed);
+    }
+
+    toggleBtn.addEventListener('click', toggle);
+    // Initialize
+    apply();
+
+    // Return API in case caller wants to programmatically control it
+    return { toggle, setCollapsed, isCollapsed: () => collapsed };
+  } catch {
+    // no-op if init fails
+    return () => {};
+  }
+}
