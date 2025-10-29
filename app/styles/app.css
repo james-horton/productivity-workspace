@@ -790,6 +790,19 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
   line-height: 1.45;
 }
 
+/* Desktop: two-column layout for News and Web Search link lists; keep summary spanning full width */
+@media (min-width: 900px) {
+  #newsItems,
+  #webSearchItems {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Ensure the Tavily/News summary spans across both columns */
+  #newsItems .news-summary,
+  #webSearchItems .news-summary {
+    grid-column: 1 / -1;
+  }
+}
 /* Footer */
 .footer {
   padding: 2rem 1rem 3rem 1rem;

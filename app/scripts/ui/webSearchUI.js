@@ -60,14 +60,16 @@ export function renderWebSearchResults(items, { answer } = {}) {
     // Remove any existing toggle to avoid duplicates
     const existing = left.querySelector('#webSearchSourcesToggle');
     if (existing) existing.remove();
+    // Preserve previously expanded/collapsed state across rerenders (session-only)
+    const wasExpanded = box.getAttribute('aria-hidden') === 'false';
     // Create toggle button
     const sourcesToggle = document.createElement('button');
     sourcesToggle.id = 'webSearchSourcesToggle';
     sourcesToggle.type = 'button';
     sourcesToggle.className = 'btn icon-only chevron-toggle';
-    sourcesToggle.setAttribute('aria-label', 'show sources');
-    sourcesToggle.title = 'show sources';
-    sourcesToggle.setAttribute('aria-expanded', 'false');
+    sourcesToggle.setAttribute('aria-label', wasExpanded ? 'hide sources' : 'show sources');
+    sourcesToggle.title = wasExpanded ? 'hide sources' : 'show sources';
+    sourcesToggle.setAttribute('aria-expanded', wasExpanded ? 'true' : 'false');
     sourcesToggle.innerHTML = `
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="6 9 12 15 18 9"></polyline>
@@ -75,7 +77,8 @@ export function renderWebSearchResults(items, { answer } = {}) {
     `;
     left.appendChild(sourcesToggle);
     // Initialize collapsible behavior on the whole results box (hides link items only)
-    initCollapsible(sourcesToggle, box, { defaultCollapsed: true, expandedLabel: 'hide sources', collapsedLabel: 'show sources' });
+    // If the user already expanded previously, keep it expanded; otherwise default collapsed (fresh page load).
+    initCollapsible(sourcesToggle, box, { defaultCollapsed: !wasExpanded, expandedLabel: 'hide sources', collapsedLabel: 'show sources' });
   }
 
   items.forEach((item) => {
