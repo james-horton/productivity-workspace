@@ -114,7 +114,7 @@ router.post('/', async (req, res, next) => {
       model: 'gpt-5.2',
       messages, 
       maxTokens: 2000,
-      reasoningLevel: 'minimal' 
+      reasoningLevel: 'none' 
     });
 
     res.json({
