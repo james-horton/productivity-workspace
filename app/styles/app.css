@@ -911,6 +911,12 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
     margin-left: 5%;
     max-width: 95%;
   }
+  /* Mobile: stack "Mode" label above the dropdown in Chat header */
+  .chat-card .chat-controls .control {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
 }
 /* Loading indicators and skeletons (theme-aware) */
 .loader {
