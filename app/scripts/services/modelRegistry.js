@@ -8,7 +8,7 @@ const MODELS = [
     key: 'openai:gpt-5',
     label: 'GPT-5 (OpenAI)',
     provider: 'openai',
-    model: 'gpt-5',
+    model: 'gpt-5.2',
     tier: 'high'
   }
 ];
