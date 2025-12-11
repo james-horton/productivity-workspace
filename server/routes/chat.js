@@ -6,13 +6,13 @@ const { config } = require('../config');
 // Mode specifications: reasoning + default search + disclaimers
 const MODE_SPECS = {
   doctor: {
-    model: 'gpt-5',
+    model: 'gpt-5.2',
     reasoning: 'high',
     defaultSearch: false,
     disclaimer: 'This is not medical advice. For urgent or serious symptoms, contact a licensed clinician or emergency services.'
   },
   therapist: {
-    model: 'gpt-5',
+    model: 'gpt-5.2',
     reasoning: 'high',
     defaultSearch: false,
     disclaimer: 'This is supportive conversation, not a substitute for professional mental health care. If in crisis, contact local emergency services or a crisis hotline.'
@@ -24,13 +24,13 @@ const MODE_SPECS = {
     disclaimer: null
   },
   basic: {
-    model: 'gpt-5',
+    model: 'gpt-5.2',
     reasoning: 'low',
     defaultSearch: false,
     disclaimer: null
   },
   excuse: {
-    model: 'gpt-5',
+    model: 'gpt-5.2',
     reasoning: 'medium',
     defaultSearch: false,
     disclaimer: null
@@ -42,27 +42,27 @@ const MODE_SPECS = {
     disclaimer: null
   },
   eli5: {
-    model: 'gpt-5',
+    model: 'gpt-5.2',
     reasoning: 'low',
     defaultSearch: false,
     disclaimer: null
   },
   debate_lord: {
-    model: 'gpt-5',
+    model: 'gpt-5.2',
     reasoning: 'medium',
     defaultSearch: false,
     disclaimer: null
   },
   big_brain: {
-    model: 'gpt-5-pro',
-    reasoning: 'high',
+    model: 'gpt-5.2-pro',
+    reasoning: 'xhigh',
     defaultSearch: false,
     disclaimer: 'High-reasoning mode. No web search and no code interpreter is available.',
     maxInputTokens: 4000,
     maxOutputTokens: 4000
   },
   coder: {
-    model: 'gpt-5',
+    model: 'gpt-5.2',
     reasoning: 'high',
     defaultSearch: false,
     disclaimer: ''
