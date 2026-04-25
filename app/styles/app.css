@@ -42,7 +42,7 @@ html { scroll-behavior: smooth; }
   padding: 0.75rem 1rem;
   background: var(--topbar-bg, var(--surface));
   border-bottom: 1px solid var(--ring);
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* When the Matrix viewport is hidden, collapse column 2 but keep controls in col 3 */
@@ -78,7 +78,9 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .topbar {
 }
 .control { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; }
 .control .label { color: var(--muted); }
-.control select {
+.control select,
+.model-combobox-toggle,
+.model-combobox-filter {
   appearance: none;
   padding: 0.5rem 2rem 0.5rem 0.75rem;
   border-radius: 10px;
@@ -87,6 +89,95 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .topbar {
   color: var(--text);
   box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset;
   outline: none;
+}
+.model-combobox {
+  position: relative;
+  min-width: min(360px, 72vw);
+}
+.model-combobox-toggle {
+  position: relative;
+  width: 100%;
+  min-height: 42px;
+  cursor: pointer;
+  text-align: left;
+}
+.model-combobox-toggle::after {
+  content: "";
+  position: absolute;
+  right: 0.8rem;
+  top: 50%;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-65%) rotate(45deg);
+  opacity: 0.7;
+  pointer-events: none;
+}
+.model-combobox-toggle:disabled {
+  cursor: wait;
+  opacity: 0.75;
+}
+.model-combobox-label {
+  display: block;
+  max-width: min(320px, 60vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.model-combobox-panel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  width: min(520px, calc(100vw - 2rem));
+  padding: 0.5rem;
+  border: 1px solid var(--ring);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.model-combobox-filter {
+  width: 100%;
+  padding-right: 0.75rem;
+}
+.model-combobox-filter::placeholder {
+  color: var(--muted);
+  opacity: 0.75;
+}
+.model-combobox-list {
+  display: grid;
+  gap: 0.25rem;
+  max-height: min(420px, 55vh);
+  margin-top: 0.5rem;
+  overflow-y: auto;
+  padding-right: 0.15rem;
+  scrollbar-width: thin;
+}
+.model-combobox-option {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.model-combobox-option:hover,
+.model-combobox-option.active {
+  background: color-mix(in oklab, var(--accent) 18%, var(--surface-2));
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--ring));
+}
+.model-combobox-option[aria-selected="true"] {
+  background: color-mix(in oklab, var(--primary) 18%, var(--surface-2));
+  border-color: color-mix(in oklab, var(--primary) 48%, var(--ring));
+}
+.model-combobox-empty {
+  padding: 0.75rem;
+  color: var(--muted);
 }
 .control.toggle {
   flex-direction: row;
@@ -855,6 +946,17 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
     flex: 1 1 170px;
     min-width: 150px;
     order: 1;
+  }
+  .model-combobox {
+    min-width: 100%;
+  }
+  .model-combobox-label {
+    max-width: calc(100vw - 4rem);
+  }
+  .model-combobox-panel {
+    left: 0;
+    right: auto;
+    width: min(100%, calc(100vw - 2rem));
   }
   #settingsBtn {
     order: 3;
