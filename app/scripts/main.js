@@ -21,6 +21,11 @@ const REDDIT_MAX_POSTS = REDDIT.maxPosts;
 // Elements
 const themeSelect = () => $('#themeSelect');
 const modelSelect = () => $('#modelSelect');
+const modelSelectLabel = () => $('#modelSelectLabel');
+const modelCombobox = () => $('#modelCombobox');
+const modelOptionsPanel = () => $('#modelOptionsPanel');
+const modelFilterInput = () => $('#modelFilterInput');
+const modelOptions = () => $('#modelOptions');
 const modeSelect = () => $('#modeSelect');
 const chatForm = () => $('#chatForm');
 const chatInput = () => $('#chatInput');
@@ -42,6 +47,9 @@ const redditItems = () => $('#redditItems');
 const redditTitle = () => $('#redditTitle');
 const clockTime = () => $('#clockTime');
 const clockDate = () => $('#clockDate');
+let availableModels = [];
+let modelFilterText = '';
+let highlightedModelIndex = -1;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -103,10 +111,7 @@ function wireControls() {
   });
 
   // Model
-  modelSelect().addEventListener('change', (e) => {
-    const key = e.target.value;
-    setModelKey(key);
-  });
+  wireModelCombobox();
 
   // Mode
   modeSelect().addEventListener('change', (e) => {
@@ -528,33 +533,199 @@ function hydrateThemeSelect(theme) {
 }
 
 async function populateModelSelect(selectedKey) {
-  const sel = modelSelect();
-  sel.disabled = true;
-  sel.innerHTML = '';
+  const button = modelSelect();
+  button.disabled = true;
   let models = getModels();
   try {
     models = await loadModels();
   } catch (_) {
     models = getModels();
   }
-  models.forEach(m => {
-    const opt = document.createElement('option');
-    opt.value = m.key;
-    opt.textContent = m.label;
-    sel.appendChild(opt);
-  });
+  availableModels = models;
+  renderModelOptions();
   hydrateModelSelect(selectedKey || getDefaultModelKey());
-  sel.disabled = false;
+  button.disabled = false;
 }
 
 function hydrateModelSelect(modelKey) {
-  const sel = modelSelect();
-  const found = Array.from(sel.options).some(o => o.value === modelKey);
+  const selected = availableModels.find(m => m.key === modelKey);
+  const found = !!selected;
   const defaultKey = getDefaultModelKey();
-  sel.value = found ? modelKey : defaultKey;
+  const model = found ? selected : availableModels.find(m => m.key === defaultKey);
+  if (modelSelectLabel()) modelSelectLabel().textContent = model ? model.label : 'Select model';
+  if (modelSelect()) modelSelect().dataset.value = model ? model.key : '';
+  syncSelectedModelOption(model ? model.key : '');
   if (!found && modelKey && modelKey !== defaultKey) {
     setModelKey(defaultKey);
   }
+}
+
+function wireModelCombobox() {
+  const button = modelSelect();
+  const filter = modelFilterInput();
+  const list = modelOptions();
+  if (!button || !filter || !list) return;
+
+  button.addEventListener('click', () => {
+    if (button.disabled) return;
+    isModelComboboxOpen() ? closeModelCombobox() : openModelCombobox();
+  });
+
+  button.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openModelCombobox();
+    }
+  });
+
+  filter.addEventListener('input', (e) => {
+    modelFilterText = e.target.value || '';
+    renderModelOptions();
+  });
+
+  filter.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      moveModelHighlight(1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      moveModelHighlight(-1);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      selectHighlightedModel();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      closeModelCombobox();
+      button.focus();
+    }
+  });
+
+  list.addEventListener('click', (e) => {
+    const option = e.target.closest('[data-model-key]');
+    if (!option) return;
+    selectModel(option.dataset.modelKey);
+  });
+
+  modelCombobox()?.addEventListener('focusout', (e) => {
+    const root = modelCombobox();
+    if (root && !root.contains(e.relatedTarget)) closeModelCombobox();
+  });
+
+  document.addEventListener('click', (e) => {
+    const root = modelCombobox();
+    if (root && !root.contains(e.target)) closeModelCombobox();
+  });
+}
+
+function isModelComboboxOpen() {
+  return modelSelect()?.getAttribute('aria-expanded') === 'true';
+}
+
+function openModelCombobox() {
+  const button = modelSelect();
+  const panel = modelOptionsPanel();
+  const filter = modelFilterInput();
+  if (!button || !panel || !filter) return;
+  button.setAttribute('aria-expanded', 'true');
+  panel.hidden = false;
+  modelFilterText = '';
+  filter.value = '';
+  renderModelOptions();
+  requestAnimationFrame(() => filter.focus());
+}
+
+function closeModelCombobox() {
+  const button = modelSelect();
+  const panel = modelOptionsPanel();
+  if (!button || !panel) return;
+  button.setAttribute('aria-expanded', 'false');
+  panel.hidden = true;
+  highlightedModelIndex = -1;
+  updateModelHighlight();
+}
+
+function renderModelOptions() {
+  const list = modelOptions();
+  if (!list) return;
+  list.innerHTML = '';
+
+  const query = normalizeModelSearch(modelFilterText);
+  const matches = availableModels.filter(model => {
+    if (!query) return true;
+    return normalizeModelSearch(`${model.label} ${model.model} ${model.provider}`).includes(query);
+  });
+
+  const selectedKey = modelSelect()?.dataset.value || getState().modelKey || getDefaultModelKey();
+  if (matches.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'model-combobox-empty';
+    empty.textContent = 'No matching models';
+    list.appendChild(empty);
+    highlightedModelIndex = -1;
+    modelFilterInput()?.removeAttribute('aria-activedescendant');
+    return;
+  }
+
+  matches.forEach((model, index) => {
+    const option = document.createElement('button');
+    option.type = 'button';
+    option.id = `model-option-${index}`;
+    option.className = 'model-combobox-option';
+    option.dataset.modelKey = model.key;
+    option.dataset.index = String(index);
+    option.setAttribute('role', 'option');
+    option.setAttribute('aria-selected', model.key === selectedKey ? 'true' : 'false');
+    option.textContent = model.label;
+    list.appendChild(option);
+  });
+
+  const selectedIndex = matches.findIndex(model => model.key === selectedKey);
+  highlightedModelIndex = selectedIndex >= 0 ? selectedIndex : 0;
+  updateModelHighlight();
+}
+
+function normalizeModelSearch(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function moveModelHighlight(direction) {
+  const options = Array.from(modelOptions()?.querySelectorAll('[data-model-key]') || []);
+  if (!options.length) return;
+  highlightedModelIndex = (highlightedModelIndex + direction + options.length) % options.length;
+  updateModelHighlight();
+}
+
+function updateModelHighlight() {
+  const filter = modelFilterInput();
+  const options = Array.from(modelOptions()?.querySelectorAll('[data-model-key]') || []);
+  options.forEach((option, index) => {
+    const active = index === highlightedModelIndex;
+    option.classList.toggle('active', active);
+    if (active) {
+      filter?.setAttribute('aria-activedescendant', option.id);
+      option.scrollIntoView({ block: 'nearest' });
+    }
+  });
+  if (!options.length) filter?.removeAttribute('aria-activedescendant');
+}
+
+function selectHighlightedModel() {
+  const option = Array.from(modelOptions()?.querySelectorAll('[data-model-key]') || [])[highlightedModelIndex];
+  if (option) selectModel(option.dataset.modelKey);
+}
+
+function selectModel(modelKey) {
+  if (!availableModels.some(model => model.key === modelKey)) return;
+  setModelKey(modelKey);
+  closeModelCombobox();
+  modelSelect()?.focus();
+}
+
+function syncSelectedModelOption(modelKey) {
+  const options = Array.from(modelOptions()?.querySelectorAll('[data-model-key]') || []);
+  options.forEach(option => {
+    option.setAttribute('aria-selected', option.dataset.modelKey === modelKey ? 'true' : 'false');
+  });
 }
 
 function hydrateModeSelect(mode) {

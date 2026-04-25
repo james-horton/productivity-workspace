@@ -39,9 +39,18 @@
 
       <label class="control">
         <span class="label">Model</span>
-        <select id="modelSelect" aria-label="Model">
-          <!-- Populated at runtime from model registry -->
-        </select>
+        <div class="model-combobox" id="modelCombobox">
+          <button id="modelSelect" class="model-combobox-toggle" type="button" aria-label="Model" aria-haspopup="listbox" aria-expanded="false" aria-controls="modelOptions">
+            <span id="modelSelectLabel" class="model-combobox-label">Loading models...</span>
+          </button>
+          <div id="modelOptionsPanel" class="model-combobox-panel" hidden>
+            <label class="sr-only" for="modelFilterInput">Filter models</label>
+            <input id="modelFilterInput" class="model-combobox-filter" type="text" autocomplete="off" spellcheck="false" placeholder="Search models..." aria-controls="modelOptions" />
+            <div id="modelOptions" class="model-combobox-list" role="listbox" aria-label="Model options">
+              <!-- Populated at runtime from model registry -->
+            </div>
+          </div>
+        </div>
       </label>
       <button id="settingsBtn" class="btn icon-only" type="button" aria-label="Settings" title="Settings">⚙</button>
     </div>
