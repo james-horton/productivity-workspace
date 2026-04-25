@@ -444,6 +444,7 @@ function wireControls() {
         inputEl.setAttribute('rows', '1');
         inputEl.style.height = 'auto';
         inputEl.addEventListener('input', autoGrowWS);
+        inputEl.addEventListener('focus', () => inputEl.select());
         inputEl.addEventListener('keydown', (e) => {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
