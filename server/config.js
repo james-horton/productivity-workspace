@@ -39,6 +39,21 @@ function loadSecrets() {
       defaultMaxTokens: parseInt(process.env.OPENAI_DEFAULT_MAX_TOKENS || (json.openai && json.openai.defaultMaxTokens) || '80000', 10),
       timeoutMs: parseInt(process.env.OPENAI_TIMEOUT_MS || (json.openai && json.openai.timeoutMs) || '300000', 10)
     },
+    openrouter: {
+      apiKey: (json.openrouter && json.openrouter.apiKey) || process.env.OPENROUTER_API_KEY || '',
+      chatCompletionsUrl: (json.openrouter && json.openrouter.chatCompletionsUrl) || process.env.OPENROUTER_CHAT_COMPLETIONS_URL || 'https://openrouter.ai/api/v1/chat/completions',
+      modelsUrl: (json.openrouter && json.openrouter.modelsUrl) || process.env.OPENROUTER_MODELS_URL || 'https://openrouter.ai/api/v1/models',
+      modelsUserUrl: (json.openrouter && json.openrouter.modelsUserUrl) || process.env.OPENROUTER_MODELS_USER_URL || 'https://openrouter.ai/api/v1/models/user',
+      defaultModel: (json.openrouter && json.openrouter.defaultModel) || process.env.OPENROUTER_DEFAULT_MODEL || '',
+      defaultTemperature: Number(process.env.OPENROUTER_DEFAULT_TEMPERATURE || (json.openrouter && json.openrouter.defaultTemperature) || 0.7),
+      defaultMaxTokens: parseInt(process.env.OPENROUTER_DEFAULT_MAX_TOKENS || (json.openrouter && json.openrouter.defaultMaxTokens) || '4000', 10),
+      timeoutMs: parseInt(process.env.OPENROUTER_TIMEOUT_MS || (json.openrouter && json.openrouter.timeoutMs) || '120000', 10),
+      favoriteModels: Array.isArray(json.openrouter && json.openrouter.favoriteModels)
+        ? json.openrouter.favoriteModels
+        : (process.env.OPENROUTER_FAVORITE_MODELS
+            ? process.env.OPENROUTER_FAVORITE_MODELS.split(',').map(s => s.trim()).filter(Boolean)
+            : [])
+    },
     tavily: {
       apiKey: (json.tavily && json.tavily.apiKey) || process.env.TAVILY_API_KEY || '',
       url: (json.tavily && json.tavily.url) || process.env.TAVILY_URL || 'https://api.tavily.com/search',

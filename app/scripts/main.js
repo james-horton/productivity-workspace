@@ -1,6 +1,6 @@
 import { applyTheme } from './theme.js';
 import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG } from './state.js';
-import { getModels, providerFor, modelIdFor, getDefaultModelKey } from './services/modelRegistry.js';
+import { getModels, loadModels, providerFor, modelIdFor, getDefaultModelKey } from './services/modelRegistry.js';
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
 import { fetchNews } from './services/newsService.js';
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setMatrixRainEnabled(s.theme === 'matrix'); setNyanCatEnabled(s.theme === 'nyan-cat');
  
   // Populate model list and select
-  populateModelSelect(s.modelKey || getDefaultModelKey());
+  void populateModelSelect(s.modelKey || getDefaultModelKey());
 
   // Mode select + disclaimer + chat starter
   hydrateModeSelect(s.mode);
@@ -412,10 +412,6 @@ function wireControls() {
         try {
           const data = await webSearch(text);
           renderWebSearchResults((data && data.items) || [], { answer: data && data.answer });
-          // Clear the search input only after a response is received and processed
-          if (input) {
-            input.value = '';
-          }
         } catch (err) {
           const box = webSearchItems && webSearchItems();
           if (box) {
@@ -530,10 +526,16 @@ function hydrateThemeSelect(theme) {
   themeSelect().value = theme;
 }
 
-function populateModelSelect(selectedKey) {
+async function populateModelSelect(selectedKey) {
   const sel = modelSelect();
+  sel.disabled = true;
   sel.innerHTML = '';
-  const models = getModels();
+  let models = getModels();
+  try {
+    models = await loadModels();
+  } catch (_) {
+    models = getModels();
+  }
   models.forEach(m => {
     const opt = document.createElement('option');
     opt.value = m.key;
@@ -541,12 +543,17 @@ function populateModelSelect(selectedKey) {
     sel.appendChild(opt);
   });
   hydrateModelSelect(selectedKey || getDefaultModelKey());
+  sel.disabled = false;
 }
 
 function hydrateModelSelect(modelKey) {
   const sel = modelSelect();
   const found = Array.from(sel.options).some(o => o.value === modelKey);
-  sel.value = found ? modelKey : getDefaultModelKey();
+  const defaultKey = getDefaultModelKey();
+  sel.value = found ? modelKey : defaultKey;
+  if (!found && modelKey && modelKey !== defaultKey) {
+    setModelKey(defaultKey);
+  }
 }
 
 function hydrateModeSelect(mode) {
