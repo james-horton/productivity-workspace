@@ -61,6 +61,7 @@ function normalizeModels(rawModels) {
         label: `OpenRouter: ${labelName}`,
         provider: 'openrouter',
         model: modelId,
+        favorite: favoriteRank(modelId) !== -1,
         tier: normalizeTier(modelId)
       };
     })

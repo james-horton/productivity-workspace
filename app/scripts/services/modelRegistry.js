@@ -41,6 +41,7 @@ function normalizeRemoteModel(model) {
     label: String(model.label || modelId),
     provider,
     model: modelId,
+    favorite: model.favorite === true,
     tier: model.tier || 'medium'
   };
 }

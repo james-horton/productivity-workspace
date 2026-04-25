@@ -677,6 +677,13 @@ function renderModelOptions() {
     option.setAttribute('aria-selected', model.key === selectedKey ? 'true' : 'false');
     option.textContent = model.label;
     list.appendChild(option);
+
+    if (model.favorite && matches[index + 1] && !matches[index + 1].favorite) {
+      const separator = document.createElement('div');
+      separator.className = 'model-combobox-separator';
+      separator.setAttribute('role', 'separator');
+      list.appendChild(separator);
+    }
   });
 
   const selectedIndex = matches.findIndex(model => model.key === selectedKey);
