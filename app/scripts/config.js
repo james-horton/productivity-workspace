@@ -10,7 +10,8 @@ export const ENDPOINTS = Object.freeze({
   news: `${API_BASE}/news`,
   websearch: `${API_BASE}/websearch`,
   reddit: `${API_BASE}/reddit`,
-  quote: `${API_BASE}/quote`
+  quote: `${API_BASE}/quote`,
+  models: `${API_BASE}/models`
 });
 
 export const JSON_HEADERS = Object.freeze({

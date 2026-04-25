@@ -6,9 +6,9 @@ const OPENAI_RESPONSES_API_URL = config.openai.responsesUrl || 'https://api.open
 
 function resolveOpenAIModel(requestedModel, reasoningLevel) {
   if (requestedModel) return requestedModel;
-  // Default to GPT-5.2 for general usage, GPT-5.2-pro for high reasoning per spec
-  if (reasoningLevel === 'high' || reasoningLevel === 'xhigh') return 'gpt-5.2-pro';
-  return 'gpt-5.2';
+  // Default to GPT-5.5 for general usage, GPT-5.5-pro for high reasoning per spec
+  if (reasoningLevel === 'high' || reasoningLevel === 'xhigh') return 'gpt-5.5-pro';
+  return 'gpt-5.5';
 }
 
 /**

@@ -12,6 +12,7 @@ const quoteRouter = require('./routes/quote');
 const newsRouter = require('./routes/news');
 const redditRouter = require('./routes/reddit');
 const searchRouter = require('./routes/search');
+const modelsRouter = require('./routes/models');
 
 const app = express();
 
@@ -59,6 +60,7 @@ app.use('/api/quote', quoteRouter);
 app.use('/api/news', newsRouter);
 app.use('/api/websearch', searchRouter);
 app.use('/api/reddit', redditRouter);
+app.use('/api/models', modelsRouter);
 
 // Serve SPA static assets
 const staticDir = path.resolve(__dirname, '..', 'app');

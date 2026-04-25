@@ -3,7 +3,7 @@
 Single-page productivity web app with:
 - Switchable, persistent themes (Matrix, Dark, Aurora)
 - Theme-aware inspirational quote (LLM-generated on demand)
-- Model picker (GPT-5)
+- Model picker (OpenAI GPT-5.5, with optional dynamically fetched OpenRouter models)
 - Multi-mode chat (Doctor, Therapist, Web Search, Basic Info, Excuse Generator) with in-session history
 - News panel (National, World, Local via Settings city/state) via Tavily web search + LLM summarization
 - Clock and current date
@@ -18,9 +18,11 @@ Backend keeps all private API keys in a local secrets.json (never sent to the br
   - Endpoints:
     - POST /api/chat
     - POST /api/quote
+    - GET  /api/models
     - GET  /api/news?category=national|world|local&city=..&state=..
   - Providers:
-    - OpenAI (GPT-5)
+    - OpenAI (GPT-5.5)
+    - OpenRouter (optional, dynamically discovered chat models)
     - Tavily (web search)
   - CORS allowlist and basic IP rate limiting
   - Reads keys from ./secrets.json (one level above /server)
@@ -37,8 +39,9 @@ Backend keeps all private API keys in a local secrets.json (never sent to the br
 
 - Node.js >= 18
 - API keys:
-  - OpenAI (for GPT-5) — private
+  - OpenAI (for GPT-5.5) — private
   - Tavily — private
+  - OpenRouter — private and optional
 - Optional: Update CORS origins as needed
 
 ## Setup
@@ -56,6 +59,11 @@ Then edit secrets.json:
 {
   "openai": { "apiKey": "YOUR_OPENAI_API_KEY" },
   "tavily": { "apiKey": "YOUR_TAVILY_API_KEY" },
+  "openrouter": {
+    "apiKey": "YOUR_OPENROUTER_API_KEY_OPTIONAL",
+    "defaultModel": "openai/gpt-5.5",
+    "favoriteModels": ["openai/gpt-5.5", "anthropic/claude-sonnet-4.5"]
+  },
   "cors": {
     "allowedOrigins": [
       "http://localhost:8787",
@@ -78,6 +86,8 @@ Then edit secrets.json:
 Notes:
 - Only public API keys (if truly public) are safe to expose. Treat the above keys as private and keep them in secrets.json.
 - .gitignore already excludes secrets.json.
+- OpenRouter is optional. When configured, the backend fetches model names from OpenRouter and sorts `openrouter.favoriteModels` first.
+- You can also set OpenRouter with environment variables: `OPENROUTER_API_KEY`, `OPENROUTER_DEFAULT_MODEL`, and comma-separated `OPENROUTER_FAVORITE_MODELS`.
 
 2) Install server dependencies
 
@@ -142,7 +152,7 @@ To enable HTTPS support, set up SSL certificates and configure the server:
 ## Usage Overview
 
 - Theme switcher (Matrix/Dark/Aurora): persists in localStorage. Matrix adds a subtle code-rain accent.
-- Model picker: GPT-5 (OpenAI).
+- Model picker: GPT-5.5 (OpenAI) plus OpenRouter models when `OPENROUTER_API_KEY` or `openrouter.apiKey` is configured. If discovery fails, the static OpenAI option remains available.
 - Quote widget: LLM-generated. Matrix theme prompts a cyberpunk/Matrix vibe; others use modern, non-cheesy inspiration.
 - Chat modes:
   - Medical Doctor (high reasoning; supportive, not a diagnosis; disclaimer added)
@@ -163,6 +173,10 @@ To enable HTTPS support, set up SSL certificates and configure the server:
 - POST /api/chat
   - Body: { mode, messages: [{role, content}], provider?, model? }
   - Returns: { message, modelUsed, providerUsed, disclaimer?, sources? }
+
+- GET /api/models
+  - Returns: { models: [{ key, label, provider, model, tier }], providers }
+  - OpenRouter models are fetched server-side so the browser never receives your OpenRouter API key.
 
 - POST /api/quote
   - Body: { theme: 'matrix' | 'dark' | 'aurora' }
@@ -187,9 +201,9 @@ To enable HTTPS support, set up SSL certificates and configure the server:
 ## Notes for Customization
 
 - Add more themes by extending CSS variables in app/styles/themes.css and setting data-theme on <body>.
-- Extend model options by editing app/scripts/services/modelRegistry.js.
+- Pin OpenRouter models by setting `openrouter.favoriteModels` in secrets.json or `OPENROUTER_FAVORITE_MODELS` in the environment.
 - Add chat modes by updating app/scripts/state.js (MODES) and adjusting server/routes/chat.js behavior if needed.
-- To enable additional providers later, re-add them in app/scripts/services/modelRegistry.js and server/routes/chat.js.
+- To enable additional providers later, add them in app/scripts/services/modelRegistry.js and server/routes/chat.js.
 
 ## Scripts
 

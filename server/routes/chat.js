@@ -2,17 +2,18 @@ const express = require('express');
 const router = express.Router();
 
 const { openaiChat } = require('../lib/providers/openai');
+const { openrouterChat } = require('../lib/providers/openrouter');
 const { config } = require('../config');
 // Mode specifications: reasoning + default search + disclaimers
 const MODE_SPECS = {
   doctor: {
-    model: 'gpt-5.2',
+    model: 'gpt-5.5',
     reasoning: 'high',
     defaultSearch: false,
     disclaimer: 'This is not medical advice. For urgent or serious symptoms, contact a licensed clinician or emergency services.'
   },
   therapist: {
-    model: 'gpt-5.2',
+    model: 'gpt-5.5',
     reasoning: 'high',
     defaultSearch: false,
     disclaimer: 'This is supportive conversation, not a substitute for professional mental health care. If in crisis, contact local emergency services or a crisis hotline.'
@@ -24,13 +25,13 @@ const MODE_SPECS = {
     disclaimer: null
   },
   basic: {
-    model: 'gpt-5.2',
+    model: 'gpt-5.5',
     reasoning: 'low',
     defaultSearch: false,
     disclaimer: null
   },
   excuse: {
-    model: 'gpt-5.2',
+    model: 'gpt-5.5',
     reasoning: 'medium',
     defaultSearch: false,
     disclaimer: null
@@ -42,19 +43,19 @@ const MODE_SPECS = {
     disclaimer: null
   },
   eli5: {
-    model: 'gpt-5.2',
+    model: 'gpt-5.5',
     reasoning: 'low',
     defaultSearch: false,
     disclaimer: null
   },
   debate_lord: {
-    model: 'gpt-5.2',
+    model: 'gpt-5.5',
     reasoning: 'medium',
     defaultSearch: false,
     disclaimer: null
   },
   big_brain: {
-    model: 'gpt-5.2-pro',
+    model: 'gpt-5.5-pro',
     reasoning: 'xhigh',
     defaultSearch: false,
     disclaimer: 'High-reasoning mode. No web search and no code interpreter is available.',
@@ -62,7 +63,7 @@ const MODE_SPECS = {
     maxOutputTokens: 4000
   },
   coder: {
-    model: 'gpt-5.2',
+    model: 'gpt-5.5',
     reasoning: 'high',
     defaultSearch: false,
     disclaimer: ''
@@ -154,25 +155,33 @@ function buildSystemPrompt(mode) {
   }
 }
 
-async function callPreferredModels({ reasoning, messages, prefer, model, webSearch, maxTokens }) {
+async function callPreferredModels({ reasoning, messages, prefer, model, fallbackModel, webSearch, maxTokens }) {
   // prefer is an array of provider ids in order; default to OpenAI only
   const attempts = Array.isArray(prefer) && prefer.length ? prefer : ['openai'];
-
-  const params = {
-    messages,
-    reasoningLevel: reasoning,
-    temperature: config.openai.defaultTemperature,
-    maxTokens: (Number.isFinite(maxTokens) ? maxTokens : config.openai.defaultMaxTokens),
-    model,
-    webSearch
-  };
 
   let lastErr;
   for (const provider of attempts) {
     try {
       if (provider === 'openai') {
-        const out = await openaiChat(params);
+        const out = await openaiChat({
+          messages,
+          reasoningLevel: reasoning,
+          temperature: config.openai.defaultTemperature,
+          maxTokens: (Number.isFinite(maxTokens) ? maxTokens : config.openai.defaultMaxTokens),
+          model: fallbackModel || model,
+          webSearch
+        });
         return { ...out, provider: 'openai' };
+      }
+      if (provider === 'openrouter') {
+        const out = await openrouterChat({
+          messages,
+          reasoningLevel: reasoning,
+          temperature: config.openrouter.defaultTemperature,
+          maxTokens: (Number.isFinite(maxTokens) ? maxTokens : config.openrouter.defaultMaxTokens),
+          model
+        });
+        return { ...out, provider: 'openrouter' };
       }
     } catch (err) {
       // If key missing (we throw 400 with message), try next provider; otherwise rethrow
@@ -192,7 +201,7 @@ router.post('/', async (req, res, next) => {
     const {
       mode = 'basic',
       messages: rawMessages,
-      provider, // 'openai' (preferred)
+      provider, // 'openai' or 'openrouter' (preferred)
       model, // optional specific model id for provider
       webSearch // boolean: if true, use provider web search (GPT-5 tools); if false, disable provider web search
     } = req.body || {};
@@ -219,16 +228,23 @@ router.post('/', async (req, res, next) => {
     // Compose final message list
     const finalMessages = [systemMsg, ...userMessages];
 
-    // Provider preference: force OpenAI
-    const prefer = ['openai'];
+    // Provider preference: honor the requested provider, with OpenAI fallback/default.
+    const requestedProvider = provider === 'openrouter' || provider === 'openai' ? provider : 'openai';
+    const prefer = requestedProvider === 'openrouter' ? ['openrouter', 'openai'] : ['openai'];
+    const requestedModel = typeof model === 'string' && model.trim() ? model.trim() : '';
+    const selectedModel = requestedProvider === 'openrouter'
+      ? (requestedModel || config.openrouter.defaultModel || undefined)
+      : (requestedModel || spec.model);
+    const providerWebSearch = requestedProvider === 'openai' ? effectiveWebSearch : false;
 
     // Call provider with optional model override and provider web search toggle
     const response = await callPreferredModels({
         reasoning: spec.reasoning,
         messages: finalMessages,
         prefer,
-        model: spec.model,
-        webSearch: effectiveWebSearch,
+        model: selectedModel,
+        fallbackModel: requestedProvider === 'openrouter' ? spec.model : selectedModel,
+        webSearch: providerWebSearch,
         maxTokens: (spec && spec.maxOutputTokens) ? spec.maxOutputTokens : undefined
       });
 
