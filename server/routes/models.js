@@ -1,5 +1,7 @@
 const express = require('express');
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 const { config } = require('../config');
 
 const router = express.Router();
@@ -8,9 +10,68 @@ const CACHE_TTL_MS = 10 * 60 * 1000;
 let cachedPayload = null;
 let cachedAt = 0;
 
+const SECRETS_PATH = path.resolve(__dirname, '..', '..', 'secrets.json');
+
+function defaultModelId() {
+  return String((config.openrouter && config.openrouter.defaultModel) || '').trim();
+}
+
+function normalizeFavoriteModels(favorites) {
+  const seen = new Set();
+  const normalized = [];
+
+  (Array.isArray(favorites) ? favorites : []).forEach(favorite => {
+    const value = String(favorite || '').trim();
+    if (!value || value.length > 200 || seen.has(value)) return;
+    seen.add(value);
+    normalized.push(value);
+  });
+
+  return normalized;
+}
+
+function configuredFavorites() {
+  return normalizeFavoriteModels(Array.isArray(config.openrouter.favoriteModels) ? config.openrouter.favoriteModels : []);
+}
+
 function favoriteRank(modelId) {
-  const favorites = Array.isArray(config.openrouter.favoriteModels) ? config.openrouter.favoriteModels : [];
+  const favorites = configuredFavorites();
   return favorites.findIndex(f => String(f).trim() === modelId);
+}
+
+function invalidateModelCache() {
+  cachedPayload = null;
+  cachedAt = 0;
+}
+
+function readSecretsFile() {
+  try {
+    return JSON.parse(fs.readFileSync(SECRETS_PATH, 'utf8'));
+  } catch (err) {
+    if (err.code === 'ENOENT') return {};
+    throw err;
+  }
+}
+
+function writeSecretsFile(secrets) {
+  const dir = path.dirname(SECRETS_PATH);
+  const tmpPath = path.join(dir, `.secrets.${process.pid}.${Date.now()}.tmp`);
+  fs.writeFileSync(tmpPath, `${JSON.stringify(secrets, null, 2)}\n`, 'utf8');
+  fs.renameSync(tmpPath, SECRETS_PATH);
+}
+
+function saveFavoriteModels(favoriteModels) {
+  const normalized = normalizeFavoriteModels(favoriteModels);
+  const secrets = readSecretsFile();
+  secrets.openrouter = secrets.openrouter && typeof secrets.openrouter === 'object' ? secrets.openrouter : {};
+  if (!secrets.openrouter.defaultModel && defaultModelId()) {
+    secrets.openrouter.defaultModel = defaultModelId();
+  }
+  secrets.openrouter.favoriteModels = normalized;
+  writeSecretsFile(secrets);
+  config.openrouter.favoriteModels = normalized;
+  invalidateModelCache();
+  return normalized;
 }
 
 function modelName(model) {
@@ -62,6 +123,7 @@ function normalizeModels(rawModels) {
         provider: 'openrouter',
         model: modelId,
         favorite: favoriteRank(modelId) !== -1,
+        default: false,
         tier: normalizeTier(modelId)
       };
     })
@@ -71,13 +133,17 @@ function normalizeModels(rawModels) {
       return true;
     })
     .sort((a, b) => {
+      if (a.default !== b.default) return a.default ? -1 : 1;
       const ar = favoriteRank(a.model);
       const br = favoriteRank(b.model);
       if (ar !== br) {
+        if (ar === -1 && a.favorite) return -1;
+        if (br === -1 && b.favorite) return 1;
         if (ar === -1) return 1;
         if (br === -1) return -1;
         return ar - br;
       }
+      if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
       return a.label.localeCompare(b.label);
     });
 }
@@ -113,6 +179,8 @@ router.get('/', async (req, res, next) => {
 
     cachedPayload = {
       models: openrouter,
+      favoriteModels: configuredFavorites(),
+      defaultModel: defaultModelId(),
       providers: {
         openrouter: {
           configured: !!(config.openrouter && config.openrouter.apiKey),
@@ -123,6 +191,20 @@ router.get('/', async (req, res, next) => {
     cachedAt = now;
 
     res.json(cachedPayload);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put('/favorites', (req, res, next) => {
+  try {
+    const body = req.body || {};
+    if (!Array.isArray(body.favoriteModels)) {
+      return res.status(400).json({ error: { message: 'favoriteModels must be an array' } });
+    }
+
+    const favoriteModels = saveFavoriteModels(body.favoriteModels);
+    res.json({ favoriteModels, defaultModel: defaultModelId() });
   } catch (err) {
     next(err);
   }
