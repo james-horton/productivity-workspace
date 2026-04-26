@@ -11,12 +11,47 @@ const STATIC_MODELS = [
     label: 'GPT-5.5 (OpenAI)',
     provider: 'openai',
     model: 'gpt-5.5',
+    favorite: false,
+    default: true,
     tier: 'high'
   }
 ];
 
 let dynamicModels = [];
+let favoriteModels = [];
 let loadPromise = null;
+
+function normalizeFavoriteModels(models) {
+  const seen = new Set();
+  const normalized = [];
+
+  (Array.isArray(models) ? models : []).forEach(model => {
+    const value = String(model || '').trim();
+    if (!value || seen.has(value)) return;
+    seen.add(value);
+    normalized.push(value);
+  });
+
+  return normalized;
+}
+
+function favoriteRank(modelId) {
+  return favoriteModels.findIndex(model => model === modelId);
+}
+
+function canFavoriteModel(model) {
+  return model.provider === 'openrouter';
+}
+
+function decorateModel(model) {
+  const isDefault = model.key === STATIC_MODELS[0].key;
+  const rank = favoriteRank(model.model);
+  return {
+    ...model,
+    favorite: canFavoriteModel(model) && (rank !== -1 || model.favorite === true),
+    default: isDefault
+  };
+}
 
 function mergeModels() {
   const seen = new Set();
@@ -26,6 +61,25 @@ function mergeModels() {
       if (seen.has(m.key)) return false;
       seen.add(m.key);
       return true;
+    })
+    .map(decorateModel)
+    .sort((a, b) => {
+      if ((a.key === STATIC_MODELS[0].key) !== (b.key === STATIC_MODELS[0].key)) {
+        return a.key === STATIC_MODELS[0].key ? -1 : 1;
+      }
+
+      if (a.default !== b.default) return a.default ? -1 : 1;
+
+      const ar = favoriteRank(a.model);
+      const br = favoriteRank(b.model);
+      if (ar !== br) {
+        if (ar === -1) return 1;
+        if (br === -1) return -1;
+        return ar - br;
+      }
+
+      if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
+      return a.label.localeCompare(b.label);
     })
     .map(m => ({ ...m }));
 }
@@ -42,6 +96,7 @@ function normalizeRemoteModel(model) {
     provider,
     model: modelId,
     favorite: model.favorite === true,
+    default: model.default === true,
     tier: model.tier || 'medium'
   };
 }
@@ -53,10 +108,22 @@ async function fetchRemoteModels() {
     const res = await fetch(ENDPOINTS.models, { signal: ctrl.signal });
     if (!res.ok) throw new Error(`Model registry failed (${res.status})`);
     const data = await res.json();
+    favoriteModels = normalizeFavoriteModels(data && data.favoriteModels);
     return ((data && data.models) || []).map(normalizeRemoteModel).filter(Boolean);
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function saveRemoteFavorites(models) {
+  const res = await fetch(ENDPOINTS.modelFavorites, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ favoriteModels: models })
+  });
+
+  if (!res.ok) throw new Error(`Saving favorites failed (${res.status})`);
+  return res.json();
 }
 
 export function getModels() {
@@ -78,6 +145,30 @@ export async function loadModels() {
       });
   }
   return loadPromise;
+}
+
+export async function saveFavoriteModels(models) {
+  const previousFavorites = favoriteModels.slice();
+  favoriteModels = normalizeFavoriteModels(models);
+
+  try {
+    const data = await saveRemoteFavorites(favoriteModels);
+    favoriteModels = normalizeFavoriteModels(data && data.favoriteModels);
+    dynamicModels = dynamicModels.map(model => ({
+      ...model,
+      favorite: favoriteModels.includes(model.model),
+      default: false
+    }));
+    loadPromise = Promise.resolve(getModels());
+    return getModels();
+  } catch (err) {
+    favoriteModels = previousFavorites;
+    throw err;
+  }
+}
+
+export function getFavoriteModelIds() {
+  return normalizeFavoriteModels(favoriteModels);
 }
 
 export function findByKey(modelKey) {

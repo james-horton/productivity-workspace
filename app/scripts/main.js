@@ -1,6 +1,6 @@
 import { applyTheme } from './theme.js';
 import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG } from './state.js';
-import { getModels, loadModels, providerFor, modelIdFor, getDefaultModelKey } from './services/modelRegistry.js';
+import { getModels, loadModels, providerFor, modelIdFor, getDefaultModelKey, getFavoriteModelIds, saveFavoriteModels } from './services/modelRegistry.js';
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
 import { fetchNews } from './services/newsService.js';
@@ -50,6 +50,7 @@ const clockDate = () => $('#clockDate');
 let availableModels = [];
 let modelFilterText = '';
 let highlightedModelIndex = -1;
+let modelDragState = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -601,9 +602,39 @@ function wireModelCombobox() {
   });
 
   list.addEventListener('click', (e) => {
+    if (modelDragState?.suppressClick) {
+      e.preventDefault();
+      modelDragState.suppressClick = false;
+      return;
+    }
+
+    const favoriteToggle = e.target.closest('[data-model-favorite-toggle]');
+    if (favoriteToggle) {
+      e.preventDefault();
+      e.stopPropagation();
+      void toggleModelFavorite(favoriteToggle.dataset.modelKey);
+      return;
+    }
+
     const option = e.target.closest('[data-model-key]');
     if (!option) return;
     selectModel(option.dataset.modelKey);
+  });
+
+  list.addEventListener('pointerdown', handleModelPointerDown);
+  list.addEventListener('pointermove', handleModelPointerMove);
+  list.addEventListener('pointerup', handleModelPointerUp);
+  list.addEventListener('pointercancel', cancelModelDrag);
+
+  list.addEventListener('keydown', (e) => {
+    const option = e.target.closest('[data-model-key]');
+    if (!option || e.target.closest('[data-model-favorite-toggle]')) return;
+
+    if ((e.altKey || e.ctrlKey) && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      e.preventDefault();
+      const direction = e.key === 'ArrowUp' ? -1 : 1;
+      void reorderFavoriteModel(option.dataset.modelKey, direction);
+    }
   });
 
   modelCombobox()?.addEventListener('focusout', (e) => {
@@ -672,10 +703,34 @@ function renderModelOptions() {
     option.id = `model-option-${index}`;
     option.className = 'model-combobox-option';
     option.dataset.modelKey = model.key;
+    option.dataset.modelId = model.model;
     option.dataset.index = String(index);
+    option.dataset.favorite = model.favorite ? 'true' : 'false';
+    option.dataset.default = model.default ? 'true' : 'false';
+    option.dataset.favoritable = canFavoriteModel(model) ? 'true' : 'false';
     option.setAttribute('role', 'option');
     option.setAttribute('aria-selected', model.key === selectedKey ? 'true' : 'false');
-    option.textContent = model.label;
+
+    const label = document.createElement('span');
+    label.className = 'model-combobox-option-label';
+    label.textContent = model.label;
+
+    option.append(label);
+
+    if (canFavoriteModel(model)) {
+      const favoriteToggle = document.createElement('span');
+      favoriteToggle.className = 'model-favorite-toggle';
+      favoriteToggle.dataset.modelFavoriteToggle = 'true';
+      favoriteToggle.dataset.modelKey = model.key;
+      favoriteToggle.setAttribute('role', 'button');
+      favoriteToggle.setAttribute('tabindex', '-1');
+      favoriteToggle.setAttribute('aria-label', model.favorite ? `Unfavorite ${model.label}` : `Favorite ${model.label}`);
+      favoriteToggle.setAttribute('aria-pressed', model.favorite ? 'true' : 'false');
+      favoriteToggle.title = model.favorite ? 'Remove from favorites' : 'Add to favorites';
+      favoriteToggle.textContent = model.favorite ? '★' : '☆';
+      option.append(favoriteToggle);
+    }
+
     list.appendChild(option);
 
     if (model.favorite && matches[index + 1] && !matches[index + 1].favorite) {
@@ -693,6 +748,239 @@ function renderModelOptions() {
 
 function normalizeModelSearch(value) {
   return String(value || '').trim().toLowerCase();
+}
+
+function modelByKey(modelKey) {
+  return availableModels.find(model => model.key === modelKey);
+}
+
+function canFavoriteModel(model) {
+  return model?.provider === 'openrouter';
+}
+
+function getFavoriteModelsInOrder() {
+  const ids = getFavoriteModelIds();
+  const presentFavorites = availableModels
+    .filter(model => canFavoriteModel(model) && model.favorite && !model.default)
+    .map(model => model.model);
+  const ordered = [];
+
+  [...ids, ...presentFavorites].forEach(modelId => {
+    if (!modelId || ordered.includes(modelId)) return;
+    ordered.push(modelId);
+  });
+
+  return ordered;
+}
+
+function applyFavoriteState(favoriteIds) {
+  const favoriteSet = new Set(favoriteIds);
+  const staticDefaultKey = getDefaultModelKey();
+  availableModels = availableModels.map(model => ({
+    ...model,
+    favorite: canFavoriteModel(model) && favoriteSet.has(model.model),
+    default: model.key === staticDefaultKey
+  })).sort((a, b) => {
+    if ((a.key === staticDefaultKey) !== (b.key === staticDefaultKey)) {
+      return a.key === staticDefaultKey ? -1 : 1;
+    }
+
+    if (a.default !== b.default) return a.default ? -1 : 1;
+
+    const ar = favoriteIds.indexOf(a.model);
+    const br = favoriteIds.indexOf(b.model);
+    if (ar !== br) {
+      if (ar === -1) return 1;
+      if (br === -1) return -1;
+      return ar - br;
+    }
+
+    if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
+    return a.label.localeCompare(b.label);
+  });
+}
+
+async function persistFavoriteModels(favoriteIds) {
+  const previousModels = availableModels.map(model => ({ ...model }));
+  const normalizedFavorites = favoriteIds.filter((modelId, index, list) => modelId && list.indexOf(modelId) === index);
+  applyFavoriteState(normalizedFavorites);
+  renderModelOptions();
+  const selectedKey = modelSelect()?.dataset.value || getState().modelKey || getDefaultModelKey();
+  hydrateModelSelect(selectedKey);
+
+  try {
+    availableModels = await saveFavoriteModels(normalizedFavorites);
+    renderModelOptions();
+    hydrateModelSelect(selectedKey);
+  } catch (err) {
+    console.warn('[models] Favorite update failed:', err.message || err);
+    availableModels = previousModels;
+    renderModelOptions();
+    hydrateModelSelect(selectedKey);
+  }
+}
+
+async function toggleModelFavorite(modelKey) {
+  const model = modelByKey(modelKey);
+  if (!canFavoriteModel(model) || model.default) return;
+
+  const favorites = getFavoriteModelsInOrder();
+  const favoriteIndex = favorites.indexOf(model.model);
+  if (favoriteIndex === -1) {
+    favorites.push(model.model);
+  } else if (!model.default) {
+    favorites.splice(favoriteIndex, 1);
+  }
+
+  await persistFavoriteModels(favorites);
+}
+
+async function reorderFavoriteModel(modelKey, direction) {
+  const model = modelByKey(modelKey);
+  if (!canFavoriteModel(model) || !model.favorite || model.default) return;
+
+  const favorites = getFavoriteModelsInOrder();
+  const currentIndex = favorites.indexOf(model.model);
+  if (currentIndex === -1) return;
+
+  const movableStart = firstMovableFavoriteIndex(favorites);
+  const nextIndex = Math.max(movableStart, Math.min(favorites.length - 1, currentIndex + direction));
+  if (nextIndex === currentIndex) return;
+
+  favorites.splice(currentIndex, 1);
+  favorites.splice(nextIndex, 0, model.model);
+  await persistFavoriteModels(favorites);
+}
+
+function firstMovableFavoriteIndex(favorites) {
+  const index = favorites.findIndex(modelId => {
+    const model = availableModels.find(item => item.model === modelId);
+    return !model || (canFavoriteModel(model) && !model.default);
+  });
+  return index === -1 ? 0 : index;
+}
+
+function dragTargetFromPointer(clientY) {
+  const favoriteOptions = Array.from(modelOptions()?.querySelectorAll('[data-model-key][data-favoritable="true"][data-favorite="true"]:not([data-default="true"])') || [])
+    .filter(option => option !== modelDragState?.option);
+  if (!favoriteOptions.length) return null;
+
+  const target = favoriteOptions.find(option => {
+    const rect = option.getBoundingClientRect();
+    return clientY < rect.top + rect.height / 2;
+  });
+
+  return target
+    ? { option: target, after: false }
+    : { option: favoriteOptions[favoriteOptions.length - 1], after: true };
+}
+
+function startModelDrag() {
+  if (!modelDragState || !modelDragState.option || modelDragState.dragging) return;
+  modelDragState.dragging = true;
+  modelDragState.suppressClick = true;
+  modelDragState.option.classList.add('dragging');
+  modelOptions()?.classList.add('is-reordering');
+}
+
+function handleModelPointerDown(e) {
+  if (e.button !== 0 || e.target.closest('[data-model-favorite-toggle]')) return;
+
+  const option = e.target.closest('[data-model-key]');
+  if (!option || option.dataset.favoritable !== 'true' || option.dataset.favorite !== 'true' || option.dataset.default === 'true') return;
+
+  modelDragState = {
+    pointerId: e.pointerId,
+    option,
+    modelKey: option.dataset.modelKey,
+    startX: e.clientX,
+    startY: e.clientY,
+    holdReady: false,
+    dragging: false,
+    suppressClick: false,
+    holdTimer: window.setTimeout(() => {
+      if (!modelDragState) return;
+      modelDragState.holdReady = true;
+      startModelDrag();
+    }, 250)
+  };
+
+  option.setPointerCapture?.(e.pointerId);
+}
+
+function handleModelPointerMove(e) {
+  if (!modelDragState || e.pointerId !== modelDragState.pointerId) return;
+
+  const deltaX = Math.abs(e.clientX - modelDragState.startX);
+  const deltaY = Math.abs(e.clientY - modelDragState.startY);
+
+  if (!modelDragState.dragging) {
+    if ((deltaX > 6 || deltaY > 6) && !modelDragState.holdReady) {
+      window.clearTimeout(modelDragState.holdTimer);
+      cancelModelDrag();
+    }
+
+    return;
+  }
+
+  e.preventDefault();
+  const targetInfo = dragTargetFromPointer(e.clientY);
+  Array.from(modelOptions()?.querySelectorAll('[data-model-key]') || []).forEach(option => {
+    option.classList.remove('drag-over-before', 'drag-over-after');
+  });
+
+  if (targetInfo?.option && targetInfo.option !== modelDragState.option) {
+    targetInfo.option.classList.add(targetInfo.after ? 'drag-over-after' : 'drag-over-before');
+  }
+}
+
+function handleModelPointerUp(e) {
+  if (!modelDragState || e.pointerId !== modelDragState.pointerId) return;
+
+  window.clearTimeout(modelDragState.holdTimer);
+  modelDragState.option.releasePointerCapture?.(e.pointerId);
+
+  if (modelDragState.dragging) {
+    e.preventDefault();
+    const model = modelByKey(modelDragState.modelKey);
+    const targetInfo = dragTargetFromPointer(e.clientY);
+    const target = targetInfo?.option;
+    const favorites = getFavoriteModelsInOrder();
+    const currentIndex = model ? favorites.indexOf(model.model) : -1;
+
+    if (model && currentIndex !== -1 && target) {
+      const targetModel = modelByKey(target.dataset.modelKey);
+      const nextIndex = targetModel ? favorites.indexOf(targetModel.model) : -1;
+      const movableStart = firstMovableFavoriteIndex(favorites);
+      const insertionIndex = Math.max(movableStart, nextIndex + (targetInfo.after ? 1 : 0));
+
+      if (nextIndex !== -1 && insertionIndex !== currentIndex) {
+        favorites.splice(currentIndex, 1);
+        favorites.splice(insertionIndex > currentIndex ? insertionIndex - 1 : insertionIndex, 0, model.model);
+        void persistFavoriteModels(favorites);
+      }
+    }
+  }
+
+  cancelModelDrag();
+}
+
+function cancelModelDrag() {
+  if (!modelDragState) return;
+  window.clearTimeout(modelDragState.holdTimer);
+  modelDragState.option?.classList.remove('dragging');
+  Array.from(modelOptions()?.querySelectorAll('[data-model-key]') || []).forEach(option => {
+    option.classList.remove('drag-over-before', 'drag-over-after');
+  });
+  modelOptions()?.classList.remove('is-reordering');
+
+  const suppressClick = modelDragState.suppressClick;
+  modelDragState = suppressClick ? { suppressClick: true } : null;
+  if (suppressClick) {
+    window.setTimeout(() => {
+      if (modelDragState?.suppressClick) modelDragState = null;
+    }, 0);
+  }
 }
 
 function moveModelHighlight(direction) {
