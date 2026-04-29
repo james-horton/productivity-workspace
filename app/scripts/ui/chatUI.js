@@ -2,7 +2,7 @@
  * Chat UI rendering helpers
  */
 
-import { $, renderContentWithLinks } from '../utils/helpers.js';
+import { $, renderChatMarkup, renderContentWithLinks } from '../utils/helpers.js';
 
 // Coder mode rendering and highlighting helpers
 function hljsAvailable() {
@@ -265,6 +265,8 @@ export function renderChat(messages, { sources, mode } = {}) {
     let frag;
     if (isCoder && msg.role !== 'user') {
       frag = renderCoderBlocks(String(msg.content || ''));
+    } else if (!isCoder && msg.role !== 'user') {
+      frag = renderChatMarkup(String(msg.content || ''));
     } else {
       frag = renderContentWithLinks(String(msg.content || ''));
     }
@@ -317,7 +319,7 @@ export function renderChat(messages, { sources, mode } = {}) {
     box.appendChild(wrap);
   }
 
-  if (isCoder) {
+  if (isCoder || box.querySelector('.chat-markup pre code')) {
     applyHighlight(box);
   }
 
