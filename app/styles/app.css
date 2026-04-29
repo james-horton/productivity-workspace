@@ -814,6 +814,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
   border-radius: 12px;
   border: 1px solid var(--ring);
   background: var(--surface-2);
+  min-width: 0;
   max-width: 80ch;
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -826,6 +827,75 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
 .msg.assistant .bubble {
   background: color-mix(in oklab, var(--accent) 26%, var(--surface-2));
   border-color: color-mix(in oklab, var(--accent) 58%, var(--ring));
+}
+.msg .bubble .chat-markup {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.msg .bubble .chat-markup > :first-child { margin-top: 0; }
+.msg .bubble .chat-markup > :last-child { margin-bottom: 0; }
+.msg .bubble .chat-markup p {
+  margin: 0.4rem 0;
+}
+.msg .bubble .chat-markup h1,
+.msg .bubble .chat-markup h2,
+.msg .bubble .chat-markup h3 {
+  margin: 0.65rem 0 0.35rem;
+  line-height: 1.25;
+  font-weight: 750;
+}
+.msg .bubble .chat-markup h1 { font-size: 1.35rem; }
+.msg .bubble .chat-markup h2 { font-size: 1.18rem; }
+.msg .bubble .chat-markup h3 { font-size: 1.04rem; }
+.msg .bubble .chat-markup ul,
+.msg .bubble .chat-markup ol {
+  margin: 0.4rem 0;
+  padding-inline-start: 1.35rem;
+}
+.msg .bubble .chat-markup li {
+  margin: 0.18rem 0;
+}
+.msg .bubble .chat-markup blockquote {
+  margin: 0.55rem 0;
+  padding: 0.15rem 0 0.15rem 0.8rem;
+  border-left: 3px solid color-mix(in oklab, var(--accent) 62%, var(--ring));
+  color: color-mix(in oklab, var(--text) 86%, var(--muted));
+}
+.msg .bubble .chat-markup blockquote p {
+  margin: 0.3rem 0;
+}
+.msg .bubble .chat-markup code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.92em;
+  padding: 0.08rem 0.28rem;
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--surface) 70%, #000 16%);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.msg .bubble .chat-markup pre {
+  margin: 0.65rem 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.msg .bubble .chat-markup pre code {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  padding: 0.75rem;
+  border: 1px solid color-mix(in oklab, var(--ring) 80%, #000 20%);
+  border-radius: 8px;
+  background: #0d1117;
+  color: #c9d1d9;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  text-shadow: none;
 }
 
 .chat-input {
