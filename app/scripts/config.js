@@ -12,7 +12,8 @@ export const ENDPOINTS = Object.freeze({
   reddit: `${API_BASE}/reddit`,
   quote: `${API_BASE}/quote`,
   models: `${API_BASE}/models`,
-  modelFavorites: `${API_BASE}/models/favorites`
+  modelFavorites: `${API_BASE}/models/favorites`,
+  settings: `${API_BASE}/settings`
 });
 
 export const JSON_HEADERS = Object.freeze({

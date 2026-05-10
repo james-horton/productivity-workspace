@@ -1,5 +1,5 @@
 import { applyTheme } from './theme.js';
-import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG } from './state.js';
+import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings } from './state.js';
 import { getModels, loadModels, providerFor, modelIdFor, getDefaultModelKey, getFavoriteModelIds, saveFavoriteModels } from './services/modelRegistry.js';
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
@@ -80,17 +80,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Collapsible toggles are rendered inline below summaries in News and Web Search.
 
   void loadNews(NEWS.defaultCategory);
-  hydrateRedditTabs();
+
   // Update subreddit tab labels when viewport crosses mobile threshold
   window.addEventListener('resize', () => { hydrateRedditTabs(); updateRedditSummariesForViewport(); });
-  setActiveRedditTab(1);
-  setRedditHeaderFromIndex(1);
-  void loadReddit(1);
 
   // Clock + date
   startClock();
 
-  // Wire listeners
+  // Wire listeners (safe before settings load — none depend on city/subreddits)
   wireControls();
   wireStateEvents();
   initSettingsUI();
@@ -99,6 +96,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Render initial chat from state (starter added above if needed)
   renderChat(getChatHistory(s.mode), { mode: s.mode });
+
+  // Load user settings (city/state/subreddits) from server (secrets.json) and
+  // then initialize the Reddit widget which depends on subreddit settings.
+  loadUserSettings().finally(() => {
+    hydrateRedditTabs();
+    setActiveRedditTab(1);
+    setRedditHeaderFromIndex(1);
+    void loadReddit(1);
+  });
 });
 
 function wireControls() {

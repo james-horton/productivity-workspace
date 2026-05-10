@@ -101,6 +101,13 @@ function loadSecrets() {
       checkIntervalMinutes: parseInt(process.env.UPDATER_CHECK_INTERVAL_MINUTES || (json.updater && json.updater.checkIntervalMinutes) || '5', 10),
       // PM2 process name to restart after update
       pm2ProcessName: (json.updater && json.updater.pm2ProcessName) || process.env.UPDATER_PM2_PROCESS_NAME || 'workspace-ai'
+    },
+    userSettings: {
+      city: (json.userSettings && typeof json.userSettings.city === 'string') ? json.userSettings.city : '',
+      state: (json.userSettings && typeof json.userSettings.state === 'string') ? json.userSettings.state.toUpperCase() : '',
+      subreddits: (json.userSettings && Array.isArray(json.userSettings.subreddits))
+        ? json.userSettings.subreddits.slice(0, 3).map(s => String(s || ''))
+        : []
     }
   };
 }
