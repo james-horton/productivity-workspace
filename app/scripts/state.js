@@ -1,16 +1,17 @@
 /**
- * Client session state (in-memory) + lightweight persistence for preferences
+ * Client session state (in-memory) + lightweight persistence for preferences.
+ *
+ * Theme / model / mode are stored in localStorage (per-browser UI prefs).
+ * City / state / reddit subreddits are stored server-side in secrets.json
+ * via /api/settings and cached here in-memory after `loadUserSettings()`.
  */
+
+import { fetchSettings, saveSettings } from './services/settingsService.js';
 
 const LS_KEYS = {
   theme: 'pw.theme',
   model: 'pw.model',
-  mode: 'pw.mode',
-  city: 'pw.city',
-  state: 'pw.state',
-  redditSubreddit: 'pw.reddit.subreddit',
-  redditSubreddit2: 'pw.reddit.subreddit2',
-  redditSubreddit3: 'pw.reddit.subreddit3'
+  mode: 'pw.mode'
 };
 
 export const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow', 'bumblebee', 'orangeade', 'sky-blue'];
@@ -178,44 +179,110 @@ function dispatch(type, detail) {
   document.dispatchEvent(new CustomEvent(type, { detail }));
 }
 
+// ---------------------------------------------------------------------------
+// User settings (city/state/subreddits) — persisted on the server in secrets.json.
+// Cached in-memory so getters can stay synchronous for callers throughout the UI.
+// ---------------------------------------------------------------------------
+
+const SUBREDDIT_SLOTS = 3;
+
+const userSettings = {
+  city: '',
+  state: '',
+  subreddits: ['', '', '']
+};
+
+let settingsLoaded = false;
+
+function clampSlotIndex(index) {
+  const i = parseInt(index, 10);
+  if (!Number.isFinite(i)) return 0;
+  return Math.max(0, Math.min(SUBREDDIT_SLOTS - 1, i - 1));
+}
+
+function normalizeSubredditName(name) {
+  return String(name || '').replace(/^\/?r\//i, '').trim();
+}
+
+/**
+ * Fetch persisted user settings from the server and populate the in-memory cache.
+ * Should be awaited once during app startup before widgets that depend on
+ * city/state/subreddits initialize. Safe to call multiple times.
+ */
+export async function loadUserSettings() {
+  try {
+    const data = await fetchSettings();
+    userSettings.city = String(data?.city || '').trim();
+    userSettings.state = String(data?.state || '').trim().toUpperCase();
+    const subs = Array.isArray(data?.subreddits) ? data.subreddits : [];
+    for (let i = 0; i < SUBREDDIT_SLOTS; i += 1) {
+      userSettings.subreddits[i] = normalizeSubredditName(subs[i]);
+    }
+  } catch (err) {
+    console.warn('[settings] failed to load from server:', err && err.message);
+  } finally {
+    settingsLoaded = true;
+    dispatch('pw:settings:loaded', {
+      city: userSettings.city,
+      state: userSettings.state,
+      subreddits: [...userSettings.subreddits]
+    });
+  }
+}
+
+export function isUserSettingsLoaded() {
+  return settingsLoaded;
+}
+
+// Debounce persistence so that multiple rapid setters (e.g. the settings
+// form submitting city, state, and 3 subreddits in succession) collapse into
+// a single PUT carrying the latest cached state. Avoids races where
+// out-of-order requests could clobber newer values.
+const PERSIST_DEBOUNCE_MS = 50;
+let persistTimer = null;
+let persistPending = null;
+let resolvePersistPending = null;
+
+function persistUserSettings() {
+  if (!persistPending) {
+    persistPending = new Promise((resolve) => { resolvePersistPending = resolve; });
+  }
+  if (persistTimer) clearTimeout(persistTimer);
+  persistTimer = setTimeout(() => {
+    persistTimer = null;
+    const resolver = resolvePersistPending;
+    persistPending = null;
+    resolvePersistPending = null;
+    saveSettings({
+      city: userSettings.city,
+      state: userSettings.state,
+      subreddits: [...userSettings.subreddits]
+    }).catch(err => {
+      console.warn('[settings] failed to save to server:', err && err.message);
+    }).finally(() => {
+      if (resolver) resolver();
+    });
+  }, PERSIST_DEBOUNCE_MS);
+  return persistPending;
+}
+
 // Location persistence
 export function getLocation() {
-  try {
-    const city = (localStorage.getItem(LS_KEYS.city) || '').trim();
-    const state = (localStorage.getItem(LS_KEYS.state) || '').trim().toUpperCase();
-    return { city, state };
-  } catch {
-    return { city: '', state: '' };
-  }
+  return { city: userSettings.city, state: userSettings.state };
 }
 
 export function setLocation({ city, state } = {}) {
   const c = String(city || '').trim();
   const s = String(state || '').trim().toUpperCase();
-  try {
-    if (c) localStorage.setItem(LS_KEYS.city, c);
-    else localStorage.removeItem(LS_KEYS.city);
-
-    if (s) localStorage.setItem(LS_KEYS.state, s);
-    else localStorage.removeItem(LS_KEYS.state);
-  } finally {
-    // Notify listeners (e.g., UI) that location changed
-    dispatch('pw:location:changed', { city: c, state: s });
-  }
+  userSettings.city = c;
+  userSettings.state = s;
+  void persistUserSettings();
+  dispatch('pw:location:changed', { city: c, state: s });
 }
 
-// Reddit subreddit persistence (up to 3)
+// Reddit subreddit persistence (up to 3 slots)
 export function getRedditSubredditAt(index = 1) {
-  try {
-    const key = index === 2
-      ? LS_KEYS.redditSubreddit2
-      : index === 3
-        ? LS_KEYS.redditSubreddit3
-        : LS_KEYS.redditSubreddit;
-    return (localStorage.getItem(key) || '').trim();
-  } catch {
-    return '';
-  }
+  return userSettings.subreddits[clampSlotIndex(index)] || '';
 }
 
 /**
@@ -230,18 +297,11 @@ export function getRedditSubreddit() {
  * Accepts values like "news" or "/r/news" and normalizes to "news".
  */
 export function setRedditSubredditAt(index = 1, name) {
-  const n = String(name || '').replace(/^\/?r\//i, '').trim();
-  const key = index === 2
-    ? LS_KEYS.redditSubreddit2
-    : index === 3
-      ? LS_KEYS.redditSubreddit3
-      : LS_KEYS.redditSubreddit;
-  try {
-    if (n) localStorage.setItem(key, n);
-    else localStorage.removeItem(key);
-  } finally {
-    dispatch('pw:reddit:changed', { subreddit: n, index });
-  }
+  const n = normalizeSubredditName(name);
+  const slot = clampSlotIndex(index);
+  userSettings.subreddits[slot] = n;
+  void persistUserSettings();
+  dispatch('pw:reddit:changed', { subreddit: n, index: slot + 1 });
 }
 
 /**
