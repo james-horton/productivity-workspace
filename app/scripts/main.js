@@ -108,15 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function wireControls() {
-  // Theme
-  themeSelect().addEventListener('change', (e) => {
-    const theme = e.target.value;
-    if (!THEMES.includes(theme)) return;
-    setTheme(theme);
-    applyTheme(theme);
-    setMatrixRainEnabled(theme === 'matrix'); setNyanCatEnabled(theme === 'nyan-cat');
-  });
-
   // Model
   wireModelCombobox();
 
@@ -509,6 +500,7 @@ function wireStateEvents() {
   document.addEventListener('pw:theme:changed', (e) => {
     const { theme } = e.detail || {};
     hydrateThemeSelect(theme);
+    applyTheme(theme);
     setMatrixRainEnabled(theme === 'matrix'); setNyanCatEnabled(theme === 'nyan-cat');
   });
   document.addEventListener('pw:model:changed', (e) => {
@@ -1331,6 +1323,7 @@ function initSettingsUI() {
   const btn = document.getElementById('settingsBtn');
   const modal = document.getElementById('settingsModal');
   const form = document.getElementById('settingsForm');
+  const selectTheme = document.getElementById('themeSelect');
   const inputCity = document.getElementById('settingsCity');
   const selectState = document.getElementById('settingsState');
   const inputReddit = document.getElementById('settingsRedditSubreddit');
@@ -1339,9 +1332,10 @@ function initSettingsUI() {
   const btnClose = document.getElementById('settingsClose');
   const btnCancel = document.getElementById('settingsCancel');
 
-  if (!btn || !modal || !form || !inputCity || !selectState) return;
+  if (!btn || !modal || !form || !selectTheme || !inputCity || !selectState) return;
 
   function prefill() {
+    selectTheme.value = getState().theme || 'matrix';
     const { city, state } = getLocation();
     inputCity.value = city || '';
     selectState.value = state || '';
@@ -1354,7 +1348,7 @@ function initSettingsUI() {
     prefill();
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('modal-open');
-    setTimeout(() => inputCity.focus(), 0);
+    setTimeout(() => selectTheme.focus(), 0);
   }
 
   function close() {
@@ -1382,6 +1376,8 @@ function initSettingsUI() {
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
+    const theme = (selectTheme.value || '').trim();
+    if (THEMES.includes(theme)) setTheme(theme);
     const city = (inputCity.value || '').trim();
     const state = (selectState.value || '').trim().toUpperCase();
     setLocation({ city, state });

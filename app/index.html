@@ -21,23 +21,6 @@
     </div>
     <div class="controls">
       <label class="control">
-        <span class="label">Theme</span>
-        <select id="themeSelect" aria-label="Theme">
-          <option value="matrix" selected>Matrix</option>
-          <option value="dark">Dark</option>
-          <option value="dark-black">Dark Black</option>
-          <option value="aurora">Aurora</option>
-          <option value="light">Light</option>
-          <option value="bright-white">Bright White</option>
-          <option value="nyan-cat">Nyan Cat</option>
-          <option value="rainbow">Rainbow</option>
-          <option value="bumblebee">Bumblebee</option>
-          <option value="orangeade">Orangeade</option>
-          <option value="sky-blue">Sky Blue</option>
-        </select>
-      </label>
-
-      <label class="control">
         <span class="label">Model</span>
         <div class="model-combobox" id="modelCombobox">
           <button id="modelSelect" class="model-combobox-toggle" type="button" aria-label="Model" aria-haspopup="listbox" aria-expanded="false" aria-controls="modelOptions">
@@ -278,6 +261,22 @@
         </button>
       </div>
       <form id="settingsForm" class="modal-body">
+        <div class="control-row">
+          <label for="themeSelect" class="label">Theme</label>
+          <select id="themeSelect" aria-label="Theme">
+            <option value="matrix" selected>Matrix</option>
+            <option value="dark">Dark</option>
+            <option value="dark-black">Dark Black</option>
+            <option value="aurora">Aurora</option>
+            <option value="light">Light</option>
+            <option value="bright-white">Bright White</option>
+            <option value="nyan-cat">Nyan Cat</option>
+            <option value="rainbow">Rainbow</option>
+            <option value="bumblebee">Bumblebee</option>
+            <option value="orangeade">Orangeade</option>
+            <option value="sky-blue">Sky Blue</option>
+          </select>
+        </div>
         <div class="control-row">
           <label for="settingsCity" class="label">City</label>
           <input id="settingsCity" type="text" placeholder="e.g., Boston" autocomplete="address-level2" />

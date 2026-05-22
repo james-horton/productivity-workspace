@@ -1,15 +1,14 @@
 /**
  * Client session state (in-memory) + lightweight persistence for preferences.
  *
- * Theme / model / mode are stored in localStorage (per-browser UI prefs).
- * City / state / reddit subreddits are stored server-side in secrets.json
+ * Model / mode are stored in localStorage (per-browser UI prefs).
+ * Theme / city / state / reddit subreddits are stored server-side in secrets.json
  * via /api/settings and cached here in-memory after `loadUserSettings()`.
  */
 
 import { fetchSettings, saveSettings } from './services/settingsService.js';
 
 const LS_KEYS = {
-  theme: 'pw.theme',
   model: 'pw.model',
   mode: 'pw.mode'
 };
@@ -115,10 +114,8 @@ const state = {
 };
 
 function loadPersisted() {
-  const t = localStorage.getItem(LS_KEYS.theme);
   const m = localStorage.getItem(LS_KEYS.model);
   const md = localStorage.getItem(LS_KEYS.mode);
-  if (t && THEMES.includes(t)) state.theme = t;
   if (m) state.modelKey = m;
   if (md && MODES[md]) {
     state.mode = md;
@@ -139,7 +136,8 @@ export function getState() {
 export function setTheme(theme) {
   if (!THEMES.includes(theme)) return;
   state.theme = theme;
-  localStorage.setItem(LS_KEYS.theme, theme);
+  userSettings.theme = theme;
+  void persistUserSettings();
   dispatch('pw:theme:changed', { theme });
 }
 
@@ -180,13 +178,14 @@ function dispatch(type, detail) {
 }
 
 // ---------------------------------------------------------------------------
-// User settings (city/state/subreddits) — persisted on the server in secrets.json.
+// User settings (theme/city/state/subreddits) — persisted on the server in secrets.json.
 // Cached in-memory so getters can stay synchronous for callers throughout the UI.
 // ---------------------------------------------------------------------------
 
 const SUBREDDIT_SLOTS = 3;
 
 const userSettings = {
+  theme: state.theme,
   city: '',
   state: '',
   subreddits: ['', '', '']
@@ -207,11 +206,15 @@ function normalizeSubredditName(name) {
 /**
  * Fetch persisted user settings from the server and populate the in-memory cache.
  * Should be awaited once during app startup before widgets that depend on
- * city/state/subreddits initialize. Safe to call multiple times.
+ * theme/city/state/subreddits initialize. Safe to call multiple times.
  */
 export async function loadUserSettings() {
+  let loadedTheme = state.theme;
   try {
     const data = await fetchSettings();
+    loadedTheme = THEMES.includes(data?.theme) ? data.theme : state.theme;
+    userSettings.theme = loadedTheme;
+    state.theme = loadedTheme;
     userSettings.city = String(data?.city || '').trim();
     userSettings.state = String(data?.state || '').trim().toUpperCase();
     const subs = Array.isArray(data?.subreddits) ? data.subreddits : [];
@@ -223,10 +226,12 @@ export async function loadUserSettings() {
   } finally {
     settingsLoaded = true;
     dispatch('pw:settings:loaded', {
+      theme: userSettings.theme,
       city: userSettings.city,
       state: userSettings.state,
       subreddits: [...userSettings.subreddits]
     });
+    dispatch('pw:theme:changed', { theme: loadedTheme });
   }
 }
 
@@ -235,7 +240,7 @@ export function isUserSettingsLoaded() {
 }
 
 // Debounce persistence so that multiple rapid setters (e.g. the settings
-// form submitting city, state, and 3 subreddits in succession) collapse into
+// form submitting theme, city, state, and 3 subreddits in succession) collapse into
 // a single PUT carrying the latest cached state. Avoids races where
 // out-of-order requests could clobber newer values.
 const PERSIST_DEBOUNCE_MS = 50;
@@ -254,6 +259,7 @@ function persistUserSettings() {
     persistPending = null;
     resolvePersistPending = null;
     saveSettings({
+      theme: userSettings.theme,
       city: userSettings.city,
       state: userSettings.state,
       subreddits: [...userSettings.subreddits]
