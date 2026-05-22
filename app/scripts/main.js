@@ -1385,7 +1385,30 @@ function initSettingsUI() {
   const btnClose = document.getElementById('settingsClose');
   const btnCancel = document.getElementById('settingsCancel');
 
+  const settingsTabs = document.getElementById('settingsTabs');
+  const panelGeneral = document.getElementById('settingsPanelGeneral');
+  const panelUI = document.getElementById('settingsPanelUI');
+
   if (!btn || !modal || !form || !selectTheme || !inputCity || !selectState) return;
+
+  if (settingsTabs && panelGeneral && panelUI) {
+    const tabButtons = settingsTabs.querySelectorAll('.tab');
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+
+        const targetTab = button.dataset.tab;
+        if (targetTab === 'general') {
+          panelGeneral.classList.remove('hidden');
+          panelUI.classList.add('hidden');
+        } else if (targetTab === 'ui') {
+          panelGeneral.classList.add('hidden');
+          panelUI.classList.remove('hidden');
+        }
+      });
+    });
+  }
 
   function prefill() {
     selectTheme.value = getState().theme || 'matrix';
@@ -1399,9 +1422,24 @@ function initSettingsUI() {
 
   function open() {
     prefill();
+    // Reset to General tab on open
+    if (settingsTabs && panelGeneral && panelUI) {
+      const tabButtons = settingsTabs.querySelectorAll('.tab');
+      tabButtons.forEach(btn => {
+        if (btn.dataset.tab === 'general') {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+      panelGeneral.classList.remove('hidden');
+      panelUI.classList.add('hidden');
+    }
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('modal-open');
-    setTimeout(() => selectTheme.focus(), 0);
+    setTimeout(() => {
+      if (inputCity) inputCity.focus();
+    }, 0);
   }
 
   function close() {

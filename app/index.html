@@ -269,96 +269,111 @@
         </button>
       </div>
       <form id="settingsForm" class="modal-body">
-        <div class="control-row">
-          <label for="themeSelect" class="label">Theme</label>
-          <select id="themeSelect" aria-label="Theme">
-            <option value="matrix" selected>Matrix</option>
-            <option value="dark">Dark</option>
-            <option value="dark-black">Dark Black</option>
-            <option value="aurora">Aurora</option>
-            <option value="light">Light</option>
-            <option value="bright-white">Bright White</option>
-            <option value="nyan-cat">Nyan Cat</option>
-            <option value="rainbow">Rainbow</option>
-            <option value="bumblebee">Bumblebee</option>
-            <option value="orangeade">Orangeade</option>
-            <option value="sky-blue">Sky Blue</option>
-            <option value="usa">USA</option>
-          </select>
+        <div class="settings-tabs-container">
+          <nav class="tabs" id="settingsTabs" aria-label="Settings categories">
+            <button class="tab active" data-tab="general" type="button">General</button>
+            <button class="tab" data-tab="ui" type="button">UI</button>
+          </nav>
         </div>
-        <div class="control-row">
-          <label for="settingsCity" class="label">City</label>
-          <input id="settingsCity" type="text" placeholder="e.g., Boston" autocomplete="address-level2" />
+
+        <!-- General Tab Panel -->
+        <div id="settingsPanelGeneral" class="settings-panel">
+          <div class="control-row">
+            <label for="settingsCity" class="label">City</label>
+            <input id="settingsCity" type="text" placeholder="e.g., Boston" autocomplete="address-level2" />
+          </div>
+          <div class="control-row">
+            <label for="settingsState" class="label">State</label>
+            <select id="settingsState" autocomplete="address-level1">
+              <option value="">Select a state</option>
+              <option value="AL">Alabama (AL)</option>
+              <option value="AK">Alaska (AK)</option>
+              <option value="AZ">Arizona (AZ)</option>
+              <option value="AR">Arkansas (AR)</option>
+              <option value="CA">California (CA)</option>
+              <option value="CO">Colorado (CO)</option>
+              <option value="CT">Connecticut (CT)</option>
+              <option value="DE">Delaware (DE)</option>
+              <option value="FL">Florida (FL)</option>
+              <option value="GA">Georgia (GA)</option>
+              <option value="HI">Hawaii (HI)</option>
+              <option value="ID">Idaho (ID)</option>
+              <option value="IL">Illinois (IL)</option>
+              <option value="IN">Indiana (IN)</option>
+              <option value="IA">Iowa (IA)</option>
+              <option value="KS">Kansas (KS)</option>
+              <option value="KY">Kentucky (KY)</option>
+              <option value="LA">Louisiana (LA)</option>
+              <option value="ME">Maine (ME)</option>
+              <option value="MD">Maryland (MD)</option>
+              <option value="MA">Massachusetts (MA)</option>
+              <option value="MI">Michigan (MI)</option>
+              <option value="MN">Minnesota (MN)</option>
+              <option value="MS">Mississippi (MS)</option>
+              <option value="MO">Missouri (MO)</option>
+              <option value="MT">Montana (MT)</option>
+              <option value="NE">Nebraska (NE)</option>
+              <option value="NV">Nevada (NV)</option>
+              <option value="NH">New Hampshire (NH)</option>
+              <option value="NJ">New Jersey (NJ)</option>
+              <option value="NM">New Mexico (NM)</option>
+              <option value="NY">New York (NY)</option>
+              <option value="NC">North Carolina (NC)</option>
+              <option value="ND">North Dakota (ND)</option>
+              <option value="OH">Ohio (OH)</option>
+              <option value="OK">Oklahoma (OK)</option>
+              <option value="OR">Oregon (OR)</option>
+              <option value="PA">Pennsylvania (PA)</option>
+              <option value="RI">Rhode Island (RI)</option>
+              <option value="SC">South Carolina (SC)</option>
+              <option value="SD">South Dakota (SD)</option>
+              <option value="TN">Tennessee (TN)</option>
+              <option value="TX">Texas (TX)</option>
+              <option value="UT">Utah (UT)</option>
+              <option value="VT">Vermont (VT)</option>
+              <option value="VA">Virginia (VA)</option>
+              <option value="WA">Washington (WA)</option>
+              <option value="WV">West Virginia (WV)</option>
+              <option value="WI">Wisconsin (WI)</option>
+              <option value="WY">Wyoming (WY)</option>
+              <option value="DC">District of Columbia (DC)</option>
+            </select>
+          </div>
+          <div class="control-row">
+            <label for="settingsRedditSubreddit" class="label">Reddit Subreddit 1</label>
+            <input id="settingsRedditSubreddit" type="text" placeholder="e.g., news or /r/news" autocomplete="off" />
+          </div>
+          <div class="control-row">
+            <label for="settingsRedditSubreddit2" class="label">Reddit Subreddit 2</label>
+            <input id="settingsRedditSubreddit2" type="text" placeholder="e.g., worldnews or /r/worldnews" autocomplete="off" />
+          </div>
+          <div class="control-row">
+            <label for="settingsRedditSubreddit3" class="label">Reddit Subreddit 3</label>
+            <input id="settingsRedditSubreddit3" type="text" placeholder="e.g., technology or /r/technology" autocomplete="off" />
+          </div>
         </div>
-        <div class="control-row">
-          <label for="settingsState" class="label">State</label>
-          <select id="settingsState" autocomplete="address-level1">
-            <option value="">Select a state</option>
-            <option value="AL">Alabama (AL)</option>
-            <option value="AK">Alaska (AK)</option>
-            <option value="AZ">Arizona (AZ)</option>
-            <option value="AR">Arkansas (AR)</option>
-            <option value="CA">California (CA)</option>
-            <option value="CO">Colorado (CO)</option>
-            <option value="CT">Connecticut (CT)</option>
-            <option value="DE">Delaware (DE)</option>
-            <option value="FL">Florida (FL)</option>
-            <option value="GA">Georgia (GA)</option>
-            <option value="HI">Hawaii (HI)</option>
-            <option value="ID">Idaho (ID)</option>
-            <option value="IL">Illinois (IL)</option>
-            <option value="IN">Indiana (IN)</option>
-            <option value="IA">Iowa (IA)</option>
-            <option value="KS">Kansas (KS)</option>
-            <option value="KY">Kentucky (KY)</option>
-            <option value="LA">Louisiana (LA)</option>
-            <option value="ME">Maine (ME)</option>
-            <option value="MD">Maryland (MD)</option>
-            <option value="MA">Massachusetts (MA)</option>
-            <option value="MI">Michigan (MI)</option>
-            <option value="MN">Minnesota (MN)</option>
-            <option value="MS">Mississippi (MS)</option>
-            <option value="MO">Missouri (MO)</option>
-            <option value="MT">Montana (MT)</option>
-            <option value="NE">Nebraska (NE)</option>
-            <option value="NV">Nevada (NV)</option>
-            <option value="NH">New Hampshire (NH)</option>
-            <option value="NJ">New Jersey (NJ)</option>
-            <option value="NM">New Mexico (NM)</option>
-            <option value="NY">New York (NY)</option>
-            <option value="NC">North Carolina (NC)</option>
-            <option value="ND">North Dakota (ND)</option>
-            <option value="OH">Ohio (OH)</option>
-            <option value="OK">Oklahoma (OK)</option>
-            <option value="OR">Oregon (OR)</option>
-            <option value="PA">Pennsylvania (PA)</option>
-            <option value="RI">Rhode Island (RI)</option>
-            <option value="SC">South Carolina (SC)</option>
-            <option value="SD">South Dakota (SD)</option>
-            <option value="TN">Tennessee (TN)</option>
-            <option value="TX">Texas (TX)</option>
-            <option value="UT">Utah (UT)</option>
-            <option value="VT">Vermont (VT)</option>
-            <option value="VA">Virginia (VA)</option>
-            <option value="WA">Washington (WA)</option>
-            <option value="WV">West Virginia (WV)</option>
-            <option value="WI">Wisconsin (WI)</option>
-            <option value="WY">Wyoming (WY)</option>
-            <option value="DC">District of Columbia (DC)</option>
-          </select>
+
+        <!-- UI Tab Panel -->
+        <div id="settingsPanelUI" class="settings-panel hidden">
+          <div class="control-row">
+            <label for="themeSelect" class="label">Theme</label>
+            <select id="themeSelect" aria-label="Theme">
+              <option value="matrix" selected>Matrix</option>
+              <option value="dark">Dark</option>
+              <option value="dark-black">Dark Black</option>
+              <option value="aurora">Aurora</option>
+              <option value="light">Light</option>
+              <option value="bright-white">Bright White</option>
+              <option value="nyan-cat">Nyan Cat</option>
+              <option value="rainbow">Rainbow</option>
+              <option value="bumblebee">Bumblebee</option>
+              <option value="orangeade">Orangeade</option>
+              <option value="sky-blue">Sky Blue</option>
+              <option value="usa">USA</option>
+            </select>
+          </div>
         </div>
-        <div class="control-row">
-          <label for="settingsRedditSubreddit" class="label">Reddit Subreddit 1</label>
-          <input id="settingsRedditSubreddit" type="text" placeholder="e.g., news or /r/news" autocomplete="off" />
-        </div>
-        <div class="control-row">
-          <label for="settingsRedditSubreddit2" class="label">Reddit Subreddit 2</label>
-          <input id="settingsRedditSubreddit2" type="text" placeholder="e.g., worldnews or /r/worldnews" autocomplete="off" />
-        </div>
-        <div class="control-row">
-          <label for="settingsRedditSubreddit3" class="label">Reddit Subreddit 3</label>
-          <input id="settingsRedditSubreddit3" type="text" placeholder="e.g., technology or /r/technology" autocomplete="off" />
-        </div>
+
         <div class="modal-actions">
           <button id="settingsCancel" class="btn" type="button">Cancel</button>
           <button id="settingsSave" class="btn primary" type="submit">Save</button>

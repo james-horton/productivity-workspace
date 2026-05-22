@@ -1335,6 +1335,20 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   color: var(--muted);
   font-size: .9rem;
 }
+.settings-tabs-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+.settings-panel {
+  display: grid;
+  gap: .75rem;
+  min-height: 340px;
+  align-content: start;
+}
+.settings-panel.hidden {
+  display: none;
+}
 .modal-body input[type="text"],
 .modal-body select {
   width: 100%;
