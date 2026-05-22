@@ -1,5 +1,5 @@
 import { applyTheme } from './theme.js';
-import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings } from './state.js';
+import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings, getShowInspirationQuote, setShowInspirationQuote, getShowCalculator, setShowCalculator, getShowClock, setShowClock, getRoundedBorders, setRoundedBorders } from './state.js';
 import { getModels, loadModels, providerFor, modelIdFor, getDefaultModelKey, getFavoriteModelIds, saveFavoriteModels } from './services/modelRegistry.js';
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
@@ -61,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Apply saved theme
   applyTheme(s.theme);
+  applyRoundedBorders(getRoundedBorders());
   hydrateThemeSelect(s.theme);
 
   // Init header animations and toggle based on theme
@@ -75,8 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
   syncDisclaimerForMode(s.mode);
   showStarterIfEmpty(s.mode);
 
-  // Initial quote and news + reddit
-  void refreshQuote();
+  // Initial news + reddit
   setActiveTab(NEWS.defaultCategory);
 
   // Collapsible toggles are rendered inline below summaries in News and Web Search.
@@ -102,6 +102,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load user settings (city/state/subreddits) from server (secrets.json) and
   // then initialize the Reddit widget which depends on subreddit settings.
   loadUserSettings().finally(() => {
+    syncInspirationSection();
+    syncCalculatorSection();
+    syncClockSection();
+    document.body.dataset.userSettingsReady = 'true';
+    applyRoundedBorders(getRoundedBorders());
+    if (getShowInspirationQuote()) void refreshQuote();
     hydrateRedditTabs();
     setActiveRedditTab(1);
     setRedditHeaderFromIndex(1);
@@ -576,6 +582,12 @@ function wireStateEvents() {
     const idx = getActiveRedditTabIndex();
     setRedditHeaderFromIndex(idx);
     // Do not auto-fetch here; API only on page load, refresh click, or tab click
+  });
+  document.addEventListener('pw:ui-settings:changed', () => {
+    syncInspirationSection();
+    syncCalculatorSection();
+    syncClockSection();
+    applyRoundedBorders(getRoundedBorders());
   });
 }
 
@@ -1255,6 +1267,10 @@ function downloadCoderText(files, mode) {
 }
 
 async function refreshQuote() {
+  if (!getShowInspirationQuote()) {
+    syncInspirationSection();
+    return;
+  }
   const box = quoteText();
   const currentTheme = getState().theme;
   if (box) {
@@ -1267,6 +1283,10 @@ async function refreshQuote() {
   }
   try {
     const res = await fetchQuote(currentTheme);
+    if (!getShowInspirationQuote()) {
+      syncInspirationSection();
+      return;
+    }
     if (box) {
       box.classList.remove('is-loading');
       box.textContent = res.quote || '…';
@@ -1277,6 +1297,46 @@ async function refreshQuote() {
       box.textContent = 'Could not load a quote right now. Try again.';
     }
   }
+}
+
+function syncInspirationSection() {
+  const show = getShowInspirationQuote();
+  const card = document.querySelector('.quote-card');
+  if (card) {
+    card.hidden = !show;
+    card.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
+  const btn = quoteRefresh && quoteRefresh();
+  if (btn) btn.disabled = !show;
+  if (!show) {
+    const box = quoteText && quoteText();
+    if (box) {
+      box.classList.remove('is-loading');
+      box.textContent = '';
+    }
+  }
+}
+
+function syncCalculatorSection() {
+  const show = getShowCalculator();
+  const card = document.getElementById('calculator');
+  if (card) {
+    card.hidden = !show;
+    card.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
+}
+
+function syncClockSection() {
+  const show = getShowClock();
+  const card = document.querySelector('.clock-card');
+  if (card) {
+    card.hidden = !show;
+    card.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
+}
+
+function applyRoundedBorders(rounded) {
+  document.body.dataset.roundedBorders = rounded === false ? 'false' : 'true';
 }
 
 async function loadNews(category) {
@@ -1377,6 +1437,10 @@ function initSettingsUI() {
   const modal = document.getElementById('settingsModal');
   const form = document.getElementById('settingsForm');
   const selectTheme = document.getElementById('themeSelect');
+  const inputShowInspiration = document.getElementById('settingsShowInspiration');
+  const inputShowCalculator = document.getElementById('settingsShowCalculator');
+  const inputShowClock = document.getElementById('settingsShowClock');
+  const inputRoundedBorders = document.getElementById('settingsRoundedBorders');
   const inputCity = document.getElementById('settingsCity');
   const selectState = document.getElementById('settingsState');
   const inputReddit = document.getElementById('settingsRedditSubreddit');
@@ -1412,6 +1476,10 @@ function initSettingsUI() {
 
   function prefill() {
     selectTheme.value = getState().theme || 'matrix';
+    if (inputShowInspiration) inputShowInspiration.checked = getShowInspirationQuote();
+    if (inputShowCalculator) inputShowCalculator.checked = getShowCalculator();
+    if (inputShowClock) inputShowClock.checked = getShowClock();
+    if (inputRoundedBorders) inputRoundedBorders.checked = getRoundedBorders();
     const { city, state } = getLocation();
     inputCity.value = city || '';
     selectState.value = state || '';
@@ -1469,6 +1537,11 @@ function initSettingsUI() {
     e.preventDefault();
     const theme = (selectTheme.value || '').trim();
     if (THEMES.includes(theme)) setTheme(theme);
+    const wasShowingInspiration = getShowInspirationQuote();
+    if (inputShowInspiration) setShowInspirationQuote(inputShowInspiration.checked);
+    if (inputShowCalculator) setShowCalculator(inputShowCalculator.checked);
+    if (inputShowClock) setShowClock(inputShowClock.checked);
+    if (inputRoundedBorders) setRoundedBorders(inputRoundedBorders.checked);
     const city = (inputCity.value || '').trim();
     const state = (selectState.value || '').trim().toUpperCase();
     setLocation({ city, state });
@@ -1487,6 +1560,12 @@ function initSettingsUI() {
     }
 
     close();
+
+    syncInspirationSection();
+    syncCalculatorSection();
+    syncClockSection();
+    applyRoundedBorders(getRoundedBorders());
+    if (!wasShowingInspiration && getShowInspirationQuote()) void refreshQuote();
 
     // Refresh sections dependent on settings
     const active = document.querySelector('#newsTabs .tab.active')?.dataset.cat;

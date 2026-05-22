@@ -1,5 +1,5 @@
 /**
- * User settings persistence (theme, city, state, reddit subreddits).
+ * User settings persistence (theme, city, state, reddit subreddits, UI options).
  * Reads/writes the `userSettings` section of secrets.json.
  */
 
@@ -54,6 +54,15 @@ function normalizeState(value) {
   return String(value == null ? '' : value).trim().toUpperCase().slice(0, MAX_STATE_LEN);
 }
 
+function normalizeBoolean(value, fallback = true) {
+  if (typeof value === 'boolean') return value;
+  if (value == null) return fallback;
+  const normalized = String(value).trim().toLowerCase();
+  if (['true', '1', 'yes', 'on'].includes(normalized)) return true;
+  if (['false', '0', 'no', 'off'].includes(normalized)) return false;
+  return fallback;
+}
+
 function buildSettingsResponse() {
   const s = config.userSettings || {};
   const subs = Array.isArray(s.subreddits) ? s.subreddits : [];
@@ -65,7 +74,11 @@ function buildSettingsResponse() {
     theme: normalizeTheme(s.theme),
     city: String(s.city || ''),
     state: String(s.state || '').toUpperCase(),
-    subreddits: slots
+    subreddits: slots,
+    showInspirationQuote: normalizeBoolean(s.showInspirationQuote, true),
+    showCalculator: normalizeBoolean(s.showCalculator, true),
+    showClock: normalizeBoolean(s.showClock, true),
+    roundedBorders: normalizeBoolean(s.roundedBorders, true)
   };
 }
 
@@ -84,8 +97,24 @@ router.put('/', (req, res, next) => {
     const theme = Object.prototype.hasOwnProperty.call(body, 'theme')
       ? normalizeTheme(body.theme)
       : currentTheme;
+    const currentShowInspirationQuote = normalizeBoolean((config.userSettings || {}).showInspirationQuote, true);
+    const currentShowCalculator = normalizeBoolean((config.userSettings || {}).showCalculator, true);
+    const currentShowClock = normalizeBoolean((config.userSettings || {}).showClock, true);
+    const currentRoundedBorders = normalizeBoolean((config.userSettings || {}).roundedBorders, true);
     const city = normalizeCity(body.city);
     const state = normalizeState(body.state);
+    const showInspirationQuote = Object.prototype.hasOwnProperty.call(body, 'showInspirationQuote')
+      ? normalizeBoolean(body.showInspirationQuote, true)
+      : currentShowInspirationQuote;
+    const showCalculator = Object.prototype.hasOwnProperty.call(body, 'showCalculator')
+      ? normalizeBoolean(body.showCalculator, true)
+      : currentShowCalculator;
+    const showClock = Object.prototype.hasOwnProperty.call(body, 'showClock')
+      ? normalizeBoolean(body.showClock, true)
+      : currentShowClock;
+    const roundedBorders = Object.prototype.hasOwnProperty.call(body, 'roundedBorders')
+      ? normalizeBoolean(body.roundedBorders, true)
+      : currentRoundedBorders;
 
     const incomingSubs = Array.isArray(body.subreddits) ? body.subreddits : [];
     const subreddits = [];
@@ -101,10 +130,14 @@ router.put('/', (req, res, next) => {
     secrets.userSettings.city = city;
     secrets.userSettings.state = state;
     secrets.userSettings.subreddits = subreddits;
+    secrets.userSettings.showInspirationQuote = showInspirationQuote;
+    secrets.userSettings.showCalculator = showCalculator;
+    secrets.userSettings.showClock = showClock;
+    secrets.userSettings.roundedBorders = roundedBorders;
     writeSecretsFile(secrets);
 
     // Sync in-memory config so subsequent GETs reflect the change immediately.
-    config.userSettings = { theme, city, state, subreddits };
+    config.userSettings = { theme, city, state, subreddits, showInspirationQuote, showCalculator, showClock, roundedBorders };
 
     res.json(buildSettingsResponse());
   } catch (err) {

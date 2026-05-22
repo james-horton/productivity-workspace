@@ -19,6 +19,23 @@ html { scroll-behavior: smooth; }
   --mini-card-start-height: 170px;
 }
 
+[hidden] { display: none !important; }
+
+body:not([data-user-settings-ready="true"]) .quote-card,
+body:not([data-user-settings-ready="true"]) .clock-card,
+body:not([data-user-settings-ready="true"]) #calculator {
+  display: none !important;
+}
+
+body[data-rounded-borders="false"] *,
+body[data-rounded-borders="false"] *::before,
+body[data-rounded-borders="false"] *::after {
+  border-radius: 0 !important;
+}
+body[data-rounded-borders="false"] ::-webkit-scrollbar-thumb {
+  border-radius: 0 !important;
+}
+
 /* Utility */
 .sr-only {
   position: absolute !important;
@@ -1334,6 +1351,19 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
 .control-row .label {
   color: var(--muted);
   font-size: .9rem;
+}
+.checkbox-row {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.6rem;
+}
+.checkbox-row input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--primary);
+}
+.checkbox-row .label {
+  color: var(--text);
 }
 .settings-tabs-container {
   display: flex;

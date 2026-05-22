@@ -2,7 +2,7 @@
  * Client session state (in-memory) + lightweight persistence for preferences.
  *
  * Model / mode are stored in localStorage (per-browser UI prefs).
- * Theme / city / state / reddit subreddits are stored server-side in secrets.json
+ * Theme / city / state / reddit subreddits / UI options are stored server-side in secrets.json
  * via /api/settings and cached here in-memory after `loadUserSettings()`.
  */
 
@@ -178,7 +178,7 @@ function dispatch(type, detail) {
 }
 
 // ---------------------------------------------------------------------------
-// User settings (theme/city/state/subreddits) — persisted on the server in secrets.json.
+// User settings (theme/city/state/subreddits/UI options) — persisted on the server in secrets.json.
 // Cached in-memory so getters can stay synchronous for callers throughout the UI.
 // ---------------------------------------------------------------------------
 
@@ -188,7 +188,11 @@ const userSettings = {
   theme: state.theme,
   city: '',
   state: '',
-  subreddits: ['', '', '']
+  subreddits: ['', '', ''],
+  showInspirationQuote: true,
+  showCalculator: true,
+  showClock: true,
+  roundedBorders: true
 };
 
 let settingsLoaded = false;
@@ -217,6 +221,10 @@ export async function loadUserSettings() {
     state.theme = loadedTheme;
     userSettings.city = String(data?.city || '').trim();
     userSettings.state = String(data?.state || '').trim().toUpperCase();
+    userSettings.showInspirationQuote = data?.showInspirationQuote !== false;
+    userSettings.showCalculator = data?.showCalculator !== false;
+    userSettings.showClock = data?.showClock !== false;
+    userSettings.roundedBorders = data?.roundedBorders !== false;
     const subs = Array.isArray(data?.subreddits) ? data.subreddits : [];
     for (let i = 0; i < SUBREDDIT_SLOTS; i += 1) {
       userSettings.subreddits[i] = normalizeSubredditName(subs[i]);
@@ -229,7 +237,11 @@ export async function loadUserSettings() {
       theme: userSettings.theme,
       city: userSettings.city,
       state: userSettings.state,
-      subreddits: [...userSettings.subreddits]
+      subreddits: [...userSettings.subreddits],
+      showInspirationQuote: userSettings.showInspirationQuote,
+      showCalculator: userSettings.showCalculator,
+      showClock: userSettings.showClock,
+      roundedBorders: userSettings.roundedBorders
     });
     dispatch('pw:theme:changed', { theme: loadedTheme });
   }
@@ -262,7 +274,11 @@ function persistUserSettings() {
       theme: userSettings.theme,
       city: userSettings.city,
       state: userSettings.state,
-      subreddits: [...userSettings.subreddits]
+      subreddits: [...userSettings.subreddits],
+      showInspirationQuote: userSettings.showInspirationQuote,
+      showCalculator: userSettings.showCalculator,
+      showClock: userSettings.showClock,
+      roundedBorders: userSettings.roundedBorders
     }).catch(err => {
       console.warn('[settings] failed to save to server:', err && err.message);
     }).finally(() => {
@@ -284,6 +300,70 @@ export function setLocation({ city, state } = {}) {
   userSettings.state = s;
   void persistUserSettings();
   dispatch('pw:location:changed', { city: c, state: s });
+}
+
+export function getShowInspirationQuote() {
+  return userSettings.showInspirationQuote !== false;
+}
+
+export function setShowInspirationQuote(show) {
+  const value = show !== false;
+  userSettings.showInspirationQuote = value;
+  void persistUserSettings();
+  dispatch('pw:ui-settings:changed', {
+    showInspirationQuote: value,
+    showCalculator: getShowCalculator(),
+    showClock: getShowClock(),
+    roundedBorders: getRoundedBorders()
+  });
+}
+
+export function getShowCalculator() {
+  return userSettings.showCalculator !== false;
+}
+
+export function setShowCalculator(show) {
+  const value = show !== false;
+  userSettings.showCalculator = value;
+  void persistUserSettings();
+  dispatch('pw:ui-settings:changed', {
+    showInspirationQuote: getShowInspirationQuote(),
+    showCalculator: value,
+    showClock: getShowClock(),
+    roundedBorders: getRoundedBorders()
+  });
+}
+
+export function getShowClock() {
+  return userSettings.showClock !== false;
+}
+
+export function setShowClock(show) {
+  const value = show !== false;
+  userSettings.showClock = value;
+  void persistUserSettings();
+  dispatch('pw:ui-settings:changed', {
+    showInspirationQuote: getShowInspirationQuote(),
+    showCalculator: getShowCalculator(),
+    showClock: value,
+    roundedBorders: getRoundedBorders()
+  });
+}
+
+export function getRoundedBorders() {
+  return userSettings.roundedBorders !== false;
+}
+
+export function setRoundedBorders(rounded) {
+  const value = rounded !== false;
+  userSettings.roundedBorders = value;
+  void persistUserSettings();
+  dispatch('pw:ui-settings:changed', {
+    showInspirationQuote: getShowInspirationQuote(),
+    showCalculator: getShowCalculator(),
+    showClock: getShowClock(),
+    roundedBorders: value
+  });
 }
 
 // Reddit subreddit persistence (up to 3 slots)
