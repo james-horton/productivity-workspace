@@ -1,5 +1,5 @@
 /**
- * User settings persistence (city, state, reddit subreddits).
+ * User settings persistence (theme, city, state, reddit subreddits).
  * Reads/writes the `userSettings` section of secrets.json.
  */
 
@@ -16,6 +16,7 @@ const MAX_CITY_LEN = 100;
 const MAX_STATE_LEN = 4;
 const MAX_SUBREDDIT_LEN = 64;
 const SUBREDDIT_SLOTS = 3;
+const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow', 'bumblebee', 'orangeade', 'sky-blue'];
 
 function readSecretsFile() {
   try {
@@ -40,6 +41,11 @@ function normalizeSubreddit(name) {
     .slice(0, MAX_SUBREDDIT_LEN);
 }
 
+function normalizeTheme(value) {
+  const theme = String(value == null ? '' : value).trim();
+  return THEMES.includes(theme) ? theme : 'matrix';
+}
+
 function normalizeCity(value) {
   return String(value == null ? '' : value).trim().slice(0, MAX_CITY_LEN);
 }
@@ -56,6 +62,7 @@ function buildSettingsResponse() {
     slots.push(String(subs[i] || ''));
   }
   return {
+    theme: normalizeTheme(s.theme),
     city: String(s.city || ''),
     state: String(s.state || '').toUpperCase(),
     subreddits: slots
@@ -73,6 +80,10 @@ router.get('/', (req, res, next) => {
 router.put('/', (req, res, next) => {
   try {
     const body = req.body || {};
+    const currentTheme = normalizeTheme((config.userSettings || {}).theme);
+    const theme = Object.prototype.hasOwnProperty.call(body, 'theme')
+      ? normalizeTheme(body.theme)
+      : currentTheme;
     const city = normalizeCity(body.city);
     const state = normalizeState(body.state);
 
@@ -86,13 +97,14 @@ router.put('/', (req, res, next) => {
     secrets.userSettings = (secrets.userSettings && typeof secrets.userSettings === 'object')
       ? secrets.userSettings
       : {};
+    secrets.userSettings.theme = theme;
     secrets.userSettings.city = city;
     secrets.userSettings.state = state;
     secrets.userSettings.subreddits = subreddits;
     writeSecretsFile(secrets);
 
     // Sync in-memory config so subsequent GETs reflect the change immediately.
-    config.userSettings = { city, state, subreddits };
+    config.userSettings = { theme, city, state, subreddits };
 
     res.json(buildSettingsResponse());
   } catch (err) {

@@ -7,7 +7,7 @@
 import { ENDPOINTS, JSON_HEADERS } from '../config.js';
 
 /**
- * @typedef {{ city: string, state: string, subreddits: string[] }} UserSettings
+ * @typedef {{ theme: string, city: string, state: string, subreddits: string[] }} UserSettings
  */
 
 /**
@@ -31,6 +31,7 @@ export async function fetchSettings() {
  */
 export async function saveSettings(settings) {
   const payload = {
+    theme: String(settings?.theme || ''),
     city: String(settings?.city || ''),
     state: String(settings?.state || ''),
     subreddits: Array.isArray(settings?.subreddits)

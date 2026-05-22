@@ -267,7 +267,8 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .topbar {
 
 /* Header theme viewport (between brand title and controls) */
 .theme-viewport {
-  justify-self: center; /* center horizontally in the gap */
+  justify-self: stretch;
+  width: 100%;
   height: clamp(63px, 10vw, 108px);
   display: flex;
   align-items: center;
@@ -298,7 +299,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
     grid-column: 2;
     align-self: center;
     height: clamp(42px, 6vw, 88px); 
-    width: min(100%, clamp(280px, 56vw, 820px));
+    width: 100%;
   }
 }
 
@@ -1073,7 +1074,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
     flex-wrap: wrap;
   }
 
-  /* Keep both selects and the settings button on the same row below the viewport (wrapping if needed) */
+  /* Keep the model selector and settings button tidy below the viewport (wrapping if needed) */
   .controls .control {
     flex: 1 1 170px;
     min-width: 150px;

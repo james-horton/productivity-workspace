@@ -103,6 +103,7 @@ function loadSecrets() {
       pm2ProcessName: (json.updater && json.updater.pm2ProcessName) || process.env.UPDATER_PM2_PROCESS_NAME || 'workspace-ai'
     },
     userSettings: {
+      theme: (json.userSettings && typeof json.userSettings.theme === 'string') ? json.userSettings.theme : 'matrix',
       city: (json.userSettings && typeof json.userSettings.city === 'string') ? json.userSettings.city : '',
       state: (json.userSettings && typeof json.userSettings.state === 'string') ? json.userSettings.state.toUpperCase() : '',
       subreddits: (json.userSettings && Array.isArray(json.userSettings.subreddits))
