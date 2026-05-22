@@ -46,7 +46,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* When the Matrix viewport is hidden, collapse column 2 but keep controls in col 3 */
-body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .topbar {
+body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="usa"]) .topbar {
   grid-template-columns: max-content 0 auto;
 }
 
@@ -275,7 +275,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .topbar {
   justify-content: center;
   pointer-events: none;
 }
-body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { display: none; }
+body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="usa"]) .theme-viewport { display: none; }
 .theme-viewport canvas {
   width: 100%;
   height: 100%;

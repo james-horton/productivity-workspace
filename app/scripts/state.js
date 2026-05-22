@@ -13,7 +13,7 @@ const LS_KEYS = {
   mode: 'pw.mode'
 };
 
-export const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow', 'bumblebee', 'orangeade', 'sky-blue'];
+export const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow', 'bumblebee', 'orangeade', 'sky-blue', 'usa'];
 
 export const UI_CONFIG = {
   mobileMaxWidthPx: 600,        // Mobile breakpoint (px) used for truncation logic

@@ -12,6 +12,7 @@ import { webSearch } from './services/webSearchService.js';
 import { setWebSearchBusy, renderWebSearchResults, renderWebSearchLoading } from './ui/webSearchUI.js';
 import { initMatrixRain, setMatrixRainEnabled } from './ui/matrixRain.js';
 import { initNyanCat, setNyanCatEnabled } from './ui/nyanCat.js';
+import { initUsaFlag, setUsaFlagEnabled } from './ui/usaFlag.js';
 import { $, isMobileView } from './utils/helpers.js';
 import { REDDIT, NEWS, UI_DEFAULTS } from './config.js';
 import { initCalculatorUI } from './ui/calculatorUI.js';
@@ -62,8 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
   hydrateThemeSelect(s.theme);
 
   // Init header animations and toggle based on theme
-  initMatrixRain(); initNyanCat();
-  setMatrixRainEnabled(s.theme === 'matrix'); setNyanCatEnabled(s.theme === 'nyan-cat');
+  initMatrixRain(); initNyanCat(); initUsaFlag();
+  setMatrixRainEnabled(s.theme === 'matrix'); setNyanCatEnabled(s.theme === 'nyan-cat'); setUsaFlagEnabled(s.theme === 'usa');
  
   // Populate model list and select
   void populateModelSelect(s.modelKey || getDefaultModelKey());
@@ -501,7 +502,7 @@ function wireStateEvents() {
     const { theme } = e.detail || {};
     hydrateThemeSelect(theme);
     applyTheme(theme);
-    setMatrixRainEnabled(theme === 'matrix'); setNyanCatEnabled(theme === 'nyan-cat');
+    setMatrixRainEnabled(theme === 'matrix'); setNyanCatEnabled(theme === 'nyan-cat'); setUsaFlagEnabled(theme === 'usa');
   });
   document.addEventListener('pw:model:changed', (e) => {
     const { modelKey } = e.detail || {};
