@@ -1047,7 +1047,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
 }
 
 /* Responsive */
-@media (max-width: 600px) {
+@media (max-width: 950px) {
   /* Stack topbar rows: brand, viewport, controls */
   .topbar {
     grid-template-columns: 1fr !important; /* override desktop and non-matrix variants */
@@ -1100,8 +1100,9 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
     right: 1rem;   /* match .topbar horizontal padding */
     z-index: 2;    /* ensure above decorative layers */
   }
+}
 
-
+@media (max-width: 600px) {
   /* Reddit header: stack title (row 1) and controls (row 2) */
   .reddit-card .card-head {
     flex-direction: column;
@@ -1153,6 +1154,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]) .theme-viewport { d
     gap: 0.25rem;
   }
 }
+
 /* Loading indicators and skeletons (theme-aware) */
 .loader {
   width: 16px;
