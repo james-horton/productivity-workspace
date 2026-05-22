@@ -108,7 +108,19 @@ function loadSecrets() {
       state: (json.userSettings && typeof json.userSettings.state === 'string') ? json.userSettings.state.toUpperCase() : '',
       subreddits: (json.userSettings && Array.isArray(json.userSettings.subreddits))
         ? json.userSettings.subreddits.slice(0, 3).map(s => String(s || ''))
-        : []
+        : [],
+      showInspirationQuote: (json.userSettings && typeof json.userSettings.showInspirationQuote === 'boolean')
+        ? json.userSettings.showInspirationQuote
+        : true,
+      showCalculator: (json.userSettings && typeof json.userSettings.showCalculator === 'boolean')
+        ? json.userSettings.showCalculator
+        : true,
+      showClock: (json.userSettings && typeof json.userSettings.showClock === 'boolean')
+        ? json.userSettings.showClock
+        : true,
+      roundedBorders: (json.userSettings && typeof json.userSettings.roundedBorders === 'boolean')
+        ? json.userSettings.roundedBorders
+        : true
     }
   };
 }
