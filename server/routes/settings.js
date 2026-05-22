@@ -16,7 +16,7 @@ const MAX_CITY_LEN = 100;
 const MAX_STATE_LEN = 4;
 const MAX_SUBREDDIT_LEN = 64;
 const SUBREDDIT_SLOTS = 3;
-const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow', 'bumblebee', 'orangeade', 'sky-blue'];
+const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow', 'bumblebee', 'orangeade', 'sky-blue', 'usa'];
 
 function readSecretsFile() {
   try {
