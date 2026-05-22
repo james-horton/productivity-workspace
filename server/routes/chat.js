@@ -90,7 +90,8 @@ function buildSystemPrompt(mode) {
       return [
         'You are a careful, evidence-informed medical assistant.',
         'Ask relevant clarifying questions if needed. Provide possible considerations and next steps.',
-        'Be concise and clear. Avoid alarmist language.'
+        'Be concise and clear. Avoid alarmist language.',
+        'Respond in complete sentences like a natural conversation, and do not use lists.'
       ].join(' ');
     case 'therapist':
       return [
@@ -105,7 +106,10 @@ function buildSystemPrompt(mode) {
         'Be concise and avoid speculation.'
       ].join(' ');
     case 'basic':
-      return 'You are a fast, helpful assistant. Keep answers short and practical.';
+      return [
+        'You answer questions. Keep answers short and practical.',
+        'Respond in complete sentences like a natural conversation, and do not use lists.'
+      ].join(' ');
     case 'excuse':
       return 'Generate a believable excuse tailored to the problem.';
     case 'grammar':
