@@ -46,7 +46,7 @@ export function renderWebSearchResults(items, { answer } = {}) {
   const head = document.querySelector('#websearch .card-head');
   const titleEl = document.getElementById('webSearchTitle');
   if (head && titleEl) {
-    // Create/ensure left group container (title + adjacent controls)
+    // Find or create left group container (title + adjacent controls)
     let left = head.querySelector('.card-head-left');
     if (!left) {
       left = document.createElement('div');
@@ -75,7 +75,12 @@ export function renderWebSearchResults(items, { answer } = {}) {
         <polyline points="6 9 12 15 18 9"></polyline>
       </svg>
     `;
-    left.appendChild(sourcesToggle);
+    const resetBtn = left.querySelector('#webSearchReset');
+    if (resetBtn) {
+      left.insertBefore(sourcesToggle, resetBtn.nextSibling);
+    } else {
+      left.appendChild(sourcesToggle);
+    }
     // Initialize collapsible behavior on the whole results box (hides link items only)
     // If the user already expanded previously, keep it expanded; otherwise default collapsed (fresh page load).
     initCollapsible(sourcesToggle, box, { defaultCollapsed: !wasExpanded, expandedLabel: 'hide sources', collapsedLabel: 'show sources' });

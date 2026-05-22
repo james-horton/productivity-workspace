@@ -42,6 +42,7 @@ const newsItems = () => $('#newsItems');
 const webSearchForm = () => $('#webSearchForm');
 const webSearchInput = () => $('#webSearchInput');
 const webSearchItems = () => $('#webSearchItems');
+const webSearchReset = () => $('#webSearchReset');
 const redditTabs = () => $('#redditTabs');
 const redditRefresh = () => $('#redditRefresh');
 const redditItems = () => $('#redditItems');
@@ -400,12 +401,60 @@ function wireControls() {
   {
     const wsForm = webSearchForm && webSearchForm();
     if (wsForm) {
+      let webSearchRequestId = 0;
+      const wsResetBtn = webSearchReset && webSearchReset();
+      if (wsResetBtn) {
+        wsResetBtn.addEventListener('click', () => {
+          const btn = wsResetBtn;
+          const input = webSearchInput && webSearchInput();
+          const box = webSearchItems && webSearchItems();
+          const originalTitle = btn.title;
+          const originalAria = btn.getAttribute('aria-label') || originalTitle || 'Reset';
+
+          try {
+            webSearchRequestId += 1;
+
+            if (input) {
+              input.value = '';
+              input.disabled = false;
+              if (input.tagName && input.tagName.toLowerCase() === 'textarea') {
+                input.dispatchEvent(new Event('input'));
+              }
+            }
+
+            if (box) {
+              box.innerHTML = '';
+              box.removeAttribute('data-collapsible');
+              box.removeAttribute('aria-hidden');
+            }
+
+            setWebSearchBusy(false);
+
+            const sourcesToggle = document.getElementById('webSearchSourcesToggle');
+            if (sourcesToggle) sourcesToggle.remove();
+
+            const submitBtn = wsForm.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = false;
+
+            btn.title = 'Reset';
+            btn.setAttribute('aria-label', 'Reset');
+          } finally {
+            setTimeout(() => {
+              btn.title = originalTitle;
+              btn.setAttribute('aria-label', originalAria);
+            }, UI_DEFAULTS.copySuccessDelayMs);
+          }
+        });
+      }
+
       wsForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const input = webSearchInput && webSearchInput();
         const text = (input && input.value || '').trim();
         if (!text) return;
 
+        const requestId = webSearchRequestId + 1;
+        webSearchRequestId = requestId;
         setWebSearchBusy(true);
         renderWebSearchLoading();
 
@@ -415,13 +464,16 @@ function wireControls() {
 
         try {
           const data = await webSearch(text);
+          if (requestId !== webSearchRequestId) return;
           renderWebSearchResults((data && data.items) || [], { answer: data && data.answer });
         } catch (err) {
+          if (requestId !== webSearchRequestId) return;
           const box = webSearchItems && webSearchItems();
           if (box) {
             box.innerHTML = '<div class="news-item">Failed to search the web. Try again.</div>';
           }
         } finally {
+          if (requestId !== webSearchRequestId) return;
           setWebSearchBusy(false);
           if (btnEl) btnEl.disabled = false;
           if (input) {
