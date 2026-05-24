@@ -1318,6 +1318,9 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
 .modal-dialog {
   position: relative;
   width: min(92vw, 520px);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--ring);
@@ -1342,6 +1345,8 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   padding: 1rem;
   display: grid;
   gap: .75rem;
+  overflow-y: auto;
+  min-height: 0;
 }
 .control-row {
   display: grid;
@@ -1392,9 +1397,18 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   display: flex;
   justify-content: flex-end;
   gap: .5rem;
-  padding-top: .5rem;
+  padding: .75rem 1rem;
+  border-top: 1px solid var(--ring);
+  flex-shrink: 0;
 }
 body.modal-open { overflow: hidden; }
+
+#settingsForm {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
 /* News modal body: show raw article content neatly */
 .news-modal-body {
   /* Preserve newlines from raw content while allowing safe breaks */

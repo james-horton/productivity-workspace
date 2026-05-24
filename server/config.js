@@ -107,7 +107,7 @@ function loadSecrets() {
       city: (json.userSettings && typeof json.userSettings.city === 'string') ? json.userSettings.city : '',
       state: (json.userSettings && typeof json.userSettings.state === 'string') ? json.userSettings.state.toUpperCase() : '',
       subreddits: (json.userSettings && Array.isArray(json.userSettings.subreddits))
-        ? json.userSettings.subreddits.slice(0, 5).map(s => String(s || ''))
+        ? json.userSettings.subreddits.slice(0, 10).map(s => String(s || ''))
         : [],
       showInspirationQuote: (json.userSettings && typeof json.userSettings.showInspirationQuote === 'boolean')
         ? json.userSettings.showInspirationQuote
