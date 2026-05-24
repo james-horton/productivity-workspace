@@ -35,7 +35,7 @@ export async function saveSettings(settings) {
     city: String(settings?.city || ''),
     state: String(settings?.state || ''),
     subreddits: Array.isArray(settings?.subreddits)
-      ? settings.subreddits.slice(0, 3).map(s => String(s || ''))
+      ? settings.subreddits.slice(0, 5).map(s => String(s || ''))
       : [],
     showInspirationQuote: settings?.showInspirationQuote !== false,
     showCalculator: settings?.showCalculator !== false,

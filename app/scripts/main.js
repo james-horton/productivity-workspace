@@ -1384,17 +1384,19 @@ function hydrateRedditTabs() {
   const s1 = (getRedditSubreddit() || '').trim();
   const s2 = (getRedditSubredditAt(2) || '').trim();
   const s3 = (getRedditSubredditAt(3) || '').trim();
-  const allSet = !!(s1 && s2 && s3);
+  const s4 = (getRedditSubredditAt(4) || '').trim();
+  const s5 = (getRedditSubredditAt(5) || '').trim();
+  const allSet = !!(s1 && s2 && s3 && s4 && s5);
   const mobile = isMobileView();
   tabs.forEach(btn => {
     const idx = parseInt(btn.dataset.index || '1', 10);
-    let name = idx === 2 ? s2 : idx === 3 ? s3 : s1;
+    let name = idx === 2 ? s2 : idx === 3 ? s3 : idx === 4 ? s4 : idx === 5 ? s5 : s1;
     name = (name || '').trim();
     let label = name || String(idx);
     if (mobile && allSet && name) {
       const cap = UI_CONFIG.subredditBtnCharCap;
       if (Number.isFinite(cap) && cap > 0 && label.length > cap) {
-        label = label.slice(0, cap).replace(/\s+$/,'') + '…';
+        label = label.slice(0, cap).replace(/\s+$/,'') + '\u2026';
       }
     }
     btn.textContent = label;
@@ -1405,7 +1407,7 @@ function hydrateRedditTabs() {
 function setRedditHeaderFromIndex(index = getActiveRedditTabIndex()) {
   const h = redditTitle && redditTitle();
   if (!h) return;
-  const name = (index === 2 ? getRedditSubredditAt(2) : index === 3 ? getRedditSubredditAt(3) : getRedditSubreddit()).trim();
+  const name = (index === 2 ? getRedditSubredditAt(2) : index === 3 ? getRedditSubredditAt(3) : index === 4 ? getRedditSubredditAt(4) : index === 5 ? getRedditSubredditAt(5) : getRedditSubreddit()).trim();
   h.textContent = name ? `Reddit - /r/${name}` : 'Reddit';
 }
 
@@ -1414,7 +1416,7 @@ async function loadReddit(index = getActiveRedditTabIndex()) {
   renderRedditLoading();
 
   try {
-    const sub = (index === 2 ? getRedditSubredditAt(2) : index === 3 ? getRedditSubredditAt(3) : getRedditSubreddit()).trim();
+    const sub = (index === 2 ? getRedditSubredditAt(2) : index === 3 ? getRedditSubredditAt(3) : index === 4 ? getRedditSubredditAt(4) : index === 5 ? getRedditSubredditAt(5) : getRedditSubreddit()).trim();
     if (!sub) {
       const msg = '<div class="news-item">Reddit requires a subreddit. Use the Settings (gear icon) to enter it.</div>';
       redditItems().innerHTML = msg;
@@ -1446,6 +1448,8 @@ function initSettingsUI() {
   const inputReddit = document.getElementById('settingsRedditSubreddit');
   const inputReddit2 = document.getElementById('settingsRedditSubreddit2');
   const inputReddit3 = document.getElementById('settingsRedditSubreddit3');
+  const inputReddit4 = document.getElementById('settingsRedditSubreddit4');
+  const inputReddit5 = document.getElementById('settingsRedditSubreddit5');
   const btnClose = document.getElementById('settingsClose');
   const btnCancel = document.getElementById('settingsCancel');
 
@@ -1486,6 +1490,8 @@ function initSettingsUI() {
     if (inputReddit) inputReddit.value = getRedditSubreddit() || '';
     if (inputReddit2) inputReddit2.value = getRedditSubredditAt(2) || '';
     if (inputReddit3) inputReddit3.value = getRedditSubredditAt(3) || '';
+    if (inputReddit4) inputReddit4.value = getRedditSubredditAt(4) || '';
+    if (inputReddit5) inputReddit5.value = getRedditSubredditAt(5) || '';
   }
 
   function open() {
@@ -1557,6 +1563,14 @@ function initSettingsUI() {
     if (inputReddit3) {
       const subreddit3 = (inputReddit3.value || '').trim();
       setRedditSubredditAt(3, subreddit3);
+    }
+    if (inputReddit4) {
+      const subreddit4 = (inputReddit4.value || '').trim();
+      setRedditSubredditAt(4, subreddit4);
+    }
+    if (inputReddit5) {
+      const subreddit5 = (inputReddit5.value || '').trim();
+      setRedditSubredditAt(5, subreddit5);
     }
 
     close();
