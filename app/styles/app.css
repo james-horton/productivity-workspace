@@ -1166,7 +1166,6 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   .reddit-card .reddit-controls .tabs {
     flex: 0 1 auto;
     min-width: 0;
-    max-width: calc(100% - 48px - 0.5rem); /* reserve ~48px for refresh + gap */
     overflow-x: auto;
     white-space: nowrap;
   }
