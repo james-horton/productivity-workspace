@@ -18,7 +18,7 @@ export const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'brigh
 export const UI_CONFIG = {
   mobileMaxWidthPx: 600,        // Mobile breakpoint (px) used for truncation logic
   redditBodyCharCap: 240,       // Max chars for Reddit post body in mobile view
-  subredditBtnCharCap: 5        // Max chars for subreddit tab labels in mobile when all 5 are set
+  subredditBtnCharCap: 5        // Max chars for subreddit tab labels in mobile when all 10 are set
 };
 
 export const MODES = {
@@ -182,13 +182,13 @@ function dispatch(type, detail) {
 // Cached in-memory so getters can stay synchronous for callers throughout the UI.
 // ---------------------------------------------------------------------------
 
-const SUBREDDIT_SLOTS = 5;
+const SUBREDDIT_SLOTS = 10;
 
 const userSettings = {
   theme: state.theme,
   city: '',
   state: '',
-  subreddits: ['', '', '', '', ''],
+  subreddits: ['', '', '', '', '', '', '', '', '', ''],
   showInspirationQuote: true,
   showCalculator: true,
   showClock: true,
@@ -252,7 +252,7 @@ export function isUserSettingsLoaded() {
 }
 
 // Debounce persistence so that multiple rapid setters (e.g. the settings
-// form submitting theme, city, state, and 5 subreddits in succession) collapse into
+// form submitting theme, city, state, and 10 subreddits in succession) collapse into
 // a single PUT carrying the latest cached state. Avoids races where
 // out-of-order requests could clobber newer values.
 const PERSIST_DEBOUNCE_MS = 50;
@@ -366,7 +366,7 @@ export function setRoundedBorders(rounded) {
   });
 }
 
-// Reddit subreddit persistence (up to 5 slots)
+// Reddit subreddit persistence (up to 10 slots)
 export function getRedditSubredditAt(index = 1) {
   return userSettings.subreddits[clampSlotIndex(index)] || '';
 }
@@ -379,7 +379,7 @@ export function getRedditSubreddit() {
 }
 
 /**
- * Set the preferred subreddit name at a specific slot (1-5).
+ * Set the preferred subreddit name at a specific slot (1-10).
  * Accepts values like "news" or "/r/news" and normalizes to "news".
  */
 export function setRedditSubredditAt(index = 1, name) {

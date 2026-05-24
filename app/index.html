@@ -233,6 +233,11 @@
             <button class="tab" data-index="3" type="button" title="subreddit 3">3</button>
             <button class="tab" data-index="4" type="button" title="subreddit 4">4</button>
             <button class="tab" data-index="5" type="button" title="subreddit 5">5</button>
+            <button class="tab" data-index="6" type="button" title="subreddit 6">6</button>
+            <button class="tab" data-index="7" type="button" title="subreddit 7">7</button>
+            <button class="tab" data-index="8" type="button" title="subreddit 8">8</button>
+            <button class="tab" data-index="9" type="button" title="subreddit 9">9</button>
+            <button class="tab" data-index="10" type="button" title="subreddit 10">10</button>
           </nav>
           <button id="redditRefresh" class="btn icon-only" type="button" aria-label="Refresh reddit" title="Refresh">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -270,7 +275,8 @@
           </svg>
         </button>
       </div>
-      <form id="settingsForm" class="modal-body">
+      <form id="settingsForm">
+        <div class="modal-body">
         <div class="settings-tabs-container">
           <nav class="tabs" id="settingsTabs" aria-label="Settings categories">
             <button class="tab active" data-tab="general" type="button">General</button>
@@ -361,6 +367,26 @@
             <label for="settingsRedditSubreddit5" class="label">Reddit Subreddit 5</label>
             <input id="settingsRedditSubreddit5" type="text" placeholder="e.g., science or /r/science" autocomplete="off" />
           </div>
+          <div class="control-row">
+            <label for="settingsRedditSubreddit6" class="label">Reddit Subreddit 6</label>
+            <input id="settingsRedditSubreddit6" type="text" placeholder="e.g., gaming or /r/gaming" autocomplete="off" />
+          </div>
+          <div class="control-row">
+            <label for="settingsRedditSubreddit7" class="label">Reddit Subreddit 7</label>
+            <input id="settingsRedditSubreddit7" type="text" placeholder="e.g., movies or /r/movies" autocomplete="off" />
+          </div>
+          <div class="control-row">
+            <label for="settingsRedditSubreddit8" class="label">Reddit Subreddit 8</label>
+            <input id="settingsRedditSubreddit8" type="text" placeholder="e.g., sports or /r/sports" autocomplete="off" />
+          </div>
+          <div class="control-row">
+            <label for="settingsRedditSubreddit9" class="label">Reddit Subreddit 9</label>
+            <input id="settingsRedditSubreddit9" type="text" placeholder="e.g., books or /r/books" autocomplete="off" />
+          </div>
+          <div class="control-row">
+            <label for="settingsRedditSubreddit10" class="label">Reddit Subreddit 10</label>
+            <input id="settingsRedditSubreddit10" type="text" placeholder="e.g., music or /r/music" autocomplete="off" />
+          </div>
         </div>
 
         <!-- UI Tab Panel -->
@@ -398,6 +424,8 @@
             <input id="settingsRoundedBorders" type="checkbox" />
             <label for="settingsRoundedBorders" class="label">Round border corners</label>
           </div>
+        </div>
+
         </div>
 
         <div class="modal-actions">

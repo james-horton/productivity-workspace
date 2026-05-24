@@ -1381,17 +1381,17 @@ function setActiveRedditTab(index = 1) {
 
 function hydrateRedditTabs() {
   const tabs = document.querySelectorAll('#redditTabs .tab');
-  const s1 = (getRedditSubreddit() || '').trim();
-  const s2 = (getRedditSubredditAt(2) || '').trim();
-  const s3 = (getRedditSubredditAt(3) || '').trim();
-  const s4 = (getRedditSubredditAt(4) || '').trim();
-  const s5 = (getRedditSubredditAt(5) || '').trim();
-  const allSet = !!(s1 && s2 && s3 && s4 && s5);
+  const names = [];
+  let allSet = true;
+  for (let i = 1; i <= 10; i += 1) {
+    const n = (getRedditSubredditAt(i) || '').trim();
+    names[i] = n;
+    if (!n) allSet = false;
+  }
   const mobile = isMobileView();
   tabs.forEach(btn => {
     const idx = parseInt(btn.dataset.index || '1', 10);
-    let name = idx === 2 ? s2 : idx === 3 ? s3 : idx === 4 ? s4 : idx === 5 ? s5 : s1;
-    name = (name || '').trim();
+    const name = names[idx] || '';
     let label = name || String(idx);
     if (mobile && allSet && name) {
       const cap = UI_CONFIG.subredditBtnCharCap;
@@ -1407,7 +1407,7 @@ function hydrateRedditTabs() {
 function setRedditHeaderFromIndex(index = getActiveRedditTabIndex()) {
   const h = redditTitle && redditTitle();
   if (!h) return;
-  const name = (index === 2 ? getRedditSubredditAt(2) : index === 3 ? getRedditSubredditAt(3) : index === 4 ? getRedditSubredditAt(4) : index === 5 ? getRedditSubredditAt(5) : getRedditSubreddit()).trim();
+  const name = (getRedditSubredditAt(index) || '').trim();
   h.textContent = name ? `Reddit - /r/${name}` : 'Reddit';
 }
 
@@ -1416,7 +1416,7 @@ async function loadReddit(index = getActiveRedditTabIndex()) {
   renderRedditLoading();
 
   try {
-    const sub = (index === 2 ? getRedditSubredditAt(2) : index === 3 ? getRedditSubredditAt(3) : index === 4 ? getRedditSubredditAt(4) : index === 5 ? getRedditSubredditAt(5) : getRedditSubreddit()).trim();
+    const sub = (getRedditSubredditAt(index) || '').trim();
     if (!sub) {
       const msg = '<div class="news-item">Reddit requires a subreddit. Use the Settings (gear icon) to enter it.</div>';
       redditItems().innerHTML = msg;
@@ -1450,6 +1450,11 @@ function initSettingsUI() {
   const inputReddit3 = document.getElementById('settingsRedditSubreddit3');
   const inputReddit4 = document.getElementById('settingsRedditSubreddit4');
   const inputReddit5 = document.getElementById('settingsRedditSubreddit5');
+  const inputReddit6 = document.getElementById('settingsRedditSubreddit6');
+  const inputReddit7 = document.getElementById('settingsRedditSubreddit7');
+  const inputReddit8 = document.getElementById('settingsRedditSubreddit8');
+  const inputReddit9 = document.getElementById('settingsRedditSubreddit9');
+  const inputReddit10 = document.getElementById('settingsRedditSubreddit10');
   const btnClose = document.getElementById('settingsClose');
   const btnCancel = document.getElementById('settingsCancel');
 
@@ -1492,6 +1497,11 @@ function initSettingsUI() {
     if (inputReddit3) inputReddit3.value = getRedditSubredditAt(3) || '';
     if (inputReddit4) inputReddit4.value = getRedditSubredditAt(4) || '';
     if (inputReddit5) inputReddit5.value = getRedditSubredditAt(5) || '';
+    if (inputReddit6) inputReddit6.value = getRedditSubredditAt(6) || '';
+    if (inputReddit7) inputReddit7.value = getRedditSubredditAt(7) || '';
+    if (inputReddit8) inputReddit8.value = getRedditSubredditAt(8) || '';
+    if (inputReddit9) inputReddit9.value = getRedditSubredditAt(9) || '';
+    if (inputReddit10) inputReddit10.value = getRedditSubredditAt(10) || '';
   }
 
   function open() {
@@ -1571,6 +1581,26 @@ function initSettingsUI() {
     if (inputReddit5) {
       const subreddit5 = (inputReddit5.value || '').trim();
       setRedditSubredditAt(5, subreddit5);
+    }
+    if (inputReddit6) {
+      const subreddit6 = (inputReddit6.value || '').trim();
+      setRedditSubredditAt(6, subreddit6);
+    }
+    if (inputReddit7) {
+      const subreddit7 = (inputReddit7.value || '').trim();
+      setRedditSubredditAt(7, subreddit7);
+    }
+    if (inputReddit8) {
+      const subreddit8 = (inputReddit8.value || '').trim();
+      setRedditSubredditAt(8, subreddit8);
+    }
+    if (inputReddit9) {
+      const subreddit9 = (inputReddit9.value || '').trim();
+      setRedditSubredditAt(9, subreddit9);
+    }
+    if (inputReddit10) {
+      const subreddit10 = (inputReddit10.value || '').trim();
+      setRedditSubredditAt(10, subreddit10);
     }
 
     close();
