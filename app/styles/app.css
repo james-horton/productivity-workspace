@@ -1328,6 +1328,9 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   box-shadow: var(--shadow);
   overflow: hidden;
 }
+#settingsModal .modal-dialog {
+  height: min(90vh, 720px);
+}
 .modal-head {
   display: flex;
   align-items: center;
@@ -1347,6 +1350,10 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   gap: .75rem;
   overflow-y: auto;
   min-height: 0;
+}
+#settingsForm .modal-body {
+  overflow-x: hidden;
+  scroll-padding-bottom: 4rem;
 }
 .control-row {
   display: grid;
@@ -1379,6 +1386,12 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   gap: .75rem;
   min-height: 380px;
   align-content: start;
+  padding-bottom: 1.5rem;
+}
+#settingsPanelGeneral::after {
+  content: "";
+  display: block;
+  min-height: 2rem;
 }
 .settings-panel.hidden {
   display: none;
@@ -1404,8 +1417,9 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
 body.modal-open { overflow: hidden; }
 
 #settingsForm {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
 }
