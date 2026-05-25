@@ -648,6 +648,10 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   font-weight: bold;
 }
 
+.chat-input .btn.primary {
+  min-width: 5.2em;
+}
+
 /* Stabilize essential buttons: prevent 1px hover lift (no vertical jitter) */
 .calculator .calc-btn:hover,
 .calculator .calc-btn:active,
