@@ -238,3 +238,66 @@ body[data-theme="usa"] {
   --topbar-bg: linear-gradient(135deg, rgba(191, 10, 48, 0.46), rgba(7, 23, 71, 0.92) 48%, rgba(18, 61, 130, 0.72));
   --coderain-opacity: 0.0;
 }
+
+/* THEME: 90s */
+body[data-theme="90s"] {
+  --bg:
+    radial-gradient(circle, rgba(17, 18, 20, 0.16) 1px, transparent 1.8px) 0 0 / 22px 22px,
+    radial-gradient(circle at 9% 18%, #ffe84a 0 82px, transparent 84px),
+    radial-gradient(circle at 89% 14%, #ff4fc3 0 64px, transparent 66px),
+    radial-gradient(circle at 78% 82%, #64f26f 0 72px, transparent 74px),
+    linear-gradient(135deg, transparent 0 18%, rgba(255, 79, 195, 0.55) 18% 26%, transparent 26% 42%, rgba(255, 232, 74, 0.58) 42% 52%, transparent 52%),
+    repeating-linear-gradient(45deg, rgba(17, 18, 20, 0.08) 0 2px, transparent 2px 28px),
+    #49e2dc;
+  --text: #111214;
+  --muted: #315f62;
+  --surface: #fffdf7;
+  --surface-2: #bffff6;
+  --ring: #111214;
+  --accent: #ff3fb7;
+  --primary: #ffe84a;
+  --shadow: 6px 6px 0 #111214, 0 18px 36px rgba(17, 18, 20, 0.14);
+  --topbar-bg: linear-gradient(135deg, #ff4fc3 0 22%, #49e2dc 22% 50%, #ffe84a 50% 74%, #64f26f 74% 100%);
+  --coderain-opacity: 0.0;
+  background-attachment: fixed;
+}
+
+body[data-theme="90s"] .topbar {
+  border-bottom: 3px solid #111214;
+}
+
+body[data-theme="90s"] .brand .title,
+body[data-theme="90s"] .card h2,
+body[data-theme="90s"] .modal-head h2 {
+  font-family: "Arial Black", Impact, Haettenschweiler, sans-serif;
+  letter-spacing: 0.04em;
+}
+
+body[data-theme="90s"] .card,
+body[data-theme="90s"] .modal-dialog,
+body[data-theme="90s"] .model-combobox-panel {
+  border-width: 2px;
+}
+
+body[data-theme="90s"] .card-head,
+body[data-theme="90s"] .modal-head {
+  color: #111214;
+  border-bottom: 2px solid #111214;
+  background: linear-gradient(135deg, #ffe84a, #64f26f 50%, #49e2dc);
+}
+
+body[data-theme="90s"] .quote-card .card-head,
+body[data-theme="90s"] .news-card .card-head {
+  background: #ff4fc3;
+}
+
+body[data-theme="90s"] .clock-card .card-head,
+body[data-theme="90s"] .reddit-card .card-head {
+  background: #ffe84a;
+}
+
+body[data-theme="90s"] .calculator-card .card-head,
+body[data-theme="90s"] .chat-card .card-head,
+body[data-theme="90s"] .search-card .card-head {
+  background: #49e2dc;
+}
