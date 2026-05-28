@@ -16,6 +16,33 @@ const modelsRouter = require('./routes/models');
 const settingsRouter = require('./routes/settings');
 
 const app = express();
+const staticDir = path.resolve(__dirname, '..', 'app');
+
+const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow', 'bumblebee', 'orangeade', 'sky-blue', 'usa', '90s'];
+
+function normalizeTheme(value) {
+  const theme = String(value == null ? '' : value).trim();
+  return THEMES.includes(theme) ? theme : 'matrix';
+}
+
+function renderIndexHtml() {
+  const theme = normalizeTheme(config.userSettings && config.userSettings.theme);
+  const indexPath = path.join(staticDir, 'index.html');
+  return fs.readFileSync(indexPath, 'utf8')
+    .replace(/<body\s+data-theme="[^"]*">/, `<body data-theme="${theme}">`);
+}
+
+function sendIndexHtml(req, res, next) {
+  try {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Referrer-Policy', 'no-referrer-when-downgrade');
+    res.type('html').send(renderIndexHtml());
+  } catch (err) {
+    next(err);
+  }
+}
 
 // CORS allowlist
 // Always allow our own server origin in addition to configured allowlist
@@ -65,7 +92,7 @@ app.use('/api/models', modelsRouter);
 app.use('/api/settings', settingsRouter);
 
 // Serve SPA static assets
-const staticDir = path.resolve(__dirname, '..', 'app');
+app.get(['/', '/index.html'], sendIndexHtml);
 app.use(express.static(staticDir, {
   setHeaders: (res, filePath) => {
     // Security headers
@@ -81,9 +108,7 @@ app.use(express.static(staticDir, {
 }));
 
 // SPA fallback to index.html for unknown routes (non-API)
-app.get(/^(?!\/api\/).*/, (req, res) => {
-  res.sendFile(path.join(staticDir, 'index.html'));
-});
+app.get(/^(?!\/api\/).*/, sendIndexHtml);
 
 // Centralized error handler
 // eslint-disable-next-line no-unused-vars
