@@ -16,6 +16,123 @@ function coerceLimit(v) {
   return Math.min(n, config.reddit.maxLimit);
 }
 
+function previewBody(data) {
+  try {
+    const text = typeof data === 'string' ? data : JSON.stringify(data);
+    return String(text || '').replace(/\s+/g, ' ').trim().slice(0, 500);
+  } catch {
+    return '';
+  }
+}
+
+function decodeEntities(value) {
+  return String(value || '').replace(/&#(\d+);|&#x([0-9a-f]+);|&(amp|lt|gt|quot|apos);/gi, (match, dec, hex, named) => {
+    if (dec) return String.fromCharCode(parseInt(dec, 10));
+    if (hex) return String.fromCharCode(parseInt(hex, 16));
+    const entities = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" };
+    return entities[String(named || '').toLowerCase()] || match;
+  });
+}
+
+function stripHtml(value) {
+  return decodeEntities(String(value || '')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<br\s*\/?\s*>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim());
+}
+
+function getFirstTagValue(xml, tag) {
+  const match = String(xml || '').match(new RegExp(`<${tag}\\b[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i'));
+  return match ? decodeEntities(match[1]).trim() : '';
+}
+
+function getAttrValue(tag, attr) {
+  const match = String(tag || '').match(new RegExp(`${attr}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`, 'i'));
+  return match ? decodeEntities(match[1] || match[2] || '').trim() : '';
+}
+
+function extractEntryUrl(entry) {
+  const alternateLink = String(entry || '').match(/<link\b(?=[^>]*\brel=["']alternate["'])[^>]*>/i);
+  const anyLink = String(entry || '').match(/<link\b[^>]*>/i);
+  const linkTag = alternateLink ? alternateLink[0] : (anyLink && anyLink[0]);
+  return linkTag ? getAttrValue(linkTag, 'href') : getFirstTagValue(entry, 'id');
+}
+
+function parseRedditAtom(xml, limit) {
+  return Array.from(String(xml || '').matchAll(/<entry\b[\s\S]*?<\/entry>/gi))
+    .slice(0, limit)
+    .map((match) => {
+      const entry = match[0];
+      const title = getFirstTagValue(entry, 'title') || 'Untitled';
+      const url = extractEntryUrl(entry);
+      const content = decodeEntities(getFirstTagValue(entry, 'content'));
+      const body = stripHtml(content);
+      return { title, url, body };
+    });
+}
+
+function redditHeaders(accept) {
+  return {
+    'User-Agent': config.reddit.userAgent,
+    Accept: accept
+  };
+}
+
+function redditBaseUrl() {
+  return (config.reddit.baseUrl || 'https://www.reddit.com').replace(/\/+$/, '');
+}
+
+async function fetchRedditJson(subreddit, limit) {
+  const url = `${redditBaseUrl()}/r/${encodeURIComponent(subreddit)}/hot.json?limit=${limit}&raw_json=1`;
+  const { data } = await axios.get(url, {
+    headers: redditHeaders('application/json'),
+    timeout: config.reddit.timeoutMs
+  });
+  return data;
+}
+
+async function fetchRedditRssItems(subreddit, limit) {
+  const url = `${redditBaseUrl()}/r/${encodeURIComponent(subreddit)}/.rss?limit=${limit}`;
+  const { data } = await axios.get(url, {
+    headers: redditHeaders('application/atom+xml, application/rss+xml, application/xml;q=0.9, */*;q=0.8'),
+    timeout: config.reddit.timeoutMs
+  });
+  return parseRedditAtom(data, limit);
+}
+
+function shouldFallbackToRss(err) {
+  return Boolean(err && err.isAxiosError && err.response && err.response.status === 403);
+}
+
+function logRedditUpstreamError(err, subreddit, label = '[reddit] upstream request failed', logger = console.error) {
+  if (!err || !err.isAxiosError || err.redditLogged) return;
+
+  const response = err.response || {};
+  const headers = response.headers || {};
+  const diagnostic = {
+    subreddit,
+    url: err.config && err.config.url,
+    userAgent: config.reddit.userAgent,
+    status: response.status,
+    statusText: response.statusText,
+    contentType: headers['content-type'],
+    server: headers.server,
+    rateLimitRemaining: headers['x-ratelimit-remaining'],
+    rateLimitReset: headers['x-ratelimit-reset'],
+    axiosCode: err.code,
+    message: err.message,
+    bodyPreview: previewBody(response.data)
+  };
+
+  err.redditLogged = true;
+  logger(label, JSON.stringify(diagnostic));
+}
+
 /**
  * GET /api/reddit
  * Query:
@@ -39,16 +156,26 @@ router.get('/', async (req, res, next) => {
       throw err;
     }
 
-    // Preserve Reddit ordering by taking results as-is from /hot.json
-    const base = config.reddit.baseUrl || 'https://www.reddit.com';
-    const url = `${base}/r/${encodeURIComponent(subreddit)}/hot.json?limit=${limit}&raw_json=1`;
+    let data;
+    try {
+      // Preserve Reddit ordering by taking results as-is from /hot.json when Reddit allows it.
+      data = await fetchRedditJson(subreddit, limit);
+    } catch (err) {
+      logRedditUpstreamError(
+        err,
+        subreddit,
+        '[reddit] JSON endpoint blocked; attempting RSS fallback',
+        console.warn
+      );
 
-    const { data } = await axios.get(url, {
-      headers: {
-        'User-Agent': config.reddit.userAgent
-      },
-      timeout: config.reddit.timeoutMs
-    });
+      if (!shouldFallbackToRss(err)) throw err;
+
+      const items = await fetchRedditRssItems(subreddit, limit);
+      return res.json({
+        subreddit,
+        items
+      });
+    }
 
     const children = data && data.data && Array.isArray(data.data.children)
       ? data.data.children
@@ -73,6 +200,7 @@ router.get('/', async (req, res, next) => {
       items
     });
   } catch (err) {
+    logRedditUpstreamError(err, req.query && req.query.subreddit);
     next(err);
   }
 });
