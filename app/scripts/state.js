@@ -122,8 +122,17 @@ function loadPersisted() {
   }
 }
 
+function loadRenderedTheme() {
+  const renderedTheme = document.body?.dataset?.theme;
+  if (THEMES.includes(renderedTheme)) {
+    state.theme = renderedTheme;
+    userSettings.theme = renderedTheme;
+  }
+}
+
 export function initState() {
   loadPersisted();
+  loadRenderedTheme();
   // Ensure histories exist for all modes
   Object.keys(MODES).forEach(k => { if (!chatHistories[k]) chatHistories[k] = []; });
   dispatch('pw:state:init', { ...state });
