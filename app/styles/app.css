@@ -1149,6 +1149,21 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
 }
 
 @media (max-width: 600px) {
+  #settingsForm .modal-body {
+    align-content: start;
+  }
+  #settingsForm .settings-tabs-container {
+    align-items: center;
+    align-self: start;
+  }
+  #settingsTabs {
+    align-items: center;
+  }
+  #settingsTabs .tab {
+    flex: 0 0 auto;
+    align-self: center;
+  }
+
   /* Reddit header: stack title (row 1) and controls (row 2) */
   .reddit-card .card-head {
     flex-direction: column;
@@ -1361,6 +1376,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
 #settingsForm .modal-body {
   overflow-x: hidden;
   scroll-padding-bottom: 4rem;
+  align-content: start;
 }
 .control-row {
   display: grid;
@@ -1386,7 +1402,16 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
 .settings-tabs-container {
   display: flex;
   justify-content: center;
+  align-items: center;
+  align-self: start;
   margin-bottom: 0.5rem;
+}
+#settingsTabs {
+  align-items: center;
+}
+#settingsTabs .tab {
+  flex: 0 0 auto;
+  align-self: center;
 }
 .settings-panel {
   display: grid;
