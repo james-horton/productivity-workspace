@@ -24,7 +24,9 @@ body[data-theme="matrix"] {
   --accent: #3eff9d;
   --primary: #39ff14;
   --shadow: 0 12px 34px rgba(16, 255, 128, 0.08), 0 2px 10px rgba(0,0,0,0.55);
-  --topbar-bg: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(20,255,120,0.06) 100%);
+  --topbar-bg:
+    radial-gradient(ellipse at center, rgba(20,255,120,0.045) 0%, rgba(20,255,120,0.025) 32%, rgba(0,0,0,0) 72%),
+    linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(20,255,120,0.045) 100%);
   --coderain-opacity: 0.16;
   --coderain-color: #39ff14;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -225,18 +227,92 @@ body[data-theme="sky-blue"] {
   --coderain-opacity: 0.0;
 }
 
+/* THEME: USA */
 body[data-theme="usa"] {
-  --bg: #071747;          /* deep navy background */
-  --text: #f8fafc;        /* bright foreground text */
-  --muted: #c9d7f8;       /* pale blue for subdued text */
-  --surface: #0b2f6b;     /* saturated blue card background */
-  --surface-2: #123d82;   /* brighter blue for headers/inputs */
-  --ring: #bf0a30;        /* flag red border */
-  --accent: #5ea2ff;      /* vivid blue accent for links */
-  --primary: #bf0a30;     /* flag red for primary buttons */
-  --shadow: 0 14px 38px rgba(0, 0, 20, 0.38);
-  --topbar-bg: linear-gradient(135deg, rgba(191, 10, 48, 0.46), rgba(7, 23, 71, 0.92) 48%, rgba(18, 61, 130, 0.72));
+  --bg:
+    repeating-linear-gradient(180deg, rgba(191, 10, 48, 0.16) 0 18px, rgba(255, 255, 255, 0.055) 18px 36px, rgba(7, 23, 71, 0.06) 36px 54px),
+    linear-gradient(140deg, #071747 0%, #102b63 52%, #06123a 100%);
+  --text: #f8fafc;
+  --muted: #d7e2ff;
+  --surface: #0b2a62;
+  --surface-2: #123d82;
+  --ring: #dbeafe;
+  --accent: #7db7ff;
+  --primary: #ffb3bd;
+  --shadow: 0 18px 42px rgba(0, 0, 20, 0.42), 0 0 28px rgba(191, 10, 48, 0.08);
+  --topbar-bg: linear-gradient(135deg, rgba(191, 10, 48, 0.70), rgba(7, 23, 71, 0.96) 48%, rgba(255, 255, 255, 0.18));
   --coderain-opacity: 0.0;
+  --theme-heading-font: Rockwell, Georgia, serif;
+  --theme-heading-letter-spacing: 0.04em;
+  --theme-heading-transform: uppercase;
+  --theme-title-shadow: 0 2px 0 rgba(191, 10, 48, 0.45);
+  --theme-topbar-border: 2px solid #ffffff;
+  --theme-topbar-shadow: 0 12px 30px rgba(0, 0, 20, 0.34);
+  --theme-card-border-width: 1px;
+  --theme-card-head-text: #ffffff;
+  --theme-card-head-border: 1px solid rgba(255, 255, 255, 0.46);
+  --theme-card-head-bg: linear-gradient(90deg, rgba(191, 10, 48, 0.55), rgba(18, 61, 130, 0.92));
+  --theme-card-head-quote: linear-gradient(90deg, rgba(191, 10, 48, 0.62), rgba(18, 61, 130, 0.88));
+  --theme-card-head-clock: linear-gradient(90deg, rgba(255, 255, 255, 0.16), rgba(18, 61, 130, 0.94));
+  --theme-card-head-calculator: linear-gradient(90deg, rgba(18, 61, 130, 0.95), rgba(191, 10, 48, 0.48));
+  --theme-card-head-chat: linear-gradient(90deg, rgba(191, 10, 48, 0.56), rgba(255, 255, 255, 0.12), rgba(18, 61, 130, 0.88));
+  --theme-card-head-news: linear-gradient(90deg, rgba(191, 10, 48, 0.60), rgba(18, 61, 130, 0.92));
+  --theme-card-head-search: linear-gradient(90deg, rgba(18, 61, 130, 0.94), rgba(255, 255, 255, 0.14));
+  --theme-card-head-reddit: linear-gradient(90deg, rgba(191, 10, 48, 0.55), rgba(18, 61, 130, 0.92));
+  --theme-surface-texture: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 50%);
+  --theme-field-texture: linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 58%);
+  background-attachment: fixed;
+}
+
+body[data-theme="usa"] .topbar {
+  border-bottom: var(--theme-topbar-border);
+  box-shadow: var(--theme-topbar-shadow);
+}
+
+body[data-theme="usa"] .brand .title,
+body[data-theme="usa"] .card h2,
+body[data-theme="usa"] .modal-head h2 {
+  font-family: var(--theme-heading-font);
+  letter-spacing: var(--theme-heading-letter-spacing);
+  text-transform: var(--theme-heading-transform);
+}
+
+body[data-theme="usa"] .brand .title {
+  text-shadow: var(--theme-title-shadow);
+}
+
+body[data-theme="usa"] .card,
+body[data-theme="usa"] .modal-dialog,
+body[data-theme="usa"] .model-combobox-panel {
+  border-width: var(--theme-card-border-width);
+  background-image: var(--theme-surface-texture);
+}
+
+body[data-theme="usa"] .card-head,
+body[data-theme="usa"] .modal-head {
+  color: var(--theme-card-head-text);
+  border-bottom: var(--theme-card-head-border);
+  background: var(--theme-card-head-bg);
+}
+
+body[data-theme="usa"] .quote-card .card-head { background: var(--theme-card-head-quote); }
+body[data-theme="usa"] .clock-card .card-head { background: var(--theme-card-head-clock); }
+body[data-theme="usa"] .calculator-card .card-head { background: var(--theme-card-head-calculator); }
+body[data-theme="usa"] .chat-card .card-head { background: var(--theme-card-head-chat); }
+body[data-theme="usa"] .news-card .card-head { background: var(--theme-card-head-news); }
+body[data-theme="usa"] .search-card .card-head { background: var(--theme-card-head-search); }
+body[data-theme="usa"] .reddit-card .card-head { background: var(--theme-card-head-reddit); }
+
+body[data-theme="usa"] .control select,
+body[data-theme="usa"] .model-combobox-toggle,
+body[data-theme="usa"] .model-combobox-filter,
+body[data-theme="usa"] .calc-display,
+body[data-theme="usa"] .chat-input textarea,
+body[data-theme="usa"] .msg .bubble,
+body[data-theme="usa"] .news-item,
+body[data-theme="usa"] .news-summary,
+body[data-theme="usa"] .tab {
+  background-image: var(--theme-field-texture);
 }
 
 /* THEME: 90s */
