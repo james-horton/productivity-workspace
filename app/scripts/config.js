@@ -45,6 +45,8 @@ export const UI_DEFAULTS = Object.freeze({
   copySuccessDelayMs: 1200,
   // Slightly longer delay to restore labels after failure
   copyFailDelayMs: 1500,
+  // Gap above assistant messages when anchoring them to the viewport
+  assistantTopAnchorGapPx: 12,
   // Clock update frequency for the Now card
   clockTickMs: 1000
 });
