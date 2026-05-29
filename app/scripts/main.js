@@ -18,6 +18,7 @@ import { REDDIT, NEWS, UI_DEFAULTS } from './config.js';
 import { initCalculatorUI } from './ui/calculatorUI.js';
 
 const REDDIT_MAX_POSTS = REDDIT.maxPosts;
+const ASSISTANT_TOP_ANCHOR_GAP_PX = UI_DEFAULTS.assistantTopAnchorGapPx || 0;
 
 // Elements
 const themeSelect = () => $('#themeSelect');
@@ -304,7 +305,7 @@ function wireControls() {
         }
       }
       const rect = row.getBoundingClientRect();
-      const y = window.scrollY + rect.top - headerOffset;
+      const y = window.scrollY + rect.top - headerOffset - ASSISTANT_TOP_ANCHOR_GAP_PX;
       window.scrollTo({ top: Math.max(0, y), left: 0, behavior: 'auto' });
     })();
 
@@ -322,7 +323,7 @@ function wireControls() {
         }
       }
       const rect = el.getBoundingClientRect();
-      const y = window.scrollY + rect.top - headerOffset;
+      const y = window.scrollY + rect.top - headerOffset - ASSISTANT_TOP_ANCHOR_GAP_PX;
       window.scrollTo({ top: Math.max(0, y), left: 0, behavior: 'auto' });
     };
 
