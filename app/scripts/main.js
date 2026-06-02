@@ -1,5 +1,5 @@
 import { applyTheme } from './theme.js';
-import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings, getShowInspirationQuote, setShowInspirationQuote, getShowCalculator, setShowCalculator, getShowClock, setShowClock, getRoundedBorders, setRoundedBorders } from './state.js';
+import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings, getShowInspirationQuote, setShowInspirationQuote, getShowCalculator, setShowCalculator, getShowClock, setShowClock, getRoundedBorders, setRoundedBorders, BASIC_REASONING_LEVELS, DEFAULT_BASIC_REASONING, setBasicReasoning } from './state.js';
 import { getModels, loadModels, providerFor, modelIdFor, getDefaultModelKey, getFavoriteModelIds, saveFavoriteModels } from './services/modelRegistry.js';
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
@@ -29,6 +29,8 @@ const modelOptionsPanel = () => $('#modelOptionsPanel');
 const modelFilterInput = () => $('#modelFilterInput');
 const modelOptions = () => $('#modelOptions');
 const modeSelect = () => $('#modeSelect');
+const reasoningSelect = () => $('#reasoningSelect');
+const reasoningControl = () => $('#reasoningControl');
 const chatForm = () => $('#chatForm');
 const chatInput = () => $('#chatInput');
 const chatMessages = () => $('#chatMessages');
@@ -74,6 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Mode select + disclaimer + chat starter
   hydrateModeSelect(s.mode);
+  hydrateReasoningSelect(s.basicReasoning);
+  syncReasoningControlVisibility(s.mode);
   syncDisclaimerForMode(s.mode);
   showStarterIfEmpty(s.mode);
 
@@ -128,6 +132,14 @@ function wireControls() {
     showStarterIfEmpty(m);
     renderChat(getChatHistory(m), { mode: m });
   });
+
+  // Reasoning level (only effective for Basic Info mode; server ignores it for other modes)
+  const reasoningEl = reasoningSelect();
+  if (reasoningEl) {
+    reasoningEl.addEventListener('change', (e) => {
+      setBasicReasoning(e.target.value);
+    });
+  }
 
 
   // Copy chat to clipboard
@@ -339,7 +351,8 @@ function wireControls() {
         mode: s.mode,
         messages: getChatHistory(s.mode),
         provider,
-        model: modelId
+        model: modelId,
+        reasoning: s.mode === 'basic' ? s.basicReasoning : undefined
       });
 
       hideAssistantTyping();
@@ -570,6 +583,7 @@ function wireStateEvents() {
   document.addEventListener('pw:mode:changed', (e) => {
     const { mode } = e.detail || {};
     hydrateModeSelect(mode);
+    syncReasoningControlVisibility(mode);
     syncDisclaimerForMode(mode);
     showStarterIfEmpty(mode);
     renderChat(getChatHistory(mode), { mode });
@@ -1091,6 +1105,22 @@ function hydrateModeSelect(mode) {
   const sel = modeSelect();
   if (!MODES[mode]) mode = 'basic';
   sel.value = mode;
+}
+
+function hydrateReasoningSelect(level) {
+  const sel = reasoningSelect();
+  if (!sel) return;
+  const val = BASIC_REASONING_LEVELS.includes(level) ? level : DEFAULT_BASIC_REASONING;
+  sel.value = val;
+}
+
+function syncReasoningControlVisibility(mode) {
+  const wrap = reasoningControl();
+  if (!wrap) return;
+  const show = mode === 'basic';
+  wrap.hidden = !show;
+  const sel = reasoningSelect();
+  if (sel) sel.disabled = !show;
 }
 
 function syncDisclaimerForMode(mode) {

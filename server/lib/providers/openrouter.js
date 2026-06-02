@@ -7,6 +7,27 @@ function resolveOpenRouterModel(requestedModel) {
 }
 
 /**
+ * Map our internal reasoning levels (minimal/low/medium/high/xhigh) to OpenRouter's
+ * unified `reasoning` request object. OpenRouter accepts `effort: 'minimal'|'low'|'medium'|'high'`
+ * for OpenAI-style models and forwards an equivalent to other providers' native reasoning controls.
+ *
+ * - 'minimal' and 'low' / 'medium' / 'high' map straight through.
+ * - 'xhigh' is collapsed to 'high' since OpenRouter's effort enum tops out at 'high'.
+ * - Anything else (null/undefined/invalid) returns null so the field is omitted from the payload.
+ */
+function buildOpenRouterReasoningPayload(reasoningLevel) {
+  if (!reasoningLevel || typeof reasoningLevel !== 'string') return null;
+  switch (reasoningLevel) {
+    case 'minimal': return { effort: 'minimal' };
+    case 'low':     return { effort: 'low' };
+    case 'medium':  return { effort: 'medium' };
+    case 'high':    return { effort: 'high' };
+    case 'xhigh':   return { effort: 'high' };
+    default:        return null;
+  }
+}
+
+/**
  * openrouterChat: wrapper around OpenRouter's OpenAI-compatible Chat Completions API.
  * @param {Object} params
  * @param {Array<{role: 'system'|'user'|'assistant', content: string}>} params.messages
@@ -14,6 +35,7 @@ function resolveOpenRouterModel(requestedModel) {
  * @param {number} [params.temperature]
  * @param {number} [params.maxTokens]
  * @param {Array<string>} [params.stop]
+ * @param {'minimal'|'low'|'medium'|'high'|'xhigh'} [params.reasoningLevel] Forwarded to OpenRouter's unified `reasoning.effort` field. Has no effect for models that do not support reasoning.
  * @returns {Promise<{ text: string, raw: any, modelUsed: string }>}
  */
 async function openrouterChat({
@@ -21,7 +43,8 @@ async function openrouterChat({
   model,
   temperature = (config.openrouter && config.openrouter.defaultTemperature != null ? config.openrouter.defaultTemperature : 0.7),
   maxTokens = (config.openrouter && config.openrouter.defaultMaxTokens ? config.openrouter.defaultMaxTokens : 4000),
-  stop
+  stop,
+  reasoningLevel
 }) {
   const apiKey = config.openrouter && config.openrouter.apiKey;
 
@@ -41,8 +64,12 @@ async function openrouterChat({
   if (Number.isFinite(maxTokens)) payload.max_tokens = maxTokens;
   if (stop && Array.isArray(stop) && stop.length) payload.stop = stop;
 
+  const reasoningPayload = buildOpenRouterReasoningPayload(reasoningLevel);
+  if (reasoningPayload) payload.reasoning = reasoningPayload;
+
   try {
-    console.log(`[openrouterChat] POST ${config.openrouter.chatCompletionsUrl} model=${modelToUse}`);
+    const reasoningLog = reasoningPayload ? ` reasoning=${reasoningPayload.effort}` : '';
+    console.log(`[openrouterChat] POST ${config.openrouter.chatCompletionsUrl} model=${modelToUse}${reasoningLog}`);
     const startedResp = Date.now();
     const res = await axios.post(
       config.openrouter.chatCompletionsUrl,
@@ -86,5 +113,6 @@ async function openrouterChat({
 
 module.exports = {
   openrouterChat,
-  resolveOpenRouterModel
+  resolveOpenRouterModel,
+  buildOpenRouterReasoningPayload
 };

@@ -15,6 +15,11 @@ const LS_KEYS = {
 
 export const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow', 'bumblebee', 'orangeade', 'sky-blue', 'usa', '90s'];
 
+// Reasoning levels exposed in the UI for the "Basic Info" chat mode only.
+// Other modes use their server-side fixed reasoning value (see server/routes/chat.js MODE_SPECS).
+export const BASIC_REASONING_LEVELS = ['minimal', 'low', 'medium', 'high', 'xhigh'];
+export const DEFAULT_BASIC_REASONING = 'low';
+
 export const UI_CONFIG = {
   mobileMaxWidthPx: 600,        // Mobile breakpoint (px) used for truncation logic
   redditBodyCharCap: 240,       // Max chars for Reddit post body in mobile view
@@ -110,7 +115,9 @@ const chatHistories = {
 const state = {
   theme: 'matrix',
   modelKey: 'openai:gpt-5', // populated by modelRegistry defaults
-  mode: 'basic'
+  mode: 'basic',
+  // Session-only reasoning level for Basic Info mode. Not persisted to localStorage.
+  basicReasoning: DEFAULT_BASIC_REASONING
 };
 
 function loadPersisted() {
@@ -161,6 +168,13 @@ export function setMode(mode) {
   state.mode = mode;
   localStorage.setItem(LS_KEYS.mode, mode);
   dispatch('pw:mode:changed', { mode });
+}
+
+// Session-only setter for the Basic Info reasoning level. Invalid values are ignored.
+export function setBasicReasoning(level) {
+  if (!BASIC_REASONING_LEVELS.includes(level)) return;
+  state.basicReasoning = level;
+  dispatch('pw:basic-reasoning:changed', { level });
 }
 
 

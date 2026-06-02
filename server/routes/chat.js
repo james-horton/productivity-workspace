@@ -70,6 +70,10 @@ const MODE_SPECS = {
   }
 };
 
+// Reasoning levels the client is allowed to override on a per-request basis.
+// Only honored when mode === 'basic'; every other mode keeps its fixed MODE_SPECS reasoning.
+const VALID_BASIC_REASONING = new Set(['minimal', 'low', 'medium', 'high', 'xhigh']);
+
 function coerceArray(val) {
   return Array.isArray(val) ? val : [];
 }
@@ -207,10 +211,17 @@ router.post('/', async (req, res, next) => {
       messages: rawMessages,
       provider, // 'openai' or 'openrouter' (preferred)
       model, // optional specific model id for provider
-      webSearch // boolean: if true, use provider web search (GPT-5 tools); if false, disable provider web search
+      webSearch, // boolean: if true, use provider web search (GPT-5 tools); if false, disable provider web search
+      reasoning // optional client-supplied reasoning effort; only honored for mode === 'basic'
     } = req.body || {};
 
     const spec = MODE_SPECS[mode] || MODE_SPECS.basic;
+
+    // Resolve effective reasoning: client may override only for Basic Info mode; otherwise the
+    // per-mode fixed reasoning from MODE_SPECS is used. Invalid values fall back to spec.reasoning.
+    const effectiveReasoning = (mode === 'basic' && VALID_BASIC_REASONING.has(reasoning))
+      ? reasoning
+      : spec.reasoning;
 
     // Build conversation
     const userMessages = sanitizeMessages(rawMessages);
@@ -243,7 +254,7 @@ router.post('/', async (req, res, next) => {
 
     // Call provider with optional model override and provider web search toggle
     const response = await callPreferredModels({
-        reasoning: spec.reasoning,
+        reasoning: effectiveReasoning,
         messages: finalMessages,
         prefer,
         model: selectedModel,
