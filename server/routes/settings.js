@@ -78,6 +78,7 @@ function buildSettingsResponse() {
     showInspirationQuote: normalizeBoolean(s.showInspirationQuote, true),
     showCalculator: normalizeBoolean(s.showCalculator, true),
     showClock: normalizeBoolean(s.showClock, true),
+    showWebSearch: normalizeBoolean(s.showWebSearch, true),
     roundedBorders: normalizeBoolean(s.roundedBorders, true)
   };
 }
@@ -100,6 +101,7 @@ router.put('/', (req, res, next) => {
     const currentShowInspirationQuote = normalizeBoolean((config.userSettings || {}).showInspirationQuote, true);
     const currentShowCalculator = normalizeBoolean((config.userSettings || {}).showCalculator, true);
     const currentShowClock = normalizeBoolean((config.userSettings || {}).showClock, true);
+    const currentShowWebSearch = normalizeBoolean((config.userSettings || {}).showWebSearch, true);
     const currentRoundedBorders = normalizeBoolean((config.userSettings || {}).roundedBorders, true);
     const city = normalizeCity(body.city);
     const state = normalizeState(body.state);
@@ -112,6 +114,9 @@ router.put('/', (req, res, next) => {
     const showClock = Object.prototype.hasOwnProperty.call(body, 'showClock')
       ? normalizeBoolean(body.showClock, true)
       : currentShowClock;
+    const showWebSearch = Object.prototype.hasOwnProperty.call(body, 'showWebSearch')
+      ? normalizeBoolean(body.showWebSearch, true)
+      : currentShowWebSearch;
     const roundedBorders = Object.prototype.hasOwnProperty.call(body, 'roundedBorders')
       ? normalizeBoolean(body.roundedBorders, true)
       : currentRoundedBorders;
@@ -133,11 +138,12 @@ router.put('/', (req, res, next) => {
     secrets.userSettings.showInspirationQuote = showInspirationQuote;
     secrets.userSettings.showCalculator = showCalculator;
     secrets.userSettings.showClock = showClock;
+    secrets.userSettings.showWebSearch = showWebSearch;
     secrets.userSettings.roundedBorders = roundedBorders;
     writeSecretsFile(secrets);
 
     // Sync in-memory config so subsequent GETs reflect the change immediately.
-    config.userSettings = { theme, city, state, subreddits, showInspirationQuote, showCalculator, showClock, roundedBorders };
+    config.userSettings = { theme, city, state, subreddits, showInspirationQuote, showCalculator, showClock, showWebSearch, roundedBorders };
 
     res.json(buildSettingsResponse());
   } catch (err) {

@@ -118,6 +118,9 @@ function loadSecrets() {
       showClock: (json.userSettings && typeof json.userSettings.showClock === 'boolean')
         ? json.userSettings.showClock
         : true,
+      showWebSearch: (json.userSettings && typeof json.userSettings.showWebSearch === 'boolean')
+        ? json.userSettings.showWebSearch
+        : true,
       roundedBorders: (json.userSettings && typeof json.userSettings.roundedBorders === 'boolean')
         ? json.userSettings.roundedBorders
         : true
