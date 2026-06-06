@@ -1,5 +1,5 @@
 import { applyTheme } from './theme.js';
-import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings, getShowInspirationQuote, setShowInspirationQuote, getShowCalculator, setShowCalculator, getShowClock, setShowClock, getRoundedBorders, setRoundedBorders, BASIC_REASONING_LEVELS, DEFAULT_BASIC_REASONING, setBasicReasoning } from './state.js';
+import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings, getShowInspirationQuote, setShowInspirationQuote, getShowCalculator, setShowCalculator, getShowClock, setShowClock, getShowWebSearch, setShowWebSearch, getRoundedBorders, setRoundedBorders, BASIC_REASONING_LEVELS, DEFAULT_BASIC_REASONING, setBasicReasoning } from './state.js';
 import { getModels, loadModels, providerFor, modelIdFor, getDefaultModelKey, getFavoriteModelIds, saveFavoriteModels } from './services/modelRegistry.js';
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
@@ -110,6 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
     syncInspirationSection();
     syncCalculatorSection();
     syncClockSection();
+    syncWebSearchSection();
     document.body.dataset.userSettingsReady = 'true';
     applyRoundedBorders(getRoundedBorders());
     if (getShowInspirationQuote()) void refreshQuote();
@@ -1366,6 +1367,20 @@ function syncClockSection() {
   }
 }
 
+function syncWebSearchSection() {
+  const show = getShowWebSearch();
+  const card = document.getElementById('websearch');
+  if (card) {
+    card.hidden = !show;
+    card.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
+  const tab = document.querySelector('.menu-bar .tabs a[href="#websearch"]');
+  if (tab) {
+    tab.hidden = !show;
+    tab.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
+}
+
 function applyRoundedBorders(rounded) {
   document.body.dataset.roundedBorders = rounded === false ? 'false' : 'true';
 }
@@ -1473,6 +1488,7 @@ function initSettingsUI() {
   const inputShowInspiration = document.getElementById('settingsShowInspiration');
   const inputShowCalculator = document.getElementById('settingsShowCalculator');
   const inputShowClock = document.getElementById('settingsShowClock');
+  const inputShowWebSearch = document.getElementById('settingsShowWebSearch');
   const inputRoundedBorders = document.getElementById('settingsRoundedBorders');
   const inputCity = document.getElementById('settingsCity');
   const selectState = document.getElementById('settingsState');
@@ -1519,6 +1535,7 @@ function initSettingsUI() {
     if (inputShowInspiration) inputShowInspiration.checked = getShowInspirationQuote();
     if (inputShowCalculator) inputShowCalculator.checked = getShowCalculator();
     if (inputShowClock) inputShowClock.checked = getShowClock();
+    if (inputShowWebSearch) inputShowWebSearch.checked = getShowWebSearch();
     if (inputRoundedBorders) inputRoundedBorders.checked = getRoundedBorders();
     const { city, state } = getLocation();
     inputCity.value = city || '';
@@ -1588,6 +1605,7 @@ function initSettingsUI() {
     if (inputShowInspiration) setShowInspirationQuote(inputShowInspiration.checked);
     if (inputShowCalculator) setShowCalculator(inputShowCalculator.checked);
     if (inputShowClock) setShowClock(inputShowClock.checked);
+    if (inputShowWebSearch) setShowWebSearch(inputShowWebSearch.checked);
     if (inputRoundedBorders) setRoundedBorders(inputRoundedBorders.checked);
     const city = (inputCity.value || '').trim();
     const state = (selectState.value || '').trim().toUpperCase();
@@ -1639,6 +1657,7 @@ function initSettingsUI() {
     syncInspirationSection();
     syncCalculatorSection();
     syncClockSection();
+    syncWebSearchSection();
     applyRoundedBorders(getRoundedBorders());
     if (!wasShowingInspiration && getShowInspirationQuote()) void refreshQuote();
 

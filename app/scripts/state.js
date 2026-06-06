@@ -215,6 +215,7 @@ const userSettings = {
   showInspirationQuote: true,
   showCalculator: true,
   showClock: true,
+  showWebSearch: true,
   roundedBorders: true
 };
 
@@ -247,6 +248,7 @@ export async function loadUserSettings() {
     userSettings.showInspirationQuote = data?.showInspirationQuote !== false;
     userSettings.showCalculator = data?.showCalculator !== false;
     userSettings.showClock = data?.showClock !== false;
+    userSettings.showWebSearch = data?.showWebSearch !== false;
     userSettings.roundedBorders = data?.roundedBorders !== false;
     const subs = Array.isArray(data?.subreddits) ? data.subreddits : [];
     for (let i = 0; i < SUBREDDIT_SLOTS; i += 1) {
@@ -264,6 +266,7 @@ export async function loadUserSettings() {
       showInspirationQuote: userSettings.showInspirationQuote,
       showCalculator: userSettings.showCalculator,
       showClock: userSettings.showClock,
+      showWebSearch: userSettings.showWebSearch,
       roundedBorders: userSettings.roundedBorders
     });
     dispatch('pw:theme:changed', { theme: loadedTheme });
@@ -301,6 +304,7 @@ function persistUserSettings() {
       showInspirationQuote: userSettings.showInspirationQuote,
       showCalculator: userSettings.showCalculator,
       showClock: userSettings.showClock,
+      showWebSearch: userSettings.showWebSearch,
       roundedBorders: userSettings.roundedBorders
     }).catch(err => {
       console.warn('[settings] failed to save to server:', err && err.message);
@@ -337,6 +341,7 @@ export function setShowInspirationQuote(show) {
     showInspirationQuote: value,
     showCalculator: getShowCalculator(),
     showClock: getShowClock(),
+    showWebSearch: getShowWebSearch(),
     roundedBorders: getRoundedBorders()
   });
 }
@@ -353,6 +358,7 @@ export function setShowCalculator(show) {
     showInspirationQuote: getShowInspirationQuote(),
     showCalculator: value,
     showClock: getShowClock(),
+    showWebSearch: getShowWebSearch(),
     roundedBorders: getRoundedBorders()
   });
 }
@@ -369,6 +375,24 @@ export function setShowClock(show) {
     showInspirationQuote: getShowInspirationQuote(),
     showCalculator: getShowCalculator(),
     showClock: value,
+    showWebSearch: getShowWebSearch(),
+    roundedBorders: getRoundedBorders()
+  });
+}
+
+export function getShowWebSearch() {
+  return userSettings.showWebSearch !== false;
+}
+
+export function setShowWebSearch(show) {
+  const value = show !== false;
+  userSettings.showWebSearch = value;
+  void persistUserSettings();
+  dispatch('pw:ui-settings:changed', {
+    showInspirationQuote: getShowInspirationQuote(),
+    showCalculator: getShowCalculator(),
+    showClock: getShowClock(),
+    showWebSearch: value,
     roundedBorders: getRoundedBorders()
   });
 }
@@ -385,6 +409,7 @@ export function setRoundedBorders(rounded) {
     showInspirationQuote: getShowInspirationQuote(),
     showCalculator: getShowCalculator(),
     showClock: getShowClock(),
+    showWebSearch: getShowWebSearch(),
     roundedBorders: value
   });
 }

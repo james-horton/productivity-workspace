@@ -7,7 +7,7 @@
 import { ENDPOINTS, JSON_HEADERS } from '../config.js';
 
 /**
- * @typedef {{ theme: string, city: string, state: string, subreddits: string[], showInspirationQuote: boolean, showCalculator: boolean, showClock: boolean, roundedBorders: boolean }} UserSettings
+ * @typedef {{ theme: string, city: string, state: string, subreddits: string[], showInspirationQuote: boolean, showCalculator: boolean, showClock: boolean, showWebSearch: boolean, roundedBorders: boolean }} UserSettings
  */
 
 /**
@@ -40,6 +40,7 @@ export async function saveSettings(settings) {
     showInspirationQuote: settings?.showInspirationQuote !== false,
     showCalculator: settings?.showCalculator !== false,
     showClock: settings?.showClock !== false,
+    showWebSearch: settings?.showWebSearch !== false,
     roundedBorders: settings?.roundedBorders !== false
   };
 
