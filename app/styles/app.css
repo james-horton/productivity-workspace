@@ -62,9 +62,9 @@ body[data-rounded-borders="false"] ::-webkit-scrollbar-thumb {
   overflow: visible;
 }
 
-/* When the Matrix viewport is hidden, collapse column 2 but keep controls in col 3 */
+/* When the viewport is hidden, let column 2 fill remaining space to push controls right */
 body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="usa"]) .topbar {
-  grid-template-columns: max-content 0 auto;
+  grid-template-columns: max-content 1fr auto;
 }
 
 .brand {
