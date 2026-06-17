@@ -26,7 +26,7 @@ const MODE_SPECS = {
   },
   basic: {
     model: 'gpt-5.5',
-    reasoning: 'low',
+    reasoning: 'medium',
     defaultSearch: false,
     disclaimer: null
   },
