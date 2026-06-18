@@ -62,6 +62,11 @@ body[data-theme="dark-black"] {
   --coderain-opacity: 0.0;
   --coderain-color: #1d9bf0;
 }
+body[data-theme="dark-black"] .btn.primary {
+  color: #fff;
+  font-weight: normal;
+}
+
 /* THEME: Aurora (polished) */
 body[data-theme="aurora"] {
   --bg: #0b0f10;
