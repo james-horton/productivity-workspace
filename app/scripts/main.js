@@ -1507,11 +1507,12 @@ function initSettingsUI() {
 
   const settingsTabs = document.getElementById('settingsTabs');
   const panelGeneral = document.getElementById('settingsPanelGeneral');
+  const panelReddit = document.getElementById('settingsPanelReddit');
   const panelUI = document.getElementById('settingsPanelUI');
 
   if (!btn || !modal || !form || !selectTheme || !inputCity || !selectState) return;
 
-  if (settingsTabs && panelGeneral && panelUI) {
+  if (settingsTabs && panelGeneral && panelReddit && panelUI) {
     const tabButtons = settingsTabs.querySelectorAll('.tab');
     tabButtons.forEach(button => {
       button.addEventListener('click', () => {
@@ -1521,9 +1522,15 @@ function initSettingsUI() {
         const targetTab = button.dataset.tab;
         if (targetTab === 'general') {
           panelGeneral.classList.remove('hidden');
+          panelReddit.classList.add('hidden');
+          panelUI.classList.add('hidden');
+        } else if (targetTab === 'reddit') {
+          panelGeneral.classList.add('hidden');
+          panelReddit.classList.remove('hidden');
           panelUI.classList.add('hidden');
         } else if (targetTab === 'ui') {
           panelGeneral.classList.add('hidden');
+          panelReddit.classList.add('hidden');
           panelUI.classList.remove('hidden');
         }
       });
@@ -1554,23 +1561,23 @@ function initSettingsUI() {
 
   function open() {
     prefill();
-    // Reset to General tab on open
-    if (settingsTabs && panelGeneral && panelUI) {
+    if (settingsTabs && panelGeneral && panelReddit && panelUI) {
       const tabButtons = settingsTabs.querySelectorAll('.tab');
       tabButtons.forEach(btn => {
-        if (btn.dataset.tab === 'general') {
+        if (btn.dataset.tab === 'ui') {
           btn.classList.add('active');
         } else {
           btn.classList.remove('active');
         }
       });
-      panelGeneral.classList.remove('hidden');
-      panelUI.classList.add('hidden');
+      panelGeneral.classList.add('hidden');
+      panelReddit.classList.add('hidden');
+      panelUI.classList.remove('hidden');
     }
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('modal-open');
     setTimeout(() => {
-      if (inputCity) inputCity.focus();
+      if (selectTheme) selectTheme.focus();
     }, 0);
   }
 

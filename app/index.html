@@ -289,13 +289,14 @@
         <div class="modal-body">
         <div class="settings-tabs-container">
           <nav class="tabs" id="settingsTabs" aria-label="Settings categories">
-            <button class="tab active" data-tab="general" type="button">General</button>
-            <button class="tab" data-tab="ui" type="button">UI</button>
+            <button class="tab" data-tab="general" type="button">General</button>
+            <button class="tab active" data-tab="ui" type="button">UI</button>
+            <button class="tab" data-tab="reddit" type="button">Reddit</button>
           </nav>
         </div>
 
         <!-- General Tab Panel -->
-        <div id="settingsPanelGeneral" class="settings-panel">
+        <div id="settingsPanelGeneral" class="settings-panel hidden">
           <div class="control-row">
             <label for="settingsCity" class="label">City</label>
             <input id="settingsCity" type="text" placeholder="e.g., Boston" autocomplete="address-level2" />
@@ -357,6 +358,10 @@
               <option value="DC">District of Columbia (DC)</option>
             </select>
           </div>
+          </div>
+
+        <!-- Reddit Tab Panel -->
+        <div id="settingsPanelReddit" class="settings-panel hidden">
           <div class="control-row">
             <label for="settingsRedditSubreddit" class="label">Subreddit 1</label>
             <input id="settingsRedditSubreddit" type="text" placeholder="e.g., news or /r/news" autocomplete="off" />
@@ -400,7 +405,7 @@
         </div>
 
         <!-- UI Tab Panel -->
-        <div id="settingsPanelUI" class="settings-panel hidden">
+        <div id="settingsPanelUI" class="settings-panel">
           <div class="control-row">
             <label for="themeSelect" class="label">Theme</label>
             <select id="themeSelect" aria-label="Theme">
