@@ -1433,7 +1433,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   align-content: start;
   padding-bottom: 1.5rem;
 }
-#settingsPanelGeneral::after {
+.settings-panel::after {
   content: "";
   display: block;
   min-height: 2rem;
