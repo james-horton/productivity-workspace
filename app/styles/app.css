@@ -724,12 +724,10 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   block-size: 42px;
   padding: 0; /* keep perfectly square */
   border-radius: 10px; /* match other buttons */
-  background: var(--surface);
+  background: var(--bg);
   color: var(--text);
   border: 1px solid var(--ring);
-  /* Subtle always-on accent border glow (thinner than hover) */
-  border-color: color-mix(in oklab, var(--accent) 35%, var(--ring));
-  box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 12%, transparent);
+  box-shadow: none;
   /* Enlarge the gear glyph without affecting button size */
   font-size: 1.4rem;
   line-height: 1;
