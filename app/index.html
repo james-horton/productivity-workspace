@@ -35,7 +35,24 @@
           </div>
         </div>
       </label>
-      <button id="settingsBtn" class="btn icon-only" type="button" aria-label="Settings" title="Settings">⚙</button>
+      <button id="settingsBtn" class="btn icon-only" type="button" aria-label="Settings" title="Settings">
+        <svg class="settings-icon" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+          <mask id="settingsGearMask" maskUnits="userSpaceOnUse" x="0" y="0" width="120" height="120">
+            <rect width="120" height="120" fill="black" />
+            <circle cx="60" cy="60" r="43" fill="white" />
+            <g fill="white">
+              <rect x="46" y="4" width="28" height="50" rx="14" />
+              <rect x="46" y="4" width="28" height="50" rx="14" transform="rotate(60 60 60)" />
+              <rect x="46" y="4" width="28" height="50" rx="14" transform="rotate(120 60 60)" />
+              <rect x="46" y="4" width="28" height="50" rx="14" transform="rotate(180 60 60)" />
+              <rect x="46" y="4" width="28" height="50" rx="14" transform="rotate(240 60 60)" />
+              <rect x="46" y="4" width="28" height="50" rx="14" transform="rotate(300 60 60)" />
+            </g>
+            <circle cx="60" cy="60" r="20" fill="black" />
+          </mask>
+          <rect width="120" height="120" fill="currentColor" mask="url(#settingsGearMask)" />
+        </svg>
+      </button>
     </div>
 
     <div class="code-rain" aria-hidden="true"></div>
