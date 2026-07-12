@@ -3,7 +3,7 @@
 Single-page productivity web app with:
 - Switchable, persistent themes (Matrix, Dark, Aurora)
 - Theme-aware inspirational quote (LLM-generated on demand)
-- Model picker (OpenAI GPT-5.5, with optional dynamically fetched OpenRouter models)
+- Model picker (OpenAI GPT-5.6 Sol, with optional dynamically fetched OpenRouter models)
 - Multi-mode chat (Doctor, Therapist, Web Search, Basic Info, Excuse Generator) with in-session history
 - News panel (National, World, Local via Settings city/state) via Tavily web search + LLM summarization
 - Clock and current date
@@ -21,7 +21,7 @@ Backend keeps all private API keys in a local secrets.json (never sent to the br
     - GET  /api/models
     - GET  /api/news?category=national|world|local&city=..&state=..
   - Providers:
-    - OpenAI (GPT-5.5)
+    - OpenAI (GPT-5.6 Sol, Terra, and Luna)
     - OpenRouter (optional, dynamically discovered chat models)
     - Tavily (web search)
   - CORS allowlist and basic IP rate limiting
@@ -39,7 +39,7 @@ Backend keeps all private API keys in a local secrets.json (never sent to the br
 
 - Node.js >= 18
 - API keys:
-  - OpenAI (for GPT-5.5) — private
+  - OpenAI (for GPT-5.6) — private
   - Tavily — private
   - OpenRouter — private and optional
 - Optional: Update CORS origins as needed
@@ -152,13 +152,13 @@ To enable HTTPS support, set up SSL certificates and configure the server:
 ## Usage Overview
 
 - Theme switcher (Matrix/Dark/Aurora): persists in localStorage. Matrix adds a subtle code-rain accent.
-- Model picker: GPT-5.5 (OpenAI) plus OpenRouter models when `OPENROUTER_API_KEY` or `openrouter.apiKey` is configured. If discovery fails, the static OpenAI option remains available.
+- Model picker: GPT-5.6 Sol (OpenAI) plus OpenRouter models when `OPENROUTER_API_KEY` or `openrouter.apiKey` is configured. Direct OpenAI chat modes route to Sol, Terra, or Luna based on workload. If discovery fails, the static OpenAI option remains available.
 - Quote widget: LLM-generated. Matrix theme prompts a cyberpunk/Matrix vibe; others use modern, non-cheesy inspiration.
 - Chat modes:
   - Medical Doctor (high reasoning; supportive, not a diagnosis; disclaimer added)
   - Therapist (high reasoning; supportive; disclaimer added)
-  - Web Search (medium; performs web search by default and cites sources)
-  - Basic Info (low; fast answers, no search)
+  - Web Search (GPT-5.6 Terra with low reasoning; performs web search by default and cites sources)
+  - Basic Info (GPT-5.6 Sol; user-selectable reasoning with medium as the default; no search)
   - Excuse Generator (medium; tactful and safe)
   - In-session history is maintained per mode for follow-ups (not persisted across reloads).
 - News: National, World, Local. Local uses geolocation (if permitted) to tailor results. Not auto-refreshed; use the Refresh button.

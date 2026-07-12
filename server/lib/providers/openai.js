@@ -4,11 +4,9 @@ const { config } = require('../../config');
 
 const OPENAI_RESPONSES_API_URL = config.openai.responsesUrl || 'https://api.openai.com/v1/responses';
 
-function resolveOpenAIModel(requestedModel, reasoningLevel) {
+function resolveOpenAIModel(requestedModel) {
   if (requestedModel) return requestedModel;
-  // Default to GPT-5.5 for general usage, GPT-5.5-pro for high reasoning per spec
-  if (reasoningLevel === 'high' || reasoningLevel === 'xhigh') return 'gpt-5.5-pro';
-  return 'gpt-5.5';
+  return 'gpt-5.6-sol';
 }
 
 /**
@@ -16,8 +14,8 @@ function resolveOpenAIModel(requestedModel, reasoningLevel) {
  * @param {Object} params
  * @param {Array<{role: 'system'|'user'|'assistant', content: string}>} params.messages
  * @param {string} [params.model]
- * @param {'high'|'medium'|'low'} [params.reasoningLevel] Legacy simple effort level
- * @param {{effort:'low'|'medium'|'high'}} [params.reasoning] Preferred Responses API shape
+ * @param {'none'|'low'|'medium'|'high'|'xhigh'|'max'} [params.reasoningLevel] Reasoning effort
+ * @param {'pro'} [params.reasoningMode] Optional GPT-5.6 reasoning mode
  * @param {number} [params.temperature]
  * @param {number} [params.maxTokens] Mapped to max_output_tokens
  * @param {Array<string>} [params.stop]
@@ -28,6 +26,7 @@ async function openaiChat({
   messages,
   model,
   reasoningLevel,
+  reasoningMode,
   temperature = (config.openai?.defaultTemperature ?? 1),
   maxTokens = (config.openai?.defaultMaxTokens ?? 80000),
   stop,
@@ -41,7 +40,7 @@ async function openaiChat({
     throw err;
   }
 
-  const modelToUse = resolveOpenAIModel(model, reasoningLevel);
+  const modelToUse = resolveOpenAIModel(model);
 
   // Convert chat messages into a single transcript for Responses API input
   function toTranscript(msgs) {
@@ -58,6 +57,7 @@ async function openaiChat({
     // Always use the Responses API (no more Chat Completions)
     const transcript = toTranscript(messages);
     const reasoningPayload = { effort: reasoningLevel };
+    if (reasoningMode === 'pro') reasoningPayload.mode = 'pro';
 
     const payload = {
       model: modelToUse,
@@ -78,7 +78,7 @@ async function openaiChat({
 
     console.log(
       `[openaiChat] POST ${OPENAI_RESPONSES_API_URL} model=${modelToUse} webSearch=${!!webSearch} ` +
-      `reasoning= ${reasoningLevel} ` +
+      `reasoning=${reasoningLevel}${reasoningMode === 'pro' ? '/pro' : ''} ` +
       `keys=${Object.keys(payload).join(',')}${webSearch && payload.tools ? ' tools=' + payload.tools.map(t => t.type).join(',') : ''}`
     );
     const startedResp = Date.now();

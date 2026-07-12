@@ -8,9 +8,9 @@ import { ENDPOINTS, TIMEOUTS } from '../config.js';
 const STATIC_MODELS = [
   {
     key: 'openai:gpt-5',
-    label: 'GPT-5.5 (OpenAI)',
+    label: 'GPT-5.6 (OpenAI)',
     provider: 'openai',
-    model: 'gpt-5.5',
+    model: 'gpt-5.6-sol',
     favorite: false,
     default: true,
     tier: 'high'
