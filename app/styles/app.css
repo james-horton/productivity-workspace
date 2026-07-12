@@ -728,9 +728,12 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   color: var(--text);
   border: 1px solid var(--ring);
   box-shadow: none;
-  /* Enlarge the gear glyph without affecting button size */
-  font-size: 1.4rem;
-  line-height: 1;
+}
+
+#settingsBtn .settings-icon {
+  inline-size: 27px;
+  block-size: 27px;
+  display: block;
 }
 
 /* Emphasized hover/active/focus like other icon buttons */
