@@ -20,6 +20,8 @@ pnpm-debug.log*
 
 # Environment and secrets
 secrets.json
+.secrets.*.tmp
+.secrets.*.bak
 .env
 .env.local
 .env.*.local

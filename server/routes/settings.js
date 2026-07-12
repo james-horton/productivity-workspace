@@ -17,6 +17,7 @@ const MAX_STATE_LEN = 4;
 const MAX_SUBREDDIT_LEN = 64;
 const SUBREDDIT_SLOTS = 10;
 const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow', 'bumblebee', 'orangeade', 'sky-blue', 'usa', '90s'];
+const CLOCK_VIEWS = ['digital', 'analog'];
 
 function readSecretsFile() {
   try {
@@ -31,7 +32,32 @@ function writeSecretsFile(secrets) {
   const dir = path.dirname(SECRETS_PATH);
   const tmpPath = path.join(dir, `.secrets.${process.pid}.${Date.now()}.tmp`);
   fs.writeFileSync(tmpPath, `${JSON.stringify(secrets, null, 2)}\n`, 'utf8');
-  fs.renameSync(tmpPath, SECRETS_PATH);
+  try {
+    fs.renameSync(tmpPath, SECRETS_PATH);
+  } catch (err) {
+    if (!['EEXIST', 'EPERM'].includes(err.code)) throw err;
+    const backupPath = path.join(dir, `.secrets.${process.pid}.${Date.now()}.bak`);
+    let backupCreated = false;
+    try {
+      if (fs.existsSync(SECRETS_PATH)) {
+        fs.renameSync(SECRETS_PATH, backupPath);
+        backupCreated = true;
+      }
+      fs.renameSync(tmpPath, SECRETS_PATH);
+    } catch (replaceErr) {
+      if (backupCreated && !fs.existsSync(SECRETS_PATH)) {
+        try {
+          fs.renameSync(backupPath, SECRETS_PATH);
+        } catch {
+          fs.copyFileSync(backupPath, SECRETS_PATH);
+        }
+      }
+      throw replaceErr;
+    }
+    if (backupCreated) {
+      try { fs.unlinkSync(backupPath); } catch {}
+    }
+  }
 }
 
 function normalizeSubreddit(name) {
@@ -52,6 +78,10 @@ function normalizeCity(value) {
 
 function normalizeState(value) {
   return String(value == null ? '' : value).trim().toUpperCase().slice(0, MAX_STATE_LEN);
+}
+
+function normalizeClockView(value) {
+  return CLOCK_VIEWS.includes(value) ? value : 'digital';
 }
 
 function normalizeBoolean(value, fallback = true) {
@@ -78,6 +108,7 @@ function buildSettingsResponse() {
     showInspirationQuote: normalizeBoolean(s.showInspirationQuote, true),
     showCalculator: normalizeBoolean(s.showCalculator, true),
     showClock: normalizeBoolean(s.showClock, true),
+    clockView: normalizeClockView(s.clockView),
     showWebSearch: normalizeBoolean(s.showWebSearch, true),
     roundedBorders: normalizeBoolean(s.roundedBorders, true)
   };
@@ -101,6 +132,7 @@ router.put('/', (req, res, next) => {
     const currentShowInspirationQuote = normalizeBoolean((config.userSettings || {}).showInspirationQuote, true);
     const currentShowCalculator = normalizeBoolean((config.userSettings || {}).showCalculator, true);
     const currentShowClock = normalizeBoolean((config.userSettings || {}).showClock, true);
+    const currentClockView = normalizeClockView((config.userSettings || {}).clockView);
     const currentShowWebSearch = normalizeBoolean((config.userSettings || {}).showWebSearch, true);
     const currentRoundedBorders = normalizeBoolean((config.userSettings || {}).roundedBorders, true);
     const city = normalizeCity(body.city);
@@ -114,6 +146,9 @@ router.put('/', (req, res, next) => {
     const showClock = Object.prototype.hasOwnProperty.call(body, 'showClock')
       ? normalizeBoolean(body.showClock, true)
       : currentShowClock;
+    const clockView = Object.prototype.hasOwnProperty.call(body, 'clockView')
+      ? normalizeClockView(body.clockView)
+      : currentClockView;
     const showWebSearch = Object.prototype.hasOwnProperty.call(body, 'showWebSearch')
       ? normalizeBoolean(body.showWebSearch, true)
       : currentShowWebSearch;
@@ -138,12 +173,13 @@ router.put('/', (req, res, next) => {
     secrets.userSettings.showInspirationQuote = showInspirationQuote;
     secrets.userSettings.showCalculator = showCalculator;
     secrets.userSettings.showClock = showClock;
+    secrets.userSettings.clockView = clockView;
     secrets.userSettings.showWebSearch = showWebSearch;
     secrets.userSettings.roundedBorders = roundedBorders;
     writeSecretsFile(secrets);
 
     // Sync in-memory config so subsequent GETs reflect the change immediately.
-    config.userSettings = { theme, city, state, subreddits, showInspirationQuote, showCalculator, showClock, showWebSearch, roundedBorders };
+    config.userSettings = { theme, city, state, subreddits, showInspirationQuote, showCalculator, showClock, clockView, showWebSearch, roundedBorders };
 
     res.json(buildSettingsResponse());
   } catch (err) {
