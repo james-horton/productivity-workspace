@@ -7,63 +7,64 @@ const { config } = require('../config');
 // Mode specifications: reasoning + default search + disclaimers
 const MODE_SPECS = {
   doctor: {
-    model: 'gpt-5.5',
+    model: 'gpt-5.6-sol',
     reasoning: 'high',
     defaultSearch: false,
     disclaimer: 'This is not medical advice. For urgent or serious symptoms, contact a licensed clinician or emergency services.'
   },
   therapist: {
-    model: 'gpt-5.5',
+    model: 'gpt-5.6-sol',
     reasoning: 'high',
     defaultSearch: false,
     disclaimer: 'This is supportive conversation, not a substitute for professional mental health care. If in crisis, contact local emergency services or a crisis hotline.'
   },
   web: {
-    model: 'gpt-5-mini',
+    model: 'gpt-5.6-terra',
     reasoning: 'low',
     defaultSearch: true,
     disclaimer: null
   },
   basic: {
-    model: 'gpt-5.5',
+    model: 'gpt-5.6-sol',
     reasoning: 'medium',
     defaultSearch: false,
     disclaimer: null
   },
   excuse: {
-    model: 'gpt-5.5',
+    model: 'gpt-5.6-sol',
     reasoning: 'medium',
     defaultSearch: false,
     disclaimer: null
   },
   grammar: {
-    model: 'gpt-5-nano',
-    reasoning: 'minimal',
+    model: 'gpt-5.6-luna',
+    reasoning: 'none',
     defaultSearch: false,
     disclaimer: null
   },
   eli5: {
-    model: 'gpt-5.5',
+    model: 'gpt-5.6-sol',
     reasoning: 'low',
     defaultSearch: false,
     disclaimer: null
   },
   debate_lord: {
-    model: 'gpt-5.5',
+    model: 'gpt-5.6-sol',
     reasoning: 'medium',
     defaultSearch: false,
     disclaimer: null
   },
   big_brain: {
-    model: 'gpt-5.5-pro',
+    model: 'gpt-5.6-sol',
     reasoning: 'xhigh',
+    reasoningMode: 'pro',
     defaultSearch: false,
     disclaimer: 'High-reasoning mode. No web search and no code interpreter is available.',
     maxInputTokens: 4000,
     maxOutputTokens: 4000
   },
   coder: {
-    model: 'gpt-5.5',
+    model: 'gpt-5.6-sol',
     reasoning: 'high',
     defaultSearch: false,
     disclaimer: ''
@@ -72,7 +73,7 @@ const MODE_SPECS = {
 
 // Reasoning levels the client is allowed to override on a per-request basis.
 // Only honored when mode === 'basic'; every other mode keeps its fixed MODE_SPECS reasoning.
-const VALID_BASIC_REASONING = new Set(['minimal', 'low', 'medium', 'high', 'xhigh']);
+const VALID_BASIC_REASONING = new Set(['none', 'low', 'medium', 'high', 'xhigh']);
 
 function coerceArray(val) {
   return Array.isArray(val) ? val : [];
@@ -163,7 +164,7 @@ function buildSystemPrompt(mode) {
   }
 }
 
-async function callPreferredModels({ reasoning, messages, prefer, model, fallbackModel, webSearch, maxTokens }) {
+async function callPreferredModels({ reasoning, reasoningMode, messages, prefer, model, fallbackModel, webSearch, maxTokens }) {
   // prefer is an array of provider ids in order; default to OpenAI only
   const attempts = Array.isArray(prefer) && prefer.length ? prefer : ['openai'];
 
@@ -174,6 +175,7 @@ async function callPreferredModels({ reasoning, messages, prefer, model, fallbac
         const out = await openaiChat({
           messages,
           reasoningLevel: reasoning,
+          reasoningMode,
           temperature: config.openai.defaultTemperature,
           maxTokens: (Number.isFinite(maxTokens) ? maxTokens : config.openai.defaultMaxTokens),
           model: fallbackModel || model,
@@ -184,7 +186,7 @@ async function callPreferredModels({ reasoning, messages, prefer, model, fallbac
       if (provider === 'openrouter') {
         const out = await openrouterChat({
           messages,
-          reasoningLevel: reasoning,
+          reasoningLevel: reasoning === 'none' ? 'minimal' : reasoning,
           temperature: config.openrouter.defaultTemperature,
           maxTokens: (Number.isFinite(maxTokens) ? maxTokens : config.openrouter.defaultMaxTokens),
           model
@@ -249,12 +251,13 @@ router.post('/', async (req, res, next) => {
     const requestedModel = typeof model === 'string' && model.trim() ? model.trim() : '';
     const selectedModel = requestedProvider === 'openrouter'
       ? (requestedModel || config.openrouter.defaultModel || undefined)
-      : (requestedModel || spec.model);
+      : spec.model;
     const providerWebSearch = requestedProvider === 'openai' ? effectiveWebSearch : false;
 
     // Call provider with optional model override and provider web search toggle
     const response = await callPreferredModels({
         reasoning: effectiveReasoning,
+        reasoningMode: spec.reasoningMode,
         messages: finalMessages,
         prefer,
         model: selectedModel,

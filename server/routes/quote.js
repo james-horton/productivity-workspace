@@ -111,7 +111,7 @@ router.post('/', async (req, res, next) => {
     ];
 
     const out = await openaiChat({ 
-      model: 'gpt-5.5',
+      model: 'gpt-5.6-luna',
       messages, 
       maxTokens: 2000,
       reasoningLevel: 'none' 

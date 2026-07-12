@@ -17,7 +17,7 @@ export const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'brigh
 
 // Reasoning levels exposed in the UI for the "Basic Info" chat mode only.
 // Other modes use their server-side fixed reasoning value (see server/routes/chat.js MODE_SPECS).
-export const BASIC_REASONING_LEVELS = ['minimal', 'low', 'medium', 'high', 'xhigh'];
+export const BASIC_REASONING_LEVELS = ['none', 'low', 'medium', 'high', 'xhigh'];
 export const DEFAULT_BASIC_REASONING = 'medium';
 
 export const UI_CONFIG = {
