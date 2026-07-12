@@ -1,5 +1,5 @@
 import { applyTheme } from './theme.js';
-import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings, getShowInspirationQuote, setShowInspirationQuote, getShowCalculator, setShowCalculator, getShowClock, setShowClock, getShowWebSearch, setShowWebSearch, getRoundedBorders, setRoundedBorders, BASIC_REASONING_LEVELS, DEFAULT_BASIC_REASONING, setBasicReasoning } from './state.js';
+import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings, getShowInspirationQuote, setShowInspirationQuote, getShowCalculator, setShowCalculator, getShowClock, setShowClock, getClockView, setClockView, getShowWebSearch, setShowWebSearch, getRoundedBorders, setRoundedBorders, BASIC_REASONING_LEVELS, DEFAULT_BASIC_REASONING, setBasicReasoning } from './state.js';
 import { getModels, loadModels, providerFor, modelIdFor, getDefaultModelKey, getFavoriteModelIds, saveFavoriteModels } from './services/modelRegistry.js';
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
@@ -52,6 +52,13 @@ const redditItems = () => $('#redditItems');
 const redditTitle = () => $('#redditTitle');
 const clockTime = () => $('#clockTime');
 const clockDate = () => $('#clockDate');
+const clockStatus = () => $('#clockStatus');
+const clockViewToggle = () => $('#clockViewToggle');
+const digitalClock = () => $('#digitalClock');
+const analogClock = () => $('#analogClock');
+const clockHourHand = () => $('#clockHourHand');
+const clockMinuteHand = () => $('#clockMinuteHand');
+const clockSecondHand = () => $('#clockSecondHand');
 let availableModels = [];
 let modelFilterText = '';
 let highlightedModelIndex = -1;
@@ -107,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load user settings (city/state/subreddits) from server (secrets.json) and
   // then initialize the Reddit widget which depends on subreddit settings.
   loadUserSettings().finally(() => {
+    syncClockView();
     syncInspirationSection();
     syncCalculatorSection();
     syncClockSection();
@@ -536,6 +544,12 @@ function wireControls() {
   // Quote refresh
   quoteRefresh().addEventListener('click', () => void refreshQuote());
 
+  clockViewToggle().addEventListener('click', (e) => {
+    const button = e.target.closest('[data-clock-view]');
+    if (!button) return;
+    setClockView(button.dataset.clockView);
+  });
+
   // News tabs
   newsTabs().addEventListener('click', async (e) => {
     const btn = e.target.closest('.tab');
@@ -605,6 +619,7 @@ function wireStateEvents() {
     syncClockSection();
     applyRoundedBorders(getRoundedBorders());
   });
+  document.addEventListener('pw:clock-view:changed', syncClockView);
 }
 
 function hydrateThemeSelect(theme) {
@@ -1367,6 +1382,20 @@ function syncClockSection() {
   }
 }
 
+function syncClockView() {
+  const view = getClockView();
+  const isAnalog = view === 'analog';
+  const digital = digitalClock();
+  const analog = analogClock();
+  if (digital) digital.hidden = isAnalog;
+  if (analog) analog.hidden = !isAnalog;
+  document.querySelectorAll('#clockViewToggle [data-clock-view]').forEach(button => {
+    const active = button.dataset.clockView === view;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+}
+
 function syncWebSearchSection() {
   const show = getShowWebSearch();
   const card = document.getElementById('websearch');
@@ -1685,6 +1714,14 @@ function startClock() {
     const now = new Date();
     if (clockTime()) clockTime().textContent = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     if (clockDate()) clockDate().textContent = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+    if (clockStatus()) clockStatus().textContent = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+
+    const seconds = now.getSeconds();
+    const minutes = now.getMinutes();
+    const hours = now.getHours() % 12;
+    if (clockSecondHand()) clockSecondHand().setAttribute('transform', `rotate(${seconds * 6} 80 80)`);
+    if (clockMinuteHand()) clockMinuteHand().setAttribute('transform', `rotate(${(minutes + seconds / 60) * 6} 80 80)`);
+    if (clockHourHand()) clockHourHand().setAttribute('transform', `rotate(${(hours + minutes / 60 + seconds / 3600) * 30} 80 80)`);
   };
   update();
   setInterval(update, UI_DEFAULTS.clockTickMs);

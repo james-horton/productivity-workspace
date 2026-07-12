@@ -101,7 +101,7 @@ export function initCalculatorUI() {
       // Match Quote/Clock initial desktop height when collapsed using CSS variable
       const desktop = window.matchMedia('(min-width: 900px)').matches;
       if (desktop && isCollapsed()) {
-        const startH = (getComputedStyle(document.documentElement).getPropertyValue('--mini-card-start-height') || '220px').trim() || '220px';
+        const startH = (getComputedStyle(document.documentElement).getPropertyValue('--mini-card-start-height') || '250px').trim() || '250px';
         section.style.blockSize = startH;
         section.style.alignSelf = 'start';
         section.style.display = 'flex';

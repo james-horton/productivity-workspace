@@ -16,7 +16,7 @@ html { scroll-behavior: smooth; }
 
 :root {
   /* Desktop starting height for Quote, Clock, and Collapsed Calculator cards */
-  --mini-card-start-height: 170px;
+  --mini-card-start-height: 250px;
 }
 
 [hidden] { display: none !important; }
@@ -400,7 +400,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   gap: 0.5rem;
 }
 
-/* Hard-cap header height for Inspiration, Now, and Calculator to be visually equal */
+/* Hard-cap header height for Inspiration, Time, and Calculator to be visually equal */
 .quote-card .card-head,
 .clock-card .card-head,
 .calculator-card .card-head {
@@ -425,7 +425,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   /* Increase initial height of Quote/Clock cards for better readability on desktop */
   .quote-card,
   .clock-card {
-    block-size: var(--mini-card-start-height, 220px);
+    block-size: var(--mini-card-start-height, 250px);
     align-self: start;       /* prevent stretching to the calculator's height */
     display: flex;           /* allow header + body layout */
     flex-direction: column;
@@ -463,12 +463,24 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
 
 /* Clock */
 .clock {
-  padding: 0.75rem;
+  flex: 1 1 auto;
+  min-block-size: 0;
+  padding: 0.6rem 0.75rem 0.7rem;
   display: grid;
-  gap: 0.2rem;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 0.25rem;
   align-items: center;
   justify-items: center; /* center horizontally */
   text-align: center;    /* center text within the grid cells */
+}
+.clock-view {
+  inline-size: 100%;
+  min-block-size: 0;
+  display: grid;
+  place-items: center;
+}
+.digital-clock {
+  align-self: stretch;
 }
 .time {
   font-feature-settings: "tnum";
@@ -481,6 +493,86 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   color: var(--muted);
   font-size: 0.85rem;
 }
+.clock-view-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--ring);
+  border-radius: 8px;
+}
+.clock-view-toggle:focus-within {
+  border-color: color-mix(in oklab, var(--accent) 60%, var(--ring));
+  box-shadow: var(--focus-ring);
+}
+.clock-view-option {
+  appearance: none;
+  inline-size: 29px;
+  block-size: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: var(--surface-2);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease;
+}
+.clock-view-option + .clock-view-option {
+  border-inline-start: 1px solid var(--ring);
+}
+.clock-view-option:hover {
+  background: color-mix(in oklab, var(--accent) 12%, var(--surface-2));
+  color: var(--text);
+}
+.clock-view-option.active {
+  background: color-mix(in oklab, var(--accent) 24%, var(--surface-2));
+  color: var(--text);
+}
+.clock-view-option:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid color-mix(in oklab, var(--accent) 70%, var(--text));
+  outline-offset: -3px;
+  box-shadow: none;
+}
+.analog-clock-face {
+  inline-size: clamp(138px, 16vw, 150px);
+  max-inline-size: 100%;
+  block-size: auto;
+  display: block;
+  filter: drop-shadow(0 7px 12px color-mix(in oklab, var(--accent) 14%, transparent));
+}
+.analog-clock-dial {
+  fill: color-mix(in oklab, var(--surface-2) 91%, var(--accent));
+  stroke: color-mix(in oklab, var(--accent) 42%, var(--ring));
+  stroke-width: 3;
+}
+.analog-clock-marks {
+  stroke: var(--text);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.analog-clock-hand {
+  stroke: var(--text);
+  stroke-linecap: round;
+}
+.hour-hand { stroke-width: 7; }
+.minute-hand { stroke-width: 5; }
+.second-hand {
+  stroke: color-mix(in oklab, var(--accent) 40%, var(--text));
+  stroke-width: 3;
+}
+.analog-clock-pin-outer {
+  fill: var(--surface-2);
+  stroke: var(--text);
+  stroke-width: 2;
+}
+.analog-clock-pin { fill: var(--accent); }
 
 /* Calculator */
 .calculator {

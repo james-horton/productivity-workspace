@@ -118,6 +118,9 @@ function loadSecrets() {
       showClock: (json.userSettings && typeof json.userSettings.showClock === 'boolean')
         ? json.userSettings.showClock
         : true,
+      clockView: (json.userSettings && ['digital', 'analog'].includes(json.userSettings.clockView))
+        ? json.userSettings.clockView
+        : 'digital',
       showWebSearch: (json.userSettings && typeof json.userSettings.showWebSearch === 'boolean')
         ? json.userSettings.showWebSearch
         : true,

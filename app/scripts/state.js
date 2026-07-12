@@ -215,6 +215,7 @@ const userSettings = {
   showInspirationQuote: true,
   showCalculator: true,
   showClock: true,
+  clockView: 'digital',
   showWebSearch: true,
   roundedBorders: true
 };
@@ -229,6 +230,10 @@ function clampSlotIndex(index) {
 
 function normalizeSubredditName(name) {
   return String(name || '').replace(/^\/?r\//i, '').trim();
+}
+
+function normalizeClockView(value) {
+  return value === 'analog' ? 'analog' : 'digital';
 }
 
 /**
@@ -248,6 +253,7 @@ export async function loadUserSettings() {
     userSettings.showInspirationQuote = data?.showInspirationQuote !== false;
     userSettings.showCalculator = data?.showCalculator !== false;
     userSettings.showClock = data?.showClock !== false;
+    userSettings.clockView = normalizeClockView(data?.clockView);
     userSettings.showWebSearch = data?.showWebSearch !== false;
     userSettings.roundedBorders = data?.roundedBorders !== false;
     const subs = Array.isArray(data?.subreddits) ? data.subreddits : [];
@@ -266,6 +272,7 @@ export async function loadUserSettings() {
       showInspirationQuote: userSettings.showInspirationQuote,
       showCalculator: userSettings.showCalculator,
       showClock: userSettings.showClock,
+      clockView: userSettings.clockView,
       showWebSearch: userSettings.showWebSearch,
       roundedBorders: userSettings.roundedBorders
     });
@@ -304,6 +311,7 @@ function persistUserSettings() {
       showInspirationQuote: userSettings.showInspirationQuote,
       showCalculator: userSettings.showCalculator,
       showClock: userSettings.showClock,
+      clockView: userSettings.clockView,
       showWebSearch: userSettings.showWebSearch,
       roundedBorders: userSettings.roundedBorders
     }).catch(err => {
@@ -378,6 +386,18 @@ export function setShowClock(show) {
     showWebSearch: getShowWebSearch(),
     roundedBorders: getRoundedBorders()
   });
+}
+
+export function getClockView() {
+  return normalizeClockView(userSettings.clockView);
+}
+
+export function setClockView(clockView) {
+  const value = normalizeClockView(clockView);
+  if (userSettings.clockView === value) return;
+  userSettings.clockView = value;
+  void persistUserSettings();
+  dispatch('pw:clock-view:changed', { clockView: value });
 }
 
 export function getShowWebSearch() {
