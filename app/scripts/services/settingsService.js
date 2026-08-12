@@ -7,7 +7,7 @@
 import { ENDPOINTS, JSON_HEADERS } from '../config.js';
 
 /**
- * @typedef {{ theme: string, city: string, state: string, subreddits: string[], showInspirationQuote: boolean, showCalculator: boolean, showClock: boolean, clockView: 'digital' | 'analog', showWebSearch: boolean, roundedBorders: boolean }} UserSettings
+ * @typedef {{ theme: string, city: string, state: string, subreddits: string[], showInspirationQuote: boolean, showCalculator: boolean, showClock: boolean, clockView: 'digital' | 'analog-marks' | 'analog-quarters' | 'analog-numerals' | 'analog-roman-numerals', showWebSearch: boolean, roundedBorders: boolean }} UserSettings
  */
 
 /**
@@ -40,7 +40,9 @@ export async function saveSettings(settings) {
     showInspirationQuote: settings?.showInspirationQuote !== false,
     showCalculator: settings?.showCalculator !== false,
     showClock: settings?.showClock !== false,
-    clockView: settings?.clockView === 'analog' ? 'analog' : 'digital',
+    clockView: ['analog-marks', 'analog-quarters', 'analog-numerals', 'analog-roman-numerals'].includes(settings?.clockView)
+      ? settings.clockView
+      : 'digital',
     showWebSearch: settings?.showWebSearch !== false,
     roundedBorders: settings?.roundedBorders !== false
   };

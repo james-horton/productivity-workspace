@@ -17,7 +17,7 @@ const MAX_STATE_LEN = 4;
 const MAX_SUBREDDIT_LEN = 64;
 const SUBREDDIT_SLOTS = 10;
 const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow', 'bumblebee', 'orangeade', 'sky-blue', 'usa', '90s'];
-const CLOCK_VIEWS = ['digital', 'analog'];
+const CLOCK_VIEWS = ['digital', 'analog-marks', 'analog-quarters', 'analog-numerals', 'analog-roman-numerals'];
 
 function readSecretsFile() {
   try {
@@ -81,6 +81,7 @@ function normalizeState(value) {
 }
 
 function normalizeClockView(value) {
+  if (value === 'analog') return 'analog-marks';
   return CLOCK_VIEWS.includes(value) ? value : 'digital';
 }
 
