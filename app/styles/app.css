@@ -557,6 +557,45 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   stroke-width: 4;
   stroke-linecap: round;
 }
+.analog-clock-numerals {
+  fill: var(--text);
+  font-family: inherit;
+  font-weight: 800;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+.analog-clock-quarter-numeral,
+.analog-clock-full-numeral,
+.analog-clock-roman-numeral {
+  display: none;
+}
+.analog-clock-quarter-numeral,
+.analog-clock-full-numeral {
+  font-size: 16px;
+}
+.analog-clock-roman-numeral {
+  font-size: 13px;
+  letter-spacing: -0.04em;
+}
+.analog-clock[data-clock-style="analog-quarters"] .analog-clock-quarter-numeral {
+  display: block;
+  font-size: 22px;
+}
+.analog-clock[data-clock-style="analog-quarters"] .analog-clock-quarter-mark {
+  display: none;
+}
+.analog-clock[data-clock-style="analog-numerals"] .analog-clock-marks {
+  display: none;
+}
+.analog-clock[data-clock-style="analog-numerals"] .analog-clock-full-numeral {
+  display: block;
+}
+.analog-clock[data-clock-style="analog-roman-numerals"] .analog-clock-marks {
+  display: none;
+}
+.analog-clock[data-clock-style="analog-roman-numerals"] .analog-clock-roman-numeral {
+  display: block;
+}
 .analog-clock-hand {
   stroke: var(--text);
   stroke-linecap: round;

@@ -233,7 +233,10 @@ function normalizeSubredditName(name) {
 }
 
 function normalizeClockView(value) {
-  return value === 'analog' ? 'analog' : 'digital';
+  if (value === 'analog') return 'analog-marks';
+  return ['analog-marks', 'analog-quarters', 'analog-numerals', 'analog-roman-numerals'].includes(value)
+    ? value
+    : 'digital';
 }
 
 /**

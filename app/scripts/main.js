@@ -1384,11 +1384,14 @@ function syncClockSection() {
 
 function syncClockView() {
   const view = getClockView();
-  const isAnalog = view === 'analog';
+  const isAnalog = view !== 'digital';
   const digital = digitalClock();
   const analog = analogClock();
   if (digital) digital.hidden = isAnalog;
-  if (analog) analog.hidden = !isAnalog;
+  if (analog) {
+    analog.hidden = !isAnalog;
+    analog.dataset.clockStyle = isAnalog ? view : '';
+  }
   document.querySelectorAll('#clockViewToggle [data-clock-view]').forEach(button => {
     const active = button.dataset.clockView === view;
     button.classList.toggle('active', active);

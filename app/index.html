@@ -87,7 +87,10 @@
         <h2 id="clockTitle">Time</h2>
         <div id="clockViewToggle" class="clock-view-toggle" role="group" aria-label="Clock view">
           <button class="clock-view-option active" type="button" data-clock-view="digital" aria-label="Digital clock" title="Digital" aria-pressed="true">D</button>
-          <button class="clock-view-option" type="button" data-clock-view="analog" aria-label="Analog clock" title="Analog" aria-pressed="false">A</button>
+          <button class="clock-view-option" type="button" data-clock-view="analog-marks" aria-label="Analog clock with marks" title="Marks" aria-pressed="false">-</button>
+          <button class="clock-view-option" type="button" data-clock-view="analog-quarters" aria-label="Analog clock with 12, 3, 6, and 9" title="12, 3, 6, 9" aria-pressed="false">4</button>
+          <button class="clock-view-option" type="button" data-clock-view="analog-numerals" aria-label="Analog clock with all numerals" title="All numerals" aria-pressed="false">12</button>
+          <button class="clock-view-option" type="button" data-clock-view="analog-roman-numerals" aria-label="Analog clock with Roman numerals" title="Roman numerals" aria-pressed="false">IV</button>
         </div>
       </div>
       <div class="clock">
@@ -98,18 +101,48 @@
           <svg class="analog-clock-face" viewBox="0 0 160 160" aria-hidden="true" focusable="false">
             <circle class="analog-clock-dial" cx="80" cy="80" r="74"></circle>
             <g class="analog-clock-marks">
-              <line x1="80" y1="12" x2="80" y2="23"></line>
+              <line class="analog-clock-quarter-mark" x1="80" y1="12" x2="80" y2="23"></line>
               <line x1="80" y1="12" x2="80" y2="23" transform="rotate(30 80 80)"></line>
               <line x1="80" y1="12" x2="80" y2="23" transform="rotate(60 80 80)"></line>
-              <line x1="80" y1="12" x2="80" y2="23" transform="rotate(90 80 80)"></line>
+              <line class="analog-clock-quarter-mark" x1="80" y1="12" x2="80" y2="23" transform="rotate(90 80 80)"></line>
               <line x1="80" y1="12" x2="80" y2="23" transform="rotate(120 80 80)"></line>
               <line x1="80" y1="12" x2="80" y2="23" transform="rotate(150 80 80)"></line>
-              <line x1="80" y1="12" x2="80" y2="23" transform="rotate(180 80 80)"></line>
+              <line class="analog-clock-quarter-mark" x1="80" y1="12" x2="80" y2="23" transform="rotate(180 80 80)"></line>
               <line x1="80" y1="12" x2="80" y2="23" transform="rotate(210 80 80)"></line>
               <line x1="80" y1="12" x2="80" y2="23" transform="rotate(240 80 80)"></line>
-              <line x1="80" y1="12" x2="80" y2="23" transform="rotate(270 80 80)"></line>
+              <line class="analog-clock-quarter-mark" x1="80" y1="12" x2="80" y2="23" transform="rotate(270 80 80)"></line>
               <line x1="80" y1="12" x2="80" y2="23" transform="rotate(300 80 80)"></line>
               <line x1="80" y1="12" x2="80" y2="23" transform="rotate(330 80 80)"></line>
+            </g>
+            <g class="analog-clock-numerals" transform="translate(0 -4)">
+              <text class="analog-clock-quarter-numeral" x="80" y="26">12</text>
+              <text class="analog-clock-quarter-numeral" x="137" y="85">3</text>
+              <text class="analog-clock-quarter-numeral" x="80" y="146">6</text>
+              <text class="analog-clock-quarter-numeral" x="23" y="85">9</text>
+              <text class="analog-clock-full-numeral" x="80" y="26">12</text>
+              <text class="analog-clock-full-numeral" x="108" y="33">1</text>
+              <text class="analog-clock-full-numeral" x="128" y="53">2</text>
+              <text class="analog-clock-full-numeral" x="137" y="85">3</text>
+              <text class="analog-clock-full-numeral" x="128" y="118">4</text>
+              <text class="analog-clock-full-numeral" x="108" y="138">5</text>
+              <text class="analog-clock-full-numeral" x="80" y="146">6</text>
+              <text class="analog-clock-full-numeral" x="52" y="138">7</text>
+              <text class="analog-clock-full-numeral" x="32" y="118">8</text>
+              <text class="analog-clock-full-numeral" x="23" y="85">9</text>
+              <text class="analog-clock-full-numeral" x="32" y="53">10</text>
+              <text class="analog-clock-full-numeral" x="52" y="33">11</text>
+              <text class="analog-clock-roman-numeral" x="80" y="26">XII</text>
+              <text class="analog-clock-roman-numeral" x="108" y="33">I</text>
+              <text class="analog-clock-roman-numeral" x="128" y="53">II</text>
+              <text class="analog-clock-roman-numeral" x="137" y="85">III</text>
+              <text class="analog-clock-roman-numeral" x="128" y="118">IV</text>
+              <text class="analog-clock-roman-numeral" x="108" y="138">V</text>
+              <text class="analog-clock-roman-numeral" x="80" y="146">VI</text>
+              <text class="analog-clock-roman-numeral" x="52" y="138">VII</text>
+              <text class="analog-clock-roman-numeral" x="32" y="118">VIII</text>
+              <text class="analog-clock-roman-numeral" x="23" y="85">IX</text>
+              <text class="analog-clock-roman-numeral" x="32" y="53">X</text>
+              <text class="analog-clock-roman-numeral" x="52" y="33">XI</text>
             </g>
             <line id="clockHourHand" class="analog-clock-hand hour-hand" x1="80" y1="86" x2="80" y2="46"></line>
             <line id="clockMinuteHand" class="analog-clock-hand minute-hand" x1="80" y1="88" x2="80" y2="31"></line>
