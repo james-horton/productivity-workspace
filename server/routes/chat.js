@@ -189,7 +189,8 @@ async function callPreferredModels({ reasoning, reasoningMode, messages, prefer,
           reasoningLevel: reasoning === 'none' ? 'minimal' : reasoning,
           temperature: config.openrouter.defaultTemperature,
           maxTokens: (Number.isFinite(maxTokens) ? maxTokens : config.openrouter.defaultMaxTokens),
-          model
+          model,
+          webSearch
         });
         return { ...out, provider: 'openrouter' };
       }
@@ -213,7 +214,7 @@ router.post('/', async (req, res, next) => {
       messages: rawMessages,
       provider, // 'openai' or 'openrouter' (preferred)
       model, // optional specific model id for provider
-      webSearch, // boolean: if true, use provider web search (GPT-5 tools); if false, disable provider web search
+      webSearch, // boolean: if true, enable the selected provider's native web search
       reasoning // optional client-supplied reasoning effort; only honored for mode === 'basic'
     } = req.body || {};
 
@@ -242,9 +243,6 @@ router.post('/', async (req, res, next) => {
       ? webSearch 
       : !!(MODE_SPECS[mode] && MODE_SPECS[mode].defaultSearch);
 
-    // Compose final message list
-    const finalMessages = [systemMsg, ...userMessages];
-
     // Provider preference: honor the requested provider, with OpenAI fallback/default.
     const requestedProvider = provider === 'openrouter' || provider === 'openai' ? provider : 'openai';
     const prefer = requestedProvider === 'openrouter' ? ['openrouter', 'openai'] : ['openai'];
@@ -252,9 +250,9 @@ router.post('/', async (req, res, next) => {
     const selectedModel = requestedProvider === 'openrouter'
       ? (requestedModel || config.openrouter.defaultModel || undefined)
       : spec.model;
-    const providerWebSearch = requestedProvider === 'openai' ? effectiveWebSearch : false;
+    const finalMessages = [systemMsg, ...userMessages];
 
-    // Call provider with optional model override and provider web search toggle
+    // Call provider with optional model override and provider-native web search.
     const response = await callPreferredModels({
         reasoning: effectiveReasoning,
         reasoningMode: spec.reasoningMode,
@@ -262,7 +260,7 @@ router.post('/', async (req, res, next) => {
         prefer,
         model: selectedModel,
         fallbackModel: requestedProvider === 'openrouter' ? spec.model : selectedModel,
-        webSearch: providerWebSearch,
+        webSearch: effectiveWebSearch,
         maxTokens: (spec && spec.maxOutputTokens) ? spec.maxOutputTokens : undefined
       });
 

@@ -36,6 +36,7 @@ function buildOpenRouterReasoningPayload(reasoningLevel) {
  * @param {number} [params.maxTokens]
  * @param {Array<string>} [params.stop]
  * @param {'minimal'|'low'|'medium'|'high'|'xhigh'} [params.reasoningLevel] Forwarded to OpenRouter's unified `reasoning.effort` field. Has no effect for models that do not support reasoning.
+ * @param {boolean} [params.webSearch] Enable OpenRouter's native web-search server tool.
  * @returns {Promise<{ text: string, raw: any, modelUsed: string }>}
  */
 async function openrouterChat({
@@ -44,7 +45,8 @@ async function openrouterChat({
   temperature = (config.openrouter && config.openrouter.defaultTemperature != null ? config.openrouter.defaultTemperature : 0.7),
   maxTokens = (config.openrouter && config.openrouter.defaultMaxTokens ? config.openrouter.defaultMaxTokens : 4000),
   stop,
-  reasoningLevel
+  reasoningLevel,
+  webSearch = false
 }) {
   const apiKey = config.openrouter && config.openrouter.apiKey;
 
@@ -66,10 +68,12 @@ async function openrouterChat({
 
   const reasoningPayload = buildOpenRouterReasoningPayload(reasoningLevel);
   if (reasoningPayload) payload.reasoning = reasoningPayload;
+  if (webSearch) payload.tools = [{ type: 'openrouter:web_search' }];
 
   try {
     const reasoningLog = reasoningPayload ? ` reasoning=${reasoningPayload.effort}` : '';
-    console.log(`[openrouterChat] POST ${config.openrouter.chatCompletionsUrl} model=${modelToUse}${reasoningLog}`);
+    const webSearchLog = webSearch ? ' webSearch=true' : '';
+    console.log(`[openrouterChat] POST ${config.openrouter.chatCompletionsUrl} model=${modelToUse}${reasoningLog}${webSearchLog}`);
     const startedResp = Date.now();
     const res = await axios.post(
       config.openrouter.chatCompletionsUrl,
