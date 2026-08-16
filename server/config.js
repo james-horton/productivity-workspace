@@ -123,6 +123,12 @@ function loadSecrets() {
         : (json.userSettings && ['digital', 'analog-marks', 'analog-quarters', 'analog-numerals', 'analog-roman-numerals'].includes(json.userSettings.clockView))
           ? json.userSettings.clockView
           : 'digital',
+      showAnalogClockFrame: (json.userSettings && typeof json.userSettings.showAnalogClockFrame === 'boolean')
+        ? json.userSettings.showAnalogClockFrame
+        : true,
+      analogClockFrameWidth: (json.userSettings && Number.isFinite(Number(json.userSettings.analogClockFrameWidth)))
+        ? Math.max(1, Math.min(10, Math.round(Number(json.userSettings.analogClockFrameWidth))))
+        : 10,
       showWebSearch: (json.userSettings && typeof json.userSettings.showWebSearch === 'boolean')
         ? json.userSettings.showWebSearch
         : true,
