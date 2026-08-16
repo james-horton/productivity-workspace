@@ -1,5 +1,5 @@
 import { applyTheme } from './theme.js';
-import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings, getShowInspirationQuote, setShowInspirationQuote, getShowCalculator, setShowCalculator, getShowClock, setShowClock, getClockView, setClockView, getShowWebSearch, setShowWebSearch, getRoundedBorders, setRoundedBorders, BASIC_REASONING_LEVELS, DEFAULT_BASIC_REASONING, setBasicReasoning } from './state.js';
+import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings, getShowInspirationQuote, setShowInspirationQuote, getShowCalculator, setShowCalculator, getShowClock, setShowClock, getClockView, setClockView, getShowAnalogClockFrame, setShowAnalogClockFrame, getAnalogClockFrameWidth, setAnalogClockFrameWidth, getShowWebSearch, setShowWebSearch, getRoundedBorders, setRoundedBorders, BASIC_REASONING_LEVELS, DEFAULT_BASIC_REASONING, setBasicReasoning } from './state.js';
 import { getModels, loadModels, providerFor, modelIdFor, getDefaultModelKey, getFavoriteModelIds, saveFavoriteModels } from './services/modelRegistry.js';
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
@@ -53,7 +53,12 @@ const redditTitle = () => $('#redditTitle');
 const clockTime = () => $('#clockTime');
 const clockDate = () => $('#clockDate');
 const clockStatus = () => $('#clockStatus');
+const clockContainer = () => document.querySelector('.clock');
 const clockViewToggle = () => $('#clockViewToggle');
+const clockFrameControls = () => $('#clockFrameControls');
+const clockFrameToggle = () => $('#clockFrameToggle');
+const clockFrameWidth = () => $('#clockFrameWidth');
+const clockFrameWidthValue = () => $('#clockFrameWidthValue');
 const digitalClock = () => $('#digitalClock');
 const analogClock = () => $('#analogClock');
 const clockHourHand = () => $('#clockHourHand');
@@ -115,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // then initialize the Reddit widget which depends on subreddit settings.
   loadUserSettings().finally(() => {
     syncClockView();
+    syncAnalogClockFrame();
     syncInspirationSection();
     syncCalculatorSection();
     syncClockSection();
@@ -549,6 +555,12 @@ function wireControls() {
     if (!button) return;
     setClockView(button.dataset.clockView);
   });
+  clockFrameToggle().addEventListener('click', () => {
+    setShowAnalogClockFrame(!getShowAnalogClockFrame());
+  });
+  clockFrameWidth().addEventListener('input', () => {
+    setAnalogClockFrameWidth(clockFrameWidth().value);
+  });
 
   // News tabs
   newsTabs().addEventListener('click', async (e) => {
@@ -620,6 +632,7 @@ function wireStateEvents() {
     applyRoundedBorders(getRoundedBorders());
   });
   document.addEventListener('pw:clock-view:changed', syncClockView);
+  document.addEventListener('pw:analog-clock-frame:changed', syncAnalogClockFrame);
 }
 
 function hydrateThemeSelect(theme) {
@@ -1385,8 +1398,10 @@ function syncClockSection() {
 function syncClockView() {
   const view = getClockView();
   const isAnalog = view !== 'digital';
+  const container = clockContainer();
   const digital = digitalClock();
   const analog = analogClock();
+  if (container) container.dataset.clockView = view;
   if (digital) digital.hidden = isAnalog;
   if (analog) {
     analog.hidden = !isAnalog;
@@ -1397,6 +1412,40 @@ function syncClockView() {
     button.classList.toggle('active', active);
     button.setAttribute('aria-pressed', active ? 'true' : 'false');
   });
+  syncClockFrameControls();
+}
+
+function syncAnalogClockFrame() {
+  const analog = analogClock();
+  if (!analog) return;
+  analog.dataset.clockFrameVisible = getShowAnalogClockFrame() ? 'true' : 'false';
+  analog.style.setProperty('--analog-clock-frame-width', String(getAnalogClockFrameWidth()));
+  syncClockFrameControls();
+}
+
+function syncClockFrameControls() {
+  const controls = clockFrameControls();
+  const toggle = clockFrameToggle();
+  const width = clockFrameWidth();
+  const value = clockFrameWidthValue();
+  const isAnalog = getClockView() !== 'digital';
+  const frameVisible = getShowAnalogClockFrame();
+  if (controls) {
+    controls.hidden = !isAnalog;
+    controls.dataset.frameVisible = frameVisible ? 'true' : 'false';
+  }
+  if (toggle) {
+    toggle.setAttribute('aria-pressed', frameVisible ? 'true' : 'false');
+    toggle.setAttribute('aria-label', `${frameVisible ? 'Hide' : 'Show'} analog clock frame`);
+    toggle.title = `${frameVisible ? 'Hide' : 'Show'} analog clock frame`;
+  }
+  if (width) {
+    width.value = String(getAnalogClockFrameWidth());
+    width.disabled = !isAnalog || !frameVisible;
+  }
+  if (value) {
+    value.textContent = String(getAnalogClockFrameWidth());
+  }
 }
 
 function syncWebSearchSection() {

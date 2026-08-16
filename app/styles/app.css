@@ -482,6 +482,14 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
 .digital-clock {
   align-self: stretch;
 }
+.clock[data-clock-view="digital"] {
+  grid-template-rows: auto auto;
+  align-content: center;
+  gap: 0;
+}
+.clock[data-clock-view="digital"] .digital-clock {
+  align-self: auto;
+}
 .time {
   font-feature-settings: "tnum";
   font-variant-numeric: tabular-nums;
@@ -541,7 +549,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   box-shadow: none;
 }
 .analog-clock-face {
-  inline-size: clamp(138px, 16vw, 150px);
+  inline-size: clamp(118px, 14vw, 130px);
   max-inline-size: 100%;
   block-size: auto;
   display: block;
@@ -550,7 +558,77 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
 .analog-clock-dial {
   fill: color-mix(in oklab, var(--surface-2) 91%, var(--accent));
   stroke: color-mix(in oklab, var(--accent) 42%, var(--ring));
-  stroke-width: 10;
+  stroke-width: var(--analog-clock-frame-width, 10);
+}
+.analog-clock[data-clock-frame-visible="false"] .analog-clock-dial {
+  stroke: none;
+}
+.clock-frame-controls {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline-start: auto;
+}
+.clock-frame-controls::before {
+  content: "";
+  position: absolute;
+  inset-inline-end: 100%;
+  inset-block: -0.25rem;
+  inline-size: 5rem;
+}
+.clock-frame-toggle {
+  appearance: none;
+  inline-size: 22px;
+  block-size: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.clock-frame-toggle[aria-pressed="true"] {
+  background: color-mix(in oklab, var(--accent) 24%, var(--surface-2));
+  color: var(--text);
+}
+.clock-frame-toggle:focus-visible,
+.clock-frame-controls input:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--accent) 70%, var(--text));
+  outline-offset: 2px;
+}
+.clock-frame-controls input[type="range"] {
+  position: absolute;
+  inset-inline-end: calc(100% + 0.5rem);
+  inset-block-start: 50%;
+  display: none;
+  inline-size: 62px;
+  block-size: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+.clock-frame-controls output {
+  position: absolute;
+  inset-inline-end: calc(100% + 4.5rem);
+  inset-block-start: 50%;
+  display: none;
+  min-inline-size: 1.25rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+.clock-frame-controls[data-frame-visible="true"]:hover input[type="range"],
+.clock-frame-controls[data-frame-visible="true"]:hover output {
+  display: block;
 }
 .analog-clock-marks {
   stroke: var(--text);

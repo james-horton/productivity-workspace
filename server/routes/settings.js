@@ -18,6 +18,8 @@ const MAX_SUBREDDIT_LEN = 64;
 const SUBREDDIT_SLOTS = 10;
 const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow', 'bumblebee', 'orangeade', 'sky-blue', 'usa', '90s'];
 const CLOCK_VIEWS = ['digital', 'analog-marks', 'analog-quarters', 'analog-numerals', 'analog-roman-numerals'];
+const MIN_ANALOG_CLOCK_FRAME_WIDTH = 1;
+const MAX_ANALOG_CLOCK_FRAME_WIDTH = 10;
 
 function readSecretsFile() {
   try {
@@ -94,6 +96,13 @@ function normalizeBoolean(value, fallback = true) {
   return fallback;
 }
 
+function normalizeAnalogClockFrameWidth(value) {
+  const width = Math.round(Number(value));
+  return Number.isFinite(width)
+    ? Math.max(MIN_ANALOG_CLOCK_FRAME_WIDTH, Math.min(MAX_ANALOG_CLOCK_FRAME_WIDTH, width))
+    : MAX_ANALOG_CLOCK_FRAME_WIDTH;
+}
+
 function buildSettingsResponse() {
   const s = config.userSettings || {};
   const subs = Array.isArray(s.subreddits) ? s.subreddits : [];
@@ -110,6 +119,8 @@ function buildSettingsResponse() {
     showCalculator: normalizeBoolean(s.showCalculator, true),
     showClock: normalizeBoolean(s.showClock, true),
     clockView: normalizeClockView(s.clockView),
+    showAnalogClockFrame: normalizeBoolean(s.showAnalogClockFrame, true),
+    analogClockFrameWidth: normalizeAnalogClockFrameWidth(s.analogClockFrameWidth),
     showWebSearch: normalizeBoolean(s.showWebSearch, true),
     roundedBorders: normalizeBoolean(s.roundedBorders, true)
   };
@@ -134,6 +145,8 @@ router.put('/', (req, res, next) => {
     const currentShowCalculator = normalizeBoolean((config.userSettings || {}).showCalculator, true);
     const currentShowClock = normalizeBoolean((config.userSettings || {}).showClock, true);
     const currentClockView = normalizeClockView((config.userSettings || {}).clockView);
+    const currentShowAnalogClockFrame = normalizeBoolean((config.userSettings || {}).showAnalogClockFrame, true);
+    const currentAnalogClockFrameWidth = normalizeAnalogClockFrameWidth((config.userSettings || {}).analogClockFrameWidth);
     const currentShowWebSearch = normalizeBoolean((config.userSettings || {}).showWebSearch, true);
     const currentRoundedBorders = normalizeBoolean((config.userSettings || {}).roundedBorders, true);
     const city = normalizeCity(body.city);
@@ -150,6 +163,12 @@ router.put('/', (req, res, next) => {
     const clockView = Object.prototype.hasOwnProperty.call(body, 'clockView')
       ? normalizeClockView(body.clockView)
       : currentClockView;
+    const showAnalogClockFrame = Object.prototype.hasOwnProperty.call(body, 'showAnalogClockFrame')
+      ? normalizeBoolean(body.showAnalogClockFrame, true)
+      : currentShowAnalogClockFrame;
+    const analogClockFrameWidth = Object.prototype.hasOwnProperty.call(body, 'analogClockFrameWidth')
+      ? normalizeAnalogClockFrameWidth(body.analogClockFrameWidth)
+      : currentAnalogClockFrameWidth;
     const showWebSearch = Object.prototype.hasOwnProperty.call(body, 'showWebSearch')
       ? normalizeBoolean(body.showWebSearch, true)
       : currentShowWebSearch;
@@ -175,12 +194,14 @@ router.put('/', (req, res, next) => {
     secrets.userSettings.showCalculator = showCalculator;
     secrets.userSettings.showClock = showClock;
     secrets.userSettings.clockView = clockView;
+    secrets.userSettings.showAnalogClockFrame = showAnalogClockFrame;
+    secrets.userSettings.analogClockFrameWidth = analogClockFrameWidth;
     secrets.userSettings.showWebSearch = showWebSearch;
     secrets.userSettings.roundedBorders = roundedBorders;
     writeSecretsFile(secrets);
 
     // Sync in-memory config so subsequent GETs reflect the change immediately.
-    config.userSettings = { theme, city, state, subreddits, showInspirationQuote, showCalculator, showClock, clockView, showWebSearch, roundedBorders };
+    config.userSettings = { theme, city, state, subreddits, showInspirationQuote, showCalculator, showClock, clockView, showAnalogClockFrame, analogClockFrameWidth, showWebSearch, roundedBorders };
 
     res.json(buildSettingsResponse());
   } catch (err) {

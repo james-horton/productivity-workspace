@@ -85,6 +85,12 @@
     <section class="card clock-card" aria-labelledby="clockTitle">
       <div class="card-head">
         <h2 id="clockTitle">Time</h2>
+        <div id="clockFrameControls" class="clock-frame-controls" hidden>
+          <button id="clockFrameToggle" class="clock-frame-toggle" type="button" aria-label="Toggle analog clock frame" title="Show or hide analog clock frame" aria-pressed="true">F</button>
+          <label class="sr-only" for="clockFrameWidth">Analog clock frame width</label>
+          <input id="clockFrameWidth" type="range" min="1" max="10" step="1" aria-describedby="clockFrameWidthValue" />
+          <output id="clockFrameWidthValue" for="clockFrameWidth">10</output>
+        </div>
         <div id="clockViewToggle" class="clock-view-toggle" role="group" aria-label="Clock view">
           <button class="clock-view-option active" type="button" data-clock-view="digital" aria-label="Digital clock" title="Digital" aria-pressed="true">D</button>
           <button class="clock-view-option" type="button" data-clock-view="analog-marks" aria-label="Analog clock with marks" title="Marks" aria-pressed="false">-</button>

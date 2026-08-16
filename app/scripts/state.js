@@ -216,6 +216,8 @@ const userSettings = {
   showCalculator: true,
   showClock: true,
   clockView: 'digital',
+  showAnalogClockFrame: true,
+  analogClockFrameWidth: 10,
   showWebSearch: true,
   roundedBorders: true
 };
@@ -239,6 +241,11 @@ function normalizeClockView(value) {
     : 'digital';
 }
 
+function normalizeAnalogClockFrameWidth(value) {
+  const width = Math.round(Number(value));
+  return Number.isFinite(width) ? Math.max(1, Math.min(10, width)) : 10;
+}
+
 /**
  * Fetch persisted user settings from the server and populate the in-memory cache.
  * Should be awaited once during app startup before widgets that depend on
@@ -257,6 +264,8 @@ export async function loadUserSettings() {
     userSettings.showCalculator = data?.showCalculator !== false;
     userSettings.showClock = data?.showClock !== false;
     userSettings.clockView = normalizeClockView(data?.clockView);
+    userSettings.showAnalogClockFrame = data?.showAnalogClockFrame !== false;
+    userSettings.analogClockFrameWidth = normalizeAnalogClockFrameWidth(data?.analogClockFrameWidth);
     userSettings.showWebSearch = data?.showWebSearch !== false;
     userSettings.roundedBorders = data?.roundedBorders !== false;
     const subs = Array.isArray(data?.subreddits) ? data.subreddits : [];
@@ -276,6 +285,8 @@ export async function loadUserSettings() {
       showCalculator: userSettings.showCalculator,
       showClock: userSettings.showClock,
       clockView: userSettings.clockView,
+      showAnalogClockFrame: userSettings.showAnalogClockFrame,
+      analogClockFrameWidth: userSettings.analogClockFrameWidth,
       showWebSearch: userSettings.showWebSearch,
       roundedBorders: userSettings.roundedBorders
     });
@@ -315,6 +326,8 @@ function persistUserSettings() {
       showCalculator: userSettings.showCalculator,
       showClock: userSettings.showClock,
       clockView: userSettings.clockView,
+      showAnalogClockFrame: userSettings.showAnalogClockFrame,
+      analogClockFrameWidth: userSettings.analogClockFrameWidth,
       showWebSearch: userSettings.showWebSearch,
       roundedBorders: userSettings.roundedBorders
     }).catch(err => {
@@ -401,6 +414,36 @@ export function setClockView(clockView) {
   userSettings.clockView = value;
   void persistUserSettings();
   dispatch('pw:clock-view:changed', { clockView: value });
+}
+
+export function getShowAnalogClockFrame() {
+  return userSettings.showAnalogClockFrame !== false;
+}
+
+export function setShowAnalogClockFrame(show) {
+  const value = show !== false;
+  if (userSettings.showAnalogClockFrame === value) return;
+  userSettings.showAnalogClockFrame = value;
+  void persistUserSettings();
+  dispatch('pw:analog-clock-frame:changed', {
+    visible: value,
+    width: getAnalogClockFrameWidth()
+  });
+}
+
+export function getAnalogClockFrameWidth() {
+  return normalizeAnalogClockFrameWidth(userSettings.analogClockFrameWidth);
+}
+
+export function setAnalogClockFrameWidth(width) {
+  const value = normalizeAnalogClockFrameWidth(width);
+  if (userSettings.analogClockFrameWidth === value) return;
+  userSettings.analogClockFrameWidth = value;
+  void persistUserSettings();
+  dispatch('pw:analog-clock-frame:changed', {
+    visible: getShowAnalogClockFrame(),
+    width: value
+  });
 }
 
 export function getShowWebSearch() {
