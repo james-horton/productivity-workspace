@@ -58,7 +58,6 @@ const clockViewToggle = () => $('#clockViewToggle');
 const clockFrameControls = () => $('#clockFrameControls');
 const clockFrameToggle = () => $('#clockFrameToggle');
 const clockFrameWidth = () => $('#clockFrameWidth');
-const clockFrameWidthValue = () => $('#clockFrameWidthValue');
 const digitalClock = () => $('#digitalClock');
 const analogClock = () => $('#analogClock');
 const clockHourHand = () => $('#clockHourHand');
@@ -1427,7 +1426,6 @@ function syncClockFrameControls() {
   const controls = clockFrameControls();
   const toggle = clockFrameToggle();
   const width = clockFrameWidth();
-  const value = clockFrameWidthValue();
   const isAnalog = getClockView() !== 'digital';
   const frameVisible = getShowAnalogClockFrame();
   if (controls) {
@@ -1442,9 +1440,6 @@ function syncClockFrameControls() {
   if (width) {
     width.value = String(getAnalogClockFrameWidth());
     width.disabled = !isAnalog || !frameVisible;
-  }
-  if (value) {
-    value.textContent = String(getAnalogClockFrameWidth());
   }
 }
 

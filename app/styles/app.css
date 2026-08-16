@@ -579,16 +579,16 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
 }
 .clock-frame-toggle {
   appearance: none;
-  inline-size: 22px;
-  block-size: 22px;
+  inline-size: 29px;
+  block-size: 28px;
   padding: 0;
   border: 0;
   border-radius: 5px;
   background: transparent;
   color: var(--muted);
   font: inherit;
-  font-size: 0.7rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 800;
   cursor: pointer;
 }
 .clock-frame-toggle[aria-pressed="true"] {
@@ -613,21 +613,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   transform: translateY(-50%);
   z-index: 1;
 }
-.clock-frame-controls output {
-  position: absolute;
-  inset-inline-end: calc(100% + 4.5rem);
-  inset-block-start: 50%;
-  display: none;
-  min-inline-size: 1.25rem;
-  color: var(--muted);
-  font-size: 0.7rem;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-  transform: translateY(-50%);
-  z-index: 1;
-}
-.clock-frame-controls[data-frame-visible="true"]:hover input[type="range"],
-.clock-frame-controls[data-frame-visible="true"]:hover output {
+.clock-frame-controls[data-frame-visible="true"]:hover input[type="range"] {
   display: block;
 }
 .analog-clock-marks {
