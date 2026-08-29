@@ -566,7 +566,23 @@
       </div>
 
       <div class="spreadsheet-body">
-        <div id="spreadsheetToolbar" class="spreadsheet-toolbar" role="toolbar" aria-label="Cell formatting">
+        <div id="spreadsheetToolbar" class="spreadsheet-toolbar" role="toolbar" aria-label="Spreadsheet tools">
+          <div class="spreadsheet-tool-group" aria-label="History">
+            <button id="spreadsheetUndo" class="btn icon-only spreadsheet-history-tool" type="button" aria-label="Undo" title="Undo (Ctrl+Z)" disabled>
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="2 5 3 10 8 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 .49-5"></path>
+              </svg>
+            </button>
+            <button id="spreadsheetRedo" class="btn icon-only spreadsheet-history-tool" type="button" aria-label="Redo" title="Redo (Ctrl+Y or Ctrl+Shift+Z)" disabled>
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <g transform="translate(24 0) scale(-1 1)">
+                  <polyline points="2 5 3 10 8 10"></polyline>
+                  <path d="M3.51 15a9 9 0 1 0 .49-5"></path>
+                </g>
+              </svg>
+            </button>
+          </div>
           <div class="spreadsheet-tool-group" aria-label="Text style">
             <button id="spreadsheetBold" class="btn spreadsheet-tool" type="button" aria-pressed="false" title="Bold"><strong>B</strong></button>
             <button id="spreadsheetItalic" class="btn spreadsheet-tool" type="button" aria-pressed="false" title="Italic"><em>I</em></button>
