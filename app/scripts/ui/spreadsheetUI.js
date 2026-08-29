@@ -14,6 +14,7 @@ const MIN_COLUMN_WIDTH = 60;
 const MAX_COLUMN_WIDTH = 400;
 const MIN_ROW_HEIGHT = 22;
 const MAX_ROW_HEIGHT = 160;
+const HISTORY_LIMIT = 100;
 
 let elements;
 let workbook;
@@ -32,6 +33,10 @@ let resizeState = null;
 let calculatedValues = new Map();
 let themeColorCache = null;
 let initialized = false;
+let undoStack = [];
+let redoStack = [];
+let historyState = null;
+let savedWorkbookState = null;
 
 function createSheet(id = 'sheet-1', name = 'Sheet 1') {
   return {
@@ -119,10 +124,99 @@ function setStatus(message, kind = '') {
   elements.status.classList.toggle('is-dirty', kind === 'dirty');
 }
 
+function selectionSnapshot() {
+  return {
+    anchor: { ...selection.anchor },
+    end: { ...selection.end }
+  };
+}
+
+function workbookSnapshot() {
+  return JSON.stringify(workbook);
+}
+
+function captureHistoryState() {
+  return { workbook: workbookSnapshot(), selection: selectionSnapshot() };
+}
+
+function updateHistoryControls() {
+  if (!elements?.undo || !elements?.redo) return;
+  const unavailable = !workbook || loading || loadFailed || saving;
+  elements.undo.disabled = unavailable || undoStack.length === 0;
+  elements.redo.disabled = unavailable || redoStack.length === 0;
+}
+
+function resetHistory() {
+  undoStack = [];
+  redoStack = [];
+  historyState = workbook ? captureHistoryState() : null;
+  savedWorkbookState = historyState?.workbook || null;
+  updateHistoryControls();
+}
+
+function updateDirtyState(message) {
+  dirty = Boolean(workbook && savedWorkbookState !== workbookSnapshot());
+  setStatus(dirty ? message : 'No unsaved changes', dirty ? 'dirty' : '');
+}
+
 function markDirty(message = 'Unsaved changes') {
+  const nextState = captureHistoryState();
+  if (historyState?.workbook === nextState.workbook) {
+    historyState.selection = nextState.selection;
+    updateDirtyState(message);
+    updateHistoryControls();
+    return false;
+  }
+  if (historyState) {
+    undoStack.push(historyState);
+    if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+  }
+  historyState = nextState;
+  redoStack = [];
   revision += 1;
-  dirty = true;
-  setStatus(message, 'dirty');
+  updateDirtyState(message);
+  updateHistoryControls();
+  return true;
+}
+
+function restoreHistory(state, action) {
+  workbook = JSON.parse(state.workbook);
+  const sheet = activeSheet();
+  const restorePosition = position => ({
+    row: clamp(position?.row ?? 0, 0, sheet.rowCount - 1),
+    column: clamp(position?.column ?? 0, 0, sheet.columnCount - 1)
+  });
+  selection = {
+    anchor: restorePosition(state.selection?.anchor),
+    end: restorePosition(state.selection?.end)
+  };
+  historyState = { workbook: state.workbook, selection: selectionSnapshot() };
+  editing = false;
+  editOriginal = '';
+  revision += 1;
+  updateDirtyState(`${action} applied`);
+  renderWorkbook();
+  updateHistoryControls();
+}
+
+function undo() {
+  if (!workbook || loading || saving || isMessageBoxOpen()) return;
+  commitFormula();
+  const previousState = undoStack.pop();
+  if (!previousState) return updateHistoryControls();
+  redoStack.push(historyState || captureHistoryState());
+  if (redoStack.length > HISTORY_LIMIT) redoStack.shift();
+  restoreHistory(previousState, 'Undo');
+}
+
+function redo() {
+  if (!workbook || loading || saving || isMessageBoxOpen()) return;
+  commitFormula();
+  const nextState = redoStack.pop();
+  if (!nextState) return updateHistoryControls();
+  undoStack.push(historyState || captureHistoryState());
+  if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+  restoreHistory(nextState, 'Redo');
 }
 
 function selectedBounds() {
@@ -152,6 +246,7 @@ function setSelection(row, column, extend = false) {
   };
   if (!extend) selection.anchor = next;
   selection.end = next;
+  if (historyState) historyState.selection = selectionSnapshot();
   syncSelectionUI();
 }
 
@@ -523,11 +618,16 @@ async function save() {
   saving = true;
   const savingRevision = revision;
   elements.save.disabled = true;
+  updateHistoryControls();
   setStatus('Saving...');
   try {
     const savedWorkbook = normalizeWorkbook(await saveSpreadsheet(workbook));
-    if (revision === savingRevision) workbook = savedWorkbook;
-    dirty = revision !== savingRevision;
+    savedWorkbookState = JSON.stringify(savedWorkbook);
+    if (revision === savingRevision) {
+      workbook = savedWorkbook;
+      historyState = captureHistoryState();
+    }
+    dirty = workbookSnapshot() !== savedWorkbookState;
     setStatus(dirty ? 'Saved, with newer unsaved changes' : 'Saved', dirty ? 'dirty' : '');
     return !dirty;
   } catch (error) {
@@ -537,6 +637,7 @@ async function save() {
   } finally {
     saving = false;
     elements.save.disabled = false;
+    updateHistoryControls();
   }
 }
 
@@ -562,18 +663,21 @@ async function open() {
       loaded = true;
       loadFailed = false;
       dirty = false;
+      resetHistory();
       setStatus('Loaded');
     } catch (error) {
       workbook = createDefaultWorkbook();
       loaded = false;
       loadFailed = true;
       dirty = false;
+      resetHistory();
       setStatus(`Load failed: ${error.message}. Close and reopen to retry.`, 'error');
     } finally {
       loading = false;
       elements.loading.hidden = true;
       elements.gridViewport.hidden = false;
       setControlsDisabled(loadFailed);
+      updateHistoryControls();
     }
   }
   renderWorkbook();
@@ -606,6 +710,7 @@ async function requestClose() {
       workbook = null;
       dirty = false;
       editing = false;
+      resetHistory();
     }
     elements.modal.setAttribute('aria-hidden', 'true');
     const visibleModal = document.querySelector('.modal[aria-hidden="false"]');
@@ -628,7 +733,8 @@ function beginResize(event, type, index) {
       ? sheet.columnWidths[index] || DEFAULT_COLUMN_WIDTH
       : sheet.rowHeights[index] || DEFAULT_ROW_HEIGHT,
     pointerId: event.pointerId,
-    target: event.currentTarget
+    target: event.currentTarget,
+    changed: false
   };
   event.currentTarget.setPointerCapture?.(event.pointerId);
 }
@@ -638,22 +744,28 @@ function resizePointer(event) {
   const sheet = activeSheet();
   const delta = (resizeState.type === 'column' ? event.clientX : event.clientY) - resizeState.start;
   if (resizeState.type === 'column') {
-    sheet.columnWidths[resizeState.index] = clamp(Math.round(resizeState.size + delta), MIN_COLUMN_WIDTH, MAX_COLUMN_WIDTH);
+    const size = clamp(Math.round(resizeState.size + delta), MIN_COLUMN_WIDTH, MAX_COLUMN_WIDTH);
+    resizeState.changed ||= size !== resizeState.size;
+    sheet.columnWidths[resizeState.index] = size;
   } else {
-    sheet.rowHeights[resizeState.index] = clamp(Math.round(resizeState.size + delta), MIN_ROW_HEIGHT, MAX_ROW_HEIGHT);
+    const size = clamp(Math.round(resizeState.size + delta), MIN_ROW_HEIGHT, MAX_ROW_HEIGHT);
+    resizeState.changed ||= size !== resizeState.size;
+    sheet.rowHeights[resizeState.index] = size;
   }
   const columns = Array.from({ length: sheet.columnCount }, (_, index) => `${sheet.columnWidths[index] || DEFAULT_COLUMN_WIDTH}px`);
   const rows = Array.from({ length: sheet.rowCount }, (_, index) => `${sheet.rowHeights[index] || DEFAULT_ROW_HEIGHT}px`);
   elements.grid.style.gridTemplateColumns = `54px ${columns.join(' ')}`;
   elements.grid.style.gridTemplateRows = `30px ${rows.join(' ')}`;
-  markDirty('Unsaved size change');
+  if (resizeState.changed) setStatus('Unsaved size change', 'dirty');
 }
 
 function stopPointerActions() {
   selecting = false;
   if (resizeState) {
+    const changed = resizeState.changed;
     try { resizeState.target.releasePointerCapture?.(resizeState.pointerId); } catch {}
     resizeState = null;
+    if (changed) markDirty('Unsaved size change');
   }
 }
 
@@ -687,6 +799,8 @@ function cacheElements() {
     close: document.querySelector('#spreadsheetClose'),
     closeAction: document.querySelector('#spreadsheetCloseAction'),
     toolbar: document.querySelector('#spreadsheetToolbar'),
+    undo: document.querySelector('#spreadsheetUndo'),
+    redo: document.querySelector('#spreadsheetRedo'),
     bold: document.querySelector('#spreadsheetBold'),
     italic: document.querySelector('#spreadsheetItalic'),
     underline: document.querySelector('#spreadsheetUnderline'),
@@ -719,6 +833,8 @@ function wireEvents() {
   elements.closeAction.addEventListener('click', () => { void requestClose(); });
   elements.modal.querySelector('.modal-backdrop').addEventListener('click', () => { void requestClose(); });
   elements.save.addEventListener('click', () => { void save(); });
+  elements.undo.addEventListener('click', undo);
+  elements.redo.addEventListener('click', redo);
 
   elements.formula.addEventListener('focus', () => {
     if (!editing) editOriginal = String(activeSheet()?.cells[activeAddress()]?.value ?? '');
@@ -825,7 +941,13 @@ function wireEvents() {
     elements.sheetTabs.querySelector(`[data-sheet-id="${CSS.escape(workbook.activeSheetId)}"]`)?.focus();
   });
   document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && modalIsOpen() && !isMessageBoxOpen() && document.activeElement !== elements.formula) {
+    const historyShortcut = (event.ctrlKey || event.metaKey) && !event.altKey && document.activeElement !== elements.formula;
+    const key = event.key.toLowerCase();
+    if (modalIsOpen() && !isMessageBoxOpen() && historyShortcut && (key === 'z' || key === 'y')) {
+      event.preventDefault();
+      if (key === 'y' || event.shiftKey) redo();
+      else undo();
+    } else if (event.key === 'Escape' && modalIsOpen() && !isMessageBoxOpen() && document.activeElement !== elements.formula) {
       event.preventDefault();
       void requestClose();
     } else if (event.key === 'Tab' && modalIsOpen() && !isMessageBoxOpen()) {

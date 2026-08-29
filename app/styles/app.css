@@ -1872,7 +1872,17 @@ body.modal-open { overflow: hidden; }
   min-width: 34px;
   padding-inline: .55rem;
 }
+.spreadsheet-history-tool.btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+}
 .spreadsheet-tool-wide { white-space: nowrap; }
+.spreadsheet-toolbar .btn:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+  transform: none;
+}
 .spreadsheet-tool[aria-pressed="true"] {
   color: var(--surface);
   background: var(--accent);
