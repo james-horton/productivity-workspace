@@ -16,6 +16,7 @@ import { initUsaFlag, setUsaFlagEnabled } from './ui/usaFlag.js';
 import { $, isMobileView } from './utils/helpers.js';
 import { REDDIT, NEWS, UI_DEFAULTS } from './config.js';
 import { initCalculatorUI } from './ui/calculatorUI.js';
+import { initSpreadsheetUI } from './ui/spreadsheetUI.js';
 
 const REDDIT_MAX_POSTS = REDDIT.maxPosts;
 const ASSISTANT_TOP_ANCHOR_GAP_PX = UI_DEFAULTS.assistantTopAnchorGapPx || 0;
@@ -111,6 +112,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initSettingsUI();
   initNewsModalUI();
   initCalculatorUI();
+  if (!isMobileView()) initSpreadsheetUI();
+  window.addEventListener('resize', () => {
+    if (!isMobileView()) initSpreadsheetUI();
+  });
 
   // Render initial chat from state (starter added above if needed)
   renderChat(getChatHistory(s.mode), { mode: s.mode });
