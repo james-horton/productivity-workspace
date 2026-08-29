@@ -1658,6 +1658,22 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   border-top: 1px solid var(--ring);
   flex-shrink: 0;
 }
+.message-box-modal { z-index: 1100; }
+.message-box-dialog { width: min(92vw, 440px); }
+.message-box-modal .btn { font: inherit; }
+.message-box-modal .modal-head { padding: .8rem 1.25rem; }
+.message-box-body { padding: 1.25rem; }
+.message-box-message {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.message-box-actions {
+  flex-wrap: wrap;
+  gap: .65rem;
+  padding: .85rem 1.25rem 1.1rem;
+}
 body.modal-open { overflow: hidden; }
 
 #settingsForm {
