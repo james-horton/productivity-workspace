@@ -1,5 +1,5 @@
 import { applyTheme } from './theme.js';
-import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings, getShowInspirationQuote, setShowInspirationQuote, getShowCalculator, setShowCalculator, getShowClock, setShowClock, getClockView, setClockView, getShowAnalogClockFrame, setShowAnalogClockFrame, getAnalogClockFrameWidth, setAnalogClockFrameWidth, getShowWebSearch, setShowWebSearch, getRoundedBorders, setRoundedBorders, BASIC_REASONING_LEVELS, DEFAULT_BASIC_REASONING, setBasicReasoning } from './state.js';
+import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings, getShowInspirationQuote, setShowInspirationQuote, getShowCalculator, setShowCalculator, getShowClock, setShowClock, getClockView, setClockView, getShowAnalogClockFrame, setShowAnalogClockFrame, getAnalogClockFrameWidth, setAnalogClockFrameWidth, getShowWebSearch, setShowWebSearch, getShowReddit, setShowReddit, getRoundedBorders, setRoundedBorders, BASIC_REASONING_LEVELS, DEFAULT_BASIC_REASONING, setBasicReasoning } from './state.js';
 import { getModels, loadModels, providerFor, modelIdFor, getDefaultModelKey, getFavoriteModelIds, saveFavoriteModels } from './services/modelRegistry.js';
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
   syncDisclaimerForMode(s.mode);
   showStarterIfEmpty(s.mode);
 
-  // Initial news + reddit
+  // Initial news
   setActiveTab(NEWS.defaultCategory);
 
   // Collapsible toggles are rendered inline below summaries in News and Web Search.
@@ -120,8 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Render initial chat from state (starter added above if needed)
   renderChat(getChatHistory(s.mode), { mode: s.mode });
 
-  // Load user settings (city/state/subreddits) from server (secrets.json) and
-  // then initialize the Reddit widget which depends on subreddit settings.
+  // Load user settings from server before initializing settings-dependent widgets.
   loadUserSettings().finally(() => {
     syncClockView();
     syncAnalogClockFrame();
@@ -129,13 +128,16 @@ document.addEventListener('DOMContentLoaded', () => {
     syncCalculatorSection();
     syncClockSection();
     syncWebSearchSection();
+    syncRedditSection();
     document.body.dataset.userSettingsReady = 'true';
     applyRoundedBorders(getRoundedBorders());
     if (getShowInspirationQuote()) void refreshQuote();
-    hydrateRedditTabs();
-    setActiveRedditTab(1);
-    setRedditHeaderFromIndex(1);
-    void loadReddit(1);
+    if (getShowReddit()) {
+      hydrateRedditTabs();
+      setActiveRedditTab(1);
+      setRedditHeaderFromIndex(1);
+      void loadReddit(1);
+    }
   });
 });
 
@@ -586,7 +588,7 @@ function wireControls() {
   if (rt) {
     rt.addEventListener('click', async (e) => {
       const btn = e.target.closest('.tab');
-      if (!btn) return;
+      if (!btn || !getShowReddit()) return;
       const index = parseInt(btn.dataset.index || '1', 10);
       setActiveRedditTab(index);
       setRedditHeaderFromIndex(index);
@@ -596,6 +598,7 @@ function wireControls() {
 
   // Reddit refresh
   redditRefresh().addEventListener('click', async () => {
+    if (!getShowReddit()) return;
     await loadReddit(getActiveRedditTabIndex());
   });
 }
@@ -624,6 +627,7 @@ function wireStateEvents() {
     renderChat(getChatHistory(s.mode), { mode: s.mode });
   });
   document.addEventListener('pw:reddit:changed', (e) => {
+    if (!getShowReddit()) return;
     hydrateRedditTabs();
     const idx = getActiveRedditTabIndex();
     setRedditHeaderFromIndex(idx);
@@ -633,6 +637,8 @@ function wireStateEvents() {
     syncInspirationSection();
     syncCalculatorSection();
     syncClockSection();
+    syncWebSearchSection();
+    syncRedditSection();
     applyRoundedBorders(getRoundedBorders());
   });
   document.addEventListener('pw:clock-view:changed', syncClockView);
@@ -1462,6 +1468,20 @@ function syncWebSearchSection() {
   }
 }
 
+function syncRedditSection() {
+  const show = getShowReddit();
+  const card = document.getElementById('reddit');
+  if (card) {
+    card.hidden = !show;
+    card.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
+  const tab = document.querySelector('.menu-bar .tabs a[href="#reddit"]');
+  if (tab) {
+    tab.hidden = !show;
+    tab.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
+}
+
 function applyRoundedBorders(rounded) {
   document.body.dataset.roundedBorders = rounded === false ? 'false' : 'true';
 }
@@ -1539,6 +1559,7 @@ function setRedditHeaderFromIndex(index = getActiveRedditTabIndex()) {
 }
 
 async function loadReddit(index = getActiveRedditTabIndex()) {
+  if (!getShowReddit()) return;
   setRedditBusy(true);
   renderRedditLoading();
 
@@ -1570,6 +1591,7 @@ function initSettingsUI() {
   const inputShowCalculator = document.getElementById('settingsShowCalculator');
   const inputShowClock = document.getElementById('settingsShowClock');
   const inputShowWebSearch = document.getElementById('settingsShowWebSearch');
+  const inputShowReddit = document.getElementById('settingsShowReddit');
   const inputRoundedBorders = document.getElementById('settingsRoundedBorders');
   const inputCity = document.getElementById('settingsCity');
   const selectState = document.getElementById('settingsState');
@@ -1624,6 +1646,7 @@ function initSettingsUI() {
     if (inputShowCalculator) inputShowCalculator.checked = getShowCalculator();
     if (inputShowClock) inputShowClock.checked = getShowClock();
     if (inputShowWebSearch) inputShowWebSearch.checked = getShowWebSearch();
+    if (inputShowReddit) inputShowReddit.checked = getShowReddit();
     if (inputRoundedBorders) inputRoundedBorders.checked = getRoundedBorders();
     const { city, state } = getLocation();
     inputCity.value = city || '';
@@ -1694,6 +1717,7 @@ function initSettingsUI() {
     if (inputShowCalculator) setShowCalculator(inputShowCalculator.checked);
     if (inputShowClock) setShowClock(inputShowClock.checked);
     if (inputShowWebSearch) setShowWebSearch(inputShowWebSearch.checked);
+    if (inputShowReddit) setShowReddit(inputShowReddit.checked);
     if (inputRoundedBorders) setRoundedBorders(inputRoundedBorders.checked);
     const city = (inputCity.value || '').trim();
     const state = (selectState.value || '').trim().toUpperCase();
@@ -1746,6 +1770,7 @@ function initSettingsUI() {
     syncCalculatorSection();
     syncClockSection();
     syncWebSearchSection();
+    syncRedditSection();
     applyRoundedBorders(getRoundedBorders());
     if (!wasShowingInspiration && getShowInspirationQuote()) void refreshQuote();
 
@@ -1756,8 +1781,10 @@ function initSettingsUI() {
       void loadNews('local');
     }
 
-    hydrateRedditTabs();
-    setRedditHeaderFromIndex(getActiveRedditTabIndex());
+    if (getShowReddit()) {
+      hydrateRedditTabs();
+      setRedditHeaderFromIndex(getActiveRedditTabIndex());
+    }
     // no automatic Reddit fetch on settings save
   });
 }

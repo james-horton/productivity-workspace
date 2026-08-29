@@ -132,6 +132,9 @@ function loadSecrets() {
       showWebSearch: (json.userSettings && typeof json.userSettings.showWebSearch === 'boolean')
         ? json.userSettings.showWebSearch
         : true,
+      showReddit: (json.userSettings && typeof json.userSettings.showReddit === 'boolean')
+        ? json.userSettings.showReddit
+        : false,
       roundedBorders: (json.userSettings && typeof json.userSettings.roundedBorders === 'boolean')
         ? json.userSettings.roundedBorders
         : true
