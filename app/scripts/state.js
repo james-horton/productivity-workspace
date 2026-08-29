@@ -219,6 +219,7 @@ const userSettings = {
   showAnalogClockFrame: true,
   analogClockFrameWidth: 10,
   showWebSearch: true,
+  showReddit: false,
   roundedBorders: true
 };
 
@@ -267,6 +268,7 @@ export async function loadUserSettings() {
     userSettings.showAnalogClockFrame = data?.showAnalogClockFrame !== false;
     userSettings.analogClockFrameWidth = normalizeAnalogClockFrameWidth(data?.analogClockFrameWidth);
     userSettings.showWebSearch = data?.showWebSearch !== false;
+    userSettings.showReddit = data?.showReddit === true;
     userSettings.roundedBorders = data?.roundedBorders !== false;
     const subs = Array.isArray(data?.subreddits) ? data.subreddits : [];
     for (let i = 0; i < SUBREDDIT_SLOTS; i += 1) {
@@ -288,6 +290,7 @@ export async function loadUserSettings() {
       showAnalogClockFrame: userSettings.showAnalogClockFrame,
       analogClockFrameWidth: userSettings.analogClockFrameWidth,
       showWebSearch: userSettings.showWebSearch,
+      showReddit: userSettings.showReddit,
       roundedBorders: userSettings.roundedBorders
     });
     dispatch('pw:theme:changed', { theme: loadedTheme });
@@ -329,6 +332,7 @@ function persistUserSettings() {
       showAnalogClockFrame: userSettings.showAnalogClockFrame,
       analogClockFrameWidth: userSettings.analogClockFrameWidth,
       showWebSearch: userSettings.showWebSearch,
+      showReddit: userSettings.showReddit,
       roundedBorders: userSettings.roundedBorders
     }).catch(err => {
       console.warn('[settings] failed to save to server:', err && err.message);
@@ -366,6 +370,7 @@ export function setShowInspirationQuote(show) {
     showCalculator: getShowCalculator(),
     showClock: getShowClock(),
     showWebSearch: getShowWebSearch(),
+    showReddit: getShowReddit(),
     roundedBorders: getRoundedBorders()
   });
 }
@@ -383,6 +388,7 @@ export function setShowCalculator(show) {
     showCalculator: value,
     showClock: getShowClock(),
     showWebSearch: getShowWebSearch(),
+    showReddit: getShowReddit(),
     roundedBorders: getRoundedBorders()
   });
 }
@@ -400,6 +406,7 @@ export function setShowClock(show) {
     showCalculator: getShowCalculator(),
     showClock: value,
     showWebSearch: getShowWebSearch(),
+    showReddit: getShowReddit(),
     roundedBorders: getRoundedBorders()
   });
 }
@@ -459,6 +466,25 @@ export function setShowWebSearch(show) {
     showCalculator: getShowCalculator(),
     showClock: getShowClock(),
     showWebSearch: value,
+    showReddit: getShowReddit(),
+    roundedBorders: getRoundedBorders()
+  });
+}
+
+export function getShowReddit() {
+  return userSettings.showReddit === true;
+}
+
+export function setShowReddit(show) {
+  const value = show === true;
+  userSettings.showReddit = value;
+  void persistUserSettings();
+  dispatch('pw:ui-settings:changed', {
+    showInspirationQuote: getShowInspirationQuote(),
+    showCalculator: getShowCalculator(),
+    showClock: getShowClock(),
+    showWebSearch: getShowWebSearch(),
+    showReddit: value,
     roundedBorders: getRoundedBorders()
   });
 }
@@ -476,6 +502,7 @@ export function setRoundedBorders(rounded) {
     showCalculator: getShowCalculator(),
     showClock: getShowClock(),
     showWebSearch: getShowWebSearch(),
+    showReddit: getShowReddit(),
     roundedBorders: value
   });
 }

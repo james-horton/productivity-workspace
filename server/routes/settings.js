@@ -122,6 +122,7 @@ function buildSettingsResponse() {
     showAnalogClockFrame: normalizeBoolean(s.showAnalogClockFrame, true),
     analogClockFrameWidth: normalizeAnalogClockFrameWidth(s.analogClockFrameWidth),
     showWebSearch: normalizeBoolean(s.showWebSearch, true),
+    showReddit: normalizeBoolean(s.showReddit, false),
     roundedBorders: normalizeBoolean(s.roundedBorders, true)
   };
 }
@@ -148,6 +149,7 @@ router.put('/', (req, res, next) => {
     const currentShowAnalogClockFrame = normalizeBoolean((config.userSettings || {}).showAnalogClockFrame, true);
     const currentAnalogClockFrameWidth = normalizeAnalogClockFrameWidth((config.userSettings || {}).analogClockFrameWidth);
     const currentShowWebSearch = normalizeBoolean((config.userSettings || {}).showWebSearch, true);
+    const currentShowReddit = normalizeBoolean((config.userSettings || {}).showReddit, false);
     const currentRoundedBorders = normalizeBoolean((config.userSettings || {}).roundedBorders, true);
     const city = normalizeCity(body.city);
     const state = normalizeState(body.state);
@@ -172,6 +174,9 @@ router.put('/', (req, res, next) => {
     const showWebSearch = Object.prototype.hasOwnProperty.call(body, 'showWebSearch')
       ? normalizeBoolean(body.showWebSearch, true)
       : currentShowWebSearch;
+    const showReddit = Object.prototype.hasOwnProperty.call(body, 'showReddit')
+      ? normalizeBoolean(body.showReddit, false)
+      : currentShowReddit;
     const roundedBorders = Object.prototype.hasOwnProperty.call(body, 'roundedBorders')
       ? normalizeBoolean(body.roundedBorders, true)
       : currentRoundedBorders;
@@ -197,11 +202,12 @@ router.put('/', (req, res, next) => {
     secrets.userSettings.showAnalogClockFrame = showAnalogClockFrame;
     secrets.userSettings.analogClockFrameWidth = analogClockFrameWidth;
     secrets.userSettings.showWebSearch = showWebSearch;
+    secrets.userSettings.showReddit = showReddit;
     secrets.userSettings.roundedBorders = roundedBorders;
     writeSecretsFile(secrets);
 
     // Sync in-memory config so subsequent GETs reflect the change immediately.
-    config.userSettings = { theme, city, state, subreddits, showInspirationQuote, showCalculator, showClock, clockView, showAnalogClockFrame, analogClockFrameWidth, showWebSearch, roundedBorders };
+    config.userSettings = { theme, city, state, subreddits, showInspirationQuote, showCalculator, showClock, clockView, showAnalogClockFrame, analogClockFrameWidth, showWebSearch, showReddit, roundedBorders };
 
     res.json(buildSettingsResponse());
   } catch (err) {

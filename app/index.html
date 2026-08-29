@@ -64,7 +64,7 @@
         <a class="tab" href="#chat">Chat</a>
         <a class="tab" href="#websearch">Web Search</a>
         <a class="tab" href="#news">News</a>
-        <a class="tab" href="#reddit">Reddit</a>
+        <a class="tab" href="#reddit" hidden aria-hidden="true">Reddit</a>
         <button id="spreadsheetTrigger" class="tab spreadsheet-desktop-only" type="button">Spreadsheet</button>
       </div>
     </nav>
@@ -320,7 +320,7 @@
         <!-- News items render here -->
       </div>
     </section>
-    <section id="reddit" class="card reddit-card" aria-labelledby="redditTitle">
+    <section id="reddit" class="card reddit-card" aria-labelledby="redditTitle" hidden aria-hidden="true">
       <div class="card-head">
         <h2 id="redditTitle">Reddit</h2>
         <div class="reddit-controls">
@@ -526,6 +526,10 @@
           <div class="control-row checkbox-row">
             <input id="settingsShowWebSearch" type="checkbox" />
             <label for="settingsShowWebSearch" class="label">Web search</label>
+          </div>
+          <div class="control-row checkbox-row">
+            <input id="settingsShowReddit" type="checkbox" />
+            <label for="settingsShowReddit" class="label">Reddit</label>
           </div>
           <div class="control-row checkbox-row">
             <input id="settingsRoundedBorders" type="checkbox" />
