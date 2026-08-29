@@ -1,6 +1,7 @@
 import { fetchSpreadsheet, saveSpreadsheet } from '../services/spreadsheetService.js';
 import { isMobileView } from '../utils/helpers.js';
 import { evaluateSheet } from './spreadsheetFormula.js';
+import { isMessageBoxOpen, showMessageBox } from './messageBox.js';
 
 const DEFAULT_ROWS = 50;
 const DEFAULT_COLUMNS = 20;
@@ -464,10 +465,16 @@ function renameSheet(sheetId = workbook.activeSheetId) {
   renderSheetTabs();
 }
 
-function clearSheet() {
+async function clearSheet() {
   commitFormula();
   const sheet = activeSheet();
-  if (!window.confirm(`Clear all contents and formatting from "${sheet.name}"?`)) return;
+  const confirmed = await showMessageBox({
+    title: 'Clear sheet?',
+    message: `Clear all contents and formatting from "${sheet.name}"?`,
+    confirmLabel: 'Clear Sheet',
+    cancelLabel: 'Cancel'
+  });
+  if (!confirmed) return;
   sheet.cells = {};
   markDirty();
   renderGrid();
@@ -581,13 +588,25 @@ function setControlsDisabled(disabled) {
 }
 
 async function requestClose() {
-  if (!modalIsOpen() || closing || loading) return;
+  if (!modalIsOpen() || closing || loading || saving) return;
   closing = true;
   stopPointerActions();
   commitFormula();
-  const canClose = !dirty || await save();
+  const canClose = !dirty || await showMessageBox({
+    title: 'Discard unsaved changes?',
+    message: 'Your unsaved spreadsheet changes will be lost.',
+    confirmLabel: 'Discard Changes',
+    cancelLabel: 'Keep Editing'
+  });
   if (canClose) {
     stopPointerActions();
+    if (dirty) {
+      loaded = false;
+      loadFailed = false;
+      workbook = null;
+      dirty = false;
+      editing = false;
+    }
     elements.modal.setAttribute('aria-hidden', 'true');
     const visibleModal = document.querySelector('.modal[aria-hidden="false"]');
     document.body.classList.toggle('modal-open', Boolean(visibleModal));
@@ -806,10 +825,10 @@ function wireEvents() {
     elements.sheetTabs.querySelector(`[data-sheet-id="${CSS.escape(workbook.activeSheetId)}"]`)?.focus();
   });
   document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && modalIsOpen() && document.activeElement !== elements.formula) {
+    if (event.key === 'Escape' && modalIsOpen() && !isMessageBoxOpen() && document.activeElement !== elements.formula) {
       event.preventDefault();
       void requestClose();
-    } else if (event.key === 'Tab' && modalIsOpen()) {
+    } else if (event.key === 'Tab' && modalIsOpen() && !isMessageBoxOpen()) {
       const focusable = [...elements.modal.querySelectorAll('button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])')]
         .filter(item => !item.hidden && item.offsetParent !== null);
       if (focusable.length === 0) return;
