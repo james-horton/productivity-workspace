@@ -14,6 +14,7 @@ const redditRouter = require('./routes/reddit');
 const searchRouter = require('./routes/search');
 const modelsRouter = require('./routes/models');
 const settingsRouter = require('./routes/settings');
+const spreadsheetRouter = require('./routes/spreadsheet');
 
 const app = express();
 const staticDir = path.resolve(__dirname, '..', 'app');
@@ -90,6 +91,7 @@ app.use('/api/websearch', searchRouter);
 app.use('/api/reddit', redditRouter);
 app.use('/api/models', modelsRouter);
 app.use('/api/settings', settingsRouter);
+app.use('/api/spreadsheet', spreadsheetRouter);
 
 // Serve SPA static assets
 app.get(['/', '/index.html'], sendIndexHtml);

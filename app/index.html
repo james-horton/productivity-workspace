@@ -65,6 +65,7 @@
         <a class="tab" href="#websearch">Web Search</a>
         <a class="tab" href="#news">News</a>
         <a class="tab" href="#reddit">Reddit</a>
+        <button id="spreadsheetTrigger" class="tab spreadsheet-desktop-only" type="button">Spreadsheet</button>
       </div>
     </nav>
     <section class="card quote-card" aria-labelledby="quoteTitle">
@@ -547,6 +548,80 @@
     <div class="modal-backdrop" data-close="true"></div>
     <div class="modal-dialog" role="dialog" aria-modal="true" aria-describedby="newsModalBody">
       <div id="newsModalBody" class="modal-body news-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Spreadsheet Modal -->
+  <div id="spreadsheetModal" class="modal spreadsheet-desktop-only" aria-hidden="true">
+    <div class="modal-backdrop" data-spreadsheet-close="true"></div>
+    <div class="modal-dialog spreadsheet-dialog" role="dialog" aria-modal="true" aria-labelledby="spreadsheetTitle">
+      <div class="modal-head">
+        <h2 id="spreadsheetTitle">Spreadsheet</h2>
+        <button id="spreadsheetClose" class="btn icon-only" type="button" aria-label="Close spreadsheet" title="Close">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="spreadsheet-body">
+        <div id="spreadsheetToolbar" class="spreadsheet-toolbar" role="toolbar" aria-label="Cell formatting">
+          <div class="spreadsheet-tool-group" aria-label="Text style">
+            <button id="spreadsheetBold" class="btn spreadsheet-tool" type="button" aria-pressed="false" title="Bold"><strong>B</strong></button>
+            <button id="spreadsheetItalic" class="btn spreadsheet-tool" type="button" aria-pressed="false" title="Italic"><em>I</em></button>
+            <button id="spreadsheetUnderline" class="btn spreadsheet-tool" type="button" aria-pressed="false" title="Underline"><span class="spreadsheet-underlined">U</span></button>
+          </div>
+          <div class="spreadsheet-tool-group" aria-label="Cell colors">
+            <label class="spreadsheet-color-control" title="Text color">
+              <span>Text</span>
+              <input id="spreadsheetTextColor" type="color" value="#000000" aria-label="Text color" />
+            </label>
+            <label class="spreadsheet-color-control" title="Background color">
+              <span>Fill</span>
+              <input id="spreadsheetBackgroundColor" type="color" value="#ffffff" aria-label="Background color" />
+            </label>
+          </div>
+          <div class="spreadsheet-tool-group" aria-label="Alignment">
+            <button id="spreadsheetAlignLeft" class="btn spreadsheet-tool" type="button" data-align="left" aria-pressed="false" title="Align left">L</button>
+            <button id="spreadsheetAlignCenter" class="btn spreadsheet-tool" type="button" data-align="center" aria-pressed="false" title="Align center">C</button>
+            <button id="spreadsheetAlignRight" class="btn spreadsheet-tool" type="button" data-align="right" aria-pressed="false" title="Align right">R</button>
+            <button id="spreadsheetWrap" class="btn spreadsheet-tool spreadsheet-tool-wide" type="button" aria-pressed="false" title="Wrap text">Wrap</button>
+          </div>
+          <div class="spreadsheet-tool-group">
+            <button id="spreadsheetAutoSum" class="btn spreadsheet-tool-wide" type="button" title="Insert SUM formula">Auto-Sum</button>
+            <button id="spreadsheetClearFormatting" class="btn spreadsheet-tool-wide" type="button">Clear Formatting</button>
+          </div>
+        </div>
+
+        <div class="spreadsheet-formula-row">
+          <output id="spreadsheetAddress" class="spreadsheet-address" aria-label="Active cell">A1</output>
+          <label class="sr-only" for="spreadsheetFormula">Cell value or formula</label>
+          <input id="spreadsheetFormula" class="spreadsheet-formula" type="text" maxlength="2000" autocomplete="off" spellcheck="false" placeholder="Enter a value or formula" />
+          <button id="spreadsheetAddRow" class="btn" type="button">Add Row</button>
+          <button id="spreadsheetAddColumn" class="btn" type="button">Add Column</button>
+        </div>
+
+        <div id="spreadsheetLoading" class="spreadsheet-loading" role="status" hidden>Loading workbook...</div>
+        <div id="spreadsheetGridViewport" class="spreadsheet-grid-viewport" tabindex="0" aria-label="Spreadsheet grid">
+          <div id="spreadsheetGrid" class="spreadsheet-grid" role="grid" aria-label="Active sheet"></div>
+        </div>
+
+        <div class="spreadsheet-sheetbar">
+          <div id="spreadsheetSheetTabs" class="tabs spreadsheet-sheet-tabs" role="tablist" aria-label="Workbook sheets"></div>
+          <div class="spreadsheet-sheet-actions">
+            <button id="spreadsheetAddSheet" class="btn" type="button" title="Add sheet">+ Sheet</button>
+            <button id="spreadsheetRenameSheet" class="btn" type="button">Rename</button>
+            <button id="spreadsheetClearSheet" class="btn" type="button">Clear Sheet</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions spreadsheet-actions">
+        <div id="spreadsheetStatus" class="spreadsheet-status" role="status" aria-live="polite" tabindex="-1">Not loaded</div>
+        <button id="spreadsheetCloseAction" class="btn" type="button">Close</button>
+        <button id="spreadsheetSave" class="btn primary" type="button">Save</button>
+      </div>
     </div>
   </div>
 
