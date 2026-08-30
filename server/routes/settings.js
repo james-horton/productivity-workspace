@@ -1,6 +1,5 @@
 /**
- * User settings persistence (theme, city, state, reddit subreddits, UI options).
- * Reads/writes the `userSettings` section of secrets.json.
+ * Settings persistence for user preferences and API keys in secrets.json.
  */
 
 const express = require('express');
@@ -20,6 +19,7 @@ const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'bright-white
 const CLOCK_VIEWS = ['digital', 'analog-marks', 'analog-quarters', 'analog-numerals', 'analog-roman-numerals'];
 const MIN_ANALOG_CLOCK_FRAME_WIDTH = 1;
 const MAX_ANALOG_CLOCK_FRAME_WIDTH = 10;
+const MAX_API_KEY_LEN = 1000;
 
 function readSecretsFile() {
   try {
@@ -103,6 +103,18 @@ function normalizeAnalogClockFrameWidth(value) {
     : MAX_ANALOG_CLOCK_FRAME_WIDTH;
 }
 
+function normalizeApiKey(value) {
+  return String(value == null ? '' : value).trim().slice(0, MAX_API_KEY_LEN);
+}
+
+function buildApiKeysResponse() {
+  return {
+    openaiApiKey: String((config.openai || {}).apiKey || ''),
+    tavilyApiKey: String((config.tavily || {}).apiKey || ''),
+    openrouterApiKey: String((config.openrouter || {}).apiKey || '')
+  };
+}
+
 function buildSettingsResponse() {
   const s = config.userSettings || {};
   const subs = Array.isArray(s.subreddits) ? s.subreddits : [];
@@ -130,6 +142,42 @@ function buildSettingsResponse() {
 router.get('/', (req, res, next) => {
   try {
     res.json(buildSettingsResponse());
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/api-keys', (req, res, next) => {
+  try {
+    res.json(buildApiKeysResponse());
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put('/api-keys', (req, res, next) => {
+  try {
+    const body = req.body || {};
+    const openaiApiKey = normalizeApiKey(body.openaiApiKey);
+    const tavilyApiKey = normalizeApiKey(body.tavilyApiKey);
+    const openrouterApiKey = normalizeApiKey(body.openrouterApiKey);
+    const secrets = readSecretsFile();
+
+    for (const provider of ['openai', 'tavily', 'openrouter']) {
+      if (!secrets[provider] || typeof secrets[provider] !== 'object') {
+        secrets[provider] = {};
+      }
+    }
+    secrets.openai.apiKey = openaiApiKey;
+    secrets.tavily.apiKey = tavilyApiKey;
+    secrets.openrouter.apiKey = openrouterApiKey;
+    writeSecretsFile(secrets);
+
+    config.openai.apiKey = openaiApiKey;
+    config.tavily.apiKey = tavilyApiKey;
+    config.openrouter.apiKey = openrouterApiKey;
+
+    res.json(buildApiKeysResponse());
   } catch (err) {
     next(err);
   }

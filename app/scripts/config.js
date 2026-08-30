@@ -14,6 +14,7 @@ export const ENDPOINTS = Object.freeze({
   models: `${API_BASE}/models`,
   modelFavorites: `${API_BASE}/models/favorites`,
   settings: `${API_BASE}/settings`,
+  apiKeys: `${API_BASE}/settings/api-keys`,
   spreadsheet: `${API_BASE}/spreadsheet`
 });
 
