@@ -83,8 +83,8 @@
       </blockquote>
     </section>
 
-    <section class="card clock-card" aria-labelledby="clockTitle">
-      <div class="card-head">
+    <section class="card clock-card" aria-label="Time" data-controls-visible="false">
+      <div id="clockControls" class="card-head" hidden>
         <h2 id="clockTitle">Time</h2>
         <div id="clockFrameControls" class="clock-frame-controls" hidden>
           <button id="clockFrameToggle" class="clock-frame-toggle" type="button" aria-label="Toggle analog clock frame" title="Show or hide analog clock frame" aria-pressed="true">F</button>
@@ -99,7 +99,7 @@
           <button class="clock-view-option" type="button" data-clock-view="analog-roman-numerals" aria-label="Analog clock with Roman numerals" title="Roman numerals" aria-pressed="false">IV</button>
         </div>
       </div>
-      <div class="clock">
+      <div id="clockDisplay" class="clock" role="button" tabindex="0" aria-expanded="false" aria-controls="clockControls" aria-label="Show Time card controls" title="Show Time card controls">
         <div id="digitalClock" class="clock-view digital-clock">
           <div id="clockTime" class="time" aria-hidden="true">--:--</div>
         </div>

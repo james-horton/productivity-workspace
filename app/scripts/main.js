@@ -55,6 +55,8 @@ const clockTime = () => $('#clockTime');
 const clockDate = () => $('#clockDate');
 const clockStatus = () => $('#clockStatus');
 const clockContainer = () => document.querySelector('.clock');
+const clockCard = () => document.querySelector('.clock-card');
+const clockControls = () => document.querySelector('.clock-card .card-head');
 const clockViewToggle = () => $('#clockViewToggle');
 const clockFrameControls = () => $('#clockFrameControls');
 const clockFrameToggle = () => $('#clockFrameToggle');
@@ -68,6 +70,7 @@ let availableModels = [];
 let modelFilterText = '';
 let highlightedModelIndex = -1;
 let modelDragState = null;
+let clockControlsVisible = false;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -105,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Clock + date
   startClock();
+  syncClockControlsVisibility();
 
   // Wire listeners (safe before settings load — none depend on city/subreddits)
   wireControls();
@@ -556,6 +560,16 @@ function wireControls() {
   // Quote refresh
   quoteRefresh().addEventListener('click', () => void refreshQuote());
 
+  const toggleClockControls = () => {
+    clockControlsVisible = !clockControlsVisible;
+    syncClockControlsVisibility();
+  };
+  clockContainer().addEventListener('click', toggleClockControls);
+  clockContainer().addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    toggleClockControls();
+  });
   clockViewToggle().addEventListener('click', (e) => {
     const button = e.target.closest('[data-clock-view]');
     if (!button) return;
@@ -1398,10 +1412,24 @@ function syncCalculatorSection() {
 
 function syncClockSection() {
   const show = getShowClock();
-  const card = document.querySelector('.clock-card');
+  const card = clockCard();
   if (card) {
     card.hidden = !show;
     card.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
+}
+
+function syncClockControlsVisibility() {
+  const card = clockCard();
+  const controls = clockControls();
+  const display = clockContainer();
+  if (card) card.dataset.controlsVisible = clockControlsVisible ? 'true' : 'false';
+  if (controls) controls.hidden = !clockControlsVisible;
+  if (display) {
+    display.setAttribute('aria-expanded', clockControlsVisible ? 'true' : 'false');
+    const action = clockControlsVisible ? 'Hide' : 'Show';
+    display.setAttribute('aria-label', `${action} Time card controls`);
+    display.title = `${action} Time card controls`;
   }
 }
 
