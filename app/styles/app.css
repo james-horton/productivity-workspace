@@ -414,6 +414,16 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   display: flex;
   flex-direction: column;
 }
+.clock-card[data-controls-visible="false"] {
+  background: transparent;
+  border-color: transparent;
+  border-radius: 0;
+  overflow: visible;
+}
+.clock-card[data-controls-visible="false"] .clock {
+  grid-template-rows: auto auto;
+  align-content: center;
+}
 
 /* Specific card placements */
 .quote-card, .clock-card, .calculator-card, .chat-card, .news-card, .search-card, .reddit-card { padding-bottom: 0.25rem; }
@@ -465,14 +475,24 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
 /* Clock */
 .clock {
   flex: 1 1 auto;
+  inline-size: 100%;
   min-block-size: 0;
   padding: 0.6rem 0.75rem 0.7rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   gap: 0.25rem;
   align-items: center;
   justify-items: center; /* center horizontally */
   text-align: center;    /* center text within the grid cells */
+}
+.clock:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--accent) 70%, var(--text));
+  outline-offset: 2px;
 }
 .clock-view {
   inline-size: 100%;
