@@ -17,6 +17,7 @@ import { $, isMobileView } from './utils/helpers.js';
 import { REDDIT, NEWS, UI_DEFAULTS } from './config.js';
 import { initCalculatorUI } from './ui/calculatorUI.js';
 import { initSpreadsheetUI } from './ui/spreadsheetUI.js';
+import { fetchApiKeys, saveApiKeys } from './services/apiKeyService.js';
 
 const REDDIT_MAX_POSTS = REDDIT.maxPosts;
 const ASSISTANT_TOP_ANCHOR_GAP_PX = UI_DEFAULTS.assistantTopAnchorGapPx || 0;
@@ -1633,6 +1634,9 @@ function initSettingsUI() {
   const inputReddit8 = document.getElementById('settingsRedditSubreddit8');
   const inputReddit9 = document.getElementById('settingsRedditSubreddit9');
   const inputReddit10 = document.getElementById('settingsRedditSubreddit10');
+  const inputOpenAiApiKey = document.getElementById('settingsOpenAiApiKey');
+  const inputTavilyApiKey = document.getElementById('settingsTavilyApiKey');
+  const inputOpenRouterApiKey = document.getElementById('settingsOpenRouterApiKey');
   const btnClose = document.getElementById('settingsClose');
   const btnCancel = document.getElementById('settingsCancel');
 
@@ -1640,10 +1644,14 @@ function initSettingsUI() {
   const panelGeneral = document.getElementById('settingsPanelGeneral');
   const panelReddit = document.getElementById('settingsPanelReddit');
   const panelUI = document.getElementById('settingsPanelUI');
+  const panelApi = document.getElementById('settingsPanelApi');
+  let apiKeysLoaded = false;
+  let apiKeysLoading = false;
+  let loadedApiKeys = null;
 
   if (!btn || !modal || !form || !selectTheme || !inputCity || !selectState) return;
 
-  if (settingsTabs && panelGeneral && panelReddit && panelUI) {
+  if (settingsTabs && panelGeneral && panelReddit && panelUI && panelApi) {
     const tabButtons = settingsTabs.querySelectorAll('.tab');
     tabButtons.forEach(button => {
       button.addEventListener('click', () => {
@@ -1655,14 +1663,23 @@ function initSettingsUI() {
           panelGeneral.classList.remove('hidden');
           panelReddit.classList.add('hidden');
           panelUI.classList.add('hidden');
+          panelApi.classList.add('hidden');
         } else if (targetTab === 'reddit') {
           panelGeneral.classList.add('hidden');
           panelReddit.classList.remove('hidden');
           panelUI.classList.add('hidden');
+          panelApi.classList.add('hidden');
         } else if (targetTab === 'ui') {
           panelGeneral.classList.add('hidden');
           panelReddit.classList.add('hidden');
           panelUI.classList.remove('hidden');
+          panelApi.classList.add('hidden');
+        } else if (targetTab === 'api') {
+          panelGeneral.classList.add('hidden');
+          panelReddit.classList.add('hidden');
+          panelUI.classList.add('hidden');
+          panelApi.classList.remove('hidden');
+          void prefillApiKeys();
         }
       });
     });
@@ -1691,9 +1708,35 @@ function initSettingsUI() {
     if (inputReddit10) inputReddit10.value = getRedditSubredditAt(10) || '';
   }
 
+  async function prefillApiKeys() {
+    if (apiKeysLoaded || apiKeysLoading) return;
+    apiKeysLoading = true;
+    try {
+      const apiKeys = await fetchApiKeys();
+      if (inputOpenAiApiKey) inputOpenAiApiKey.value = apiKeys.openaiApiKey || '';
+      if (inputTavilyApiKey) inputTavilyApiKey.value = apiKeys.tavilyApiKey || '';
+      if (inputOpenRouterApiKey) inputOpenRouterApiKey.value = apiKeys.openrouterApiKey || '';
+      loadedApiKeys = {
+        openaiApiKey: apiKeys.openaiApiKey || '',
+        tavilyApiKey: apiKeys.tavilyApiKey || '',
+        openrouterApiKey: apiKeys.openrouterApiKey || ''
+      };
+      apiKeysLoaded = true;
+    } catch (err) {
+      apiKeysLoaded = false;
+      loadedApiKeys = null;
+      console.error('Failed to load API keys:', err);
+    } finally {
+      apiKeysLoading = false;
+    }
+  }
+
   function open() {
     prefill();
-    if (settingsTabs && panelGeneral && panelReddit && panelUI) {
+    apiKeysLoaded = false;
+    loadedApiKeys = null;
+    void prefillApiKeys();
+    if (settingsTabs && panelGeneral && panelReddit && panelUI && panelApi) {
       const tabButtons = settingsTabs.querySelectorAll('.tab');
       tabButtons.forEach(btn => {
         if (btn.dataset.tab === 'ui') {
@@ -1705,6 +1748,7 @@ function initSettingsUI() {
       panelGeneral.classList.add('hidden');
       panelReddit.classList.add('hidden');
       panelUI.classList.remove('hidden');
+      panelApi.classList.add('hidden');
     }
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('modal-open');
@@ -1736,8 +1780,25 @@ function initSettingsUI() {
     }
   });
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (!panelApi?.classList.contains('hidden') && !apiKeysLoaded) return;
+    const apiKeys = {
+      openaiApiKey: (inputOpenAiApiKey?.value || '').trim(),
+      tavilyApiKey: (inputTavilyApiKey?.value || '').trim(),
+      openrouterApiKey: (inputOpenRouterApiKey?.value || '').trim()
+    };
+    const apiKeysChanged = apiKeysLoaded && Object.keys(apiKeys)
+      .some(key => apiKeys[key] !== loadedApiKeys?.[key]);
+    if (apiKeysChanged) {
+      try {
+        await saveApiKeys(apiKeys);
+        loadedApiKeys = apiKeys;
+      } catch (err) {
+        console.error('Failed to save API keys:', err);
+        return;
+      }
+    }
     const theme = (selectTheme.value || '').trim();
     if (THEMES.includes(theme)) setTheme(theme);
     const wasShowingInspiration = getShowInspirationQuote();
