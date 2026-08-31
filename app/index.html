@@ -610,14 +610,26 @@
             <button id="spreadsheetUnderline" class="btn spreadsheet-tool" type="button" aria-pressed="false" title="Underline"><span class="spreadsheet-underlined">U</span></button>
           </div>
           <div class="spreadsheet-tool-group" aria-label="Cell colors">
-            <label class="spreadsheet-color-control" title="Text color">
+            <div class="spreadsheet-color-control">
               <span>Text</span>
-              <input id="spreadsheetTextColor" type="color" value="#000000" aria-label="Text color" />
-            </label>
-            <label class="spreadsheet-color-control" title="Background color">
+              <div class="spreadsheet-color-picker">
+                <button id="spreadsheetTextColor" class="btn spreadsheet-color-trigger" type="button" aria-label="Text color" aria-expanded="false" aria-controls="spreadsheetTextColorPanel" title="Text color">
+                  <span class="spreadsheet-color-preview" aria-hidden="true"></span>
+                  <span class="spreadsheet-color-chevron" aria-hidden="true">▾</span>
+                </button>
+                <div id="spreadsheetTextColorPanel" class="spreadsheet-color-panel" hidden></div>
+              </div>
+            </div>
+            <div class="spreadsheet-color-control">
               <span>Fill</span>
-              <input id="spreadsheetBackgroundColor" type="color" value="#ffffff" aria-label="Background color" />
-            </label>
+              <div class="spreadsheet-color-picker">
+                <button id="spreadsheetBackgroundColor" class="btn spreadsheet-color-trigger" type="button" aria-label="Background color" aria-expanded="false" aria-controls="spreadsheetBackgroundColorPanel" title="Background color">
+                  <span class="spreadsheet-color-preview" aria-hidden="true"></span>
+                  <span class="spreadsheet-color-chevron" aria-hidden="true">▾</span>
+                </button>
+                <div id="spreadsheetBackgroundColorPanel" class="spreadsheet-color-panel" hidden></div>
+              </div>
+            </div>
           </div>
           <div class="spreadsheet-tool-group" aria-label="Alignment">
             <button id="spreadsheetAlignLeft" class="btn spreadsheet-tool" type="button" data-align="left" aria-pressed="false" title="Align left">L</button>

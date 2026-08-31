@@ -15,6 +15,18 @@ const MAX_COLUMN_WIDTH = 400;
 const MIN_ROW_HEIGHT = 22;
 const MAX_ROW_HEIGHT = 160;
 const HISTORY_LIMIT = 100;
+const CUSTOM_COLOR_COUNT = 8;
+const DEFAULT_CUSTOM_COLOR = '#ffffff';
+const COMMON_COLORS = [
+  '#000000',
+  '#ffffff',
+  '#ef4444',
+  '#f97316',
+  '#eab308',
+  '#22c55e',
+  '#3b82f6',
+  '#a855f7'
+];
 
 let elements;
 let workbook;
@@ -37,6 +49,7 @@ let undoStack = [];
 let redoStack = [];
 let historyState = null;
 let savedWorkbookState = null;
+let colorPalettes = [];
 
 function createSheet(id = 'sheet-1', name = 'Sheet 1') {
   return {
@@ -51,7 +64,12 @@ function createSheet(id = 'sheet-1', name = 'Sheet 1') {
 }
 
 function createDefaultWorkbook() {
-  return { version: 1, activeSheetId: 'sheet-1', sheets: [createSheet()] };
+  return {
+    version: 1,
+    activeSheetId: 'sheet-1',
+    preferences: { customColors: Array(CUSTOM_COLOR_COUNT).fill(DEFAULT_CUSTOM_COLOR) },
+    sheets: [createSheet()]
+  };
 }
 
 function clamp(value, min, max) {
@@ -90,6 +108,19 @@ function styleIsEmpty(style) {
   return !style || Object.keys(style).length === 0;
 }
 
+function normalizeColor(value, fallback = DEFAULT_CUSTOM_COLOR) {
+  const color = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return /^#[0-9a-f]{6}$/.test(color) ? color : fallback;
+}
+
+function normalizeCustomColors(value) {
+  const colors = Array.isArray(value) ? value : [];
+  return Array.from(
+    { length: CUSTOM_COLOR_COUNT },
+    (_, index) => normalizeColor(colors[index])
+  );
+}
+
 function normalizeWorkbook(value) {
   if (!value || !Array.isArray(value.sheets) || value.sheets.length === 0) return createDefaultWorkbook();
   const usedIds = new Set();
@@ -115,7 +146,8 @@ function normalizeWorkbook(value) {
     };
   });
   const activeSheetId = sheets.some(sheet => sheet.id === value.activeSheetId) ? value.activeSheetId : sheets[0].id;
-  return { version: 1, activeSheetId, sheets };
+  const customColors = normalizeCustomColors(value.preferences?.customColors);
+  return { version: 1, activeSheetId, preferences: { customColors }, sheets };
 }
 
 function setStatus(message, kind = '') {
@@ -289,8 +321,10 @@ function syncToolbarState() {
     button.setAttribute('aria-pressed', style.align === button.dataset.align ? 'true' : 'false');
   });
   const themeColors = resolvedThemeColors();
-  elements.textColor.value = style.textColor || themeColors.text;
-  elements.backgroundColor.value = style.backgroundColor || themeColors.background;
+  colorPalettes.forEach(palette => {
+    const fallback = palette.property === 'textColor' ? themeColors.text : themeColors.background;
+    palette.sync(style[palette.property] || fallback, workbook.preferences.customColors);
+  });
 }
 
 function renderGrid() {
@@ -461,6 +495,156 @@ function applyStyle(mutator) {
   renderGrid();
 }
 
+function closeColorPalettes(except = null) {
+  colorPalettes.forEach(palette => {
+    if (palette !== except) palette.close();
+  });
+}
+
+function createColorPalette({ trigger, panel, property, label }) {
+  const preview = trigger.querySelector('.spreadsheet-color-preview');
+  const commonRow = document.createElement('div');
+  const customRow = document.createElement('div');
+  const editButton = document.createElement('button');
+  commonRow.className = 'spreadsheet-color-row';
+  customRow.className = 'spreadsheet-color-row';
+  editButton.type = 'button';
+  editButton.className = 'spreadsheet-color-edit';
+  editButton.textContent = 'Edit custom colors';
+  editButton.setAttribute('aria-pressed', 'false');
+  panel.setAttribute('role', 'group');
+  panel.setAttribute('aria-label', `${label} palette`);
+  commonRow.setAttribute('aria-label', 'Common colors');
+  customRow.setAttribute('aria-label', 'Custom colors');
+
+  const commonSwatches = COMMON_COLORS.map(color => {
+    const swatch = document.createElement('button');
+    swatch.type = 'button';
+    swatch.className = 'spreadsheet-color-swatch';
+    swatch.style.setProperty('--swatch-color', color);
+    swatch.dataset.color = color;
+    swatch.setAttribute('aria-label', `${label} ${color}`);
+    swatch.title = color;
+    commonRow.appendChild(swatch);
+    return swatch;
+  });
+  const customSwatches = Array.from({ length: CUSTOM_COLOR_COUNT }, (_, index) => {
+    const swatch = document.createElement('button');
+    swatch.type = 'button';
+    swatch.className = 'spreadsheet-color-swatch spreadsheet-custom-color-swatch';
+    swatch.dataset.customColorIndex = String(index);
+    customRow.appendChild(swatch);
+    return swatch;
+  });
+  const customInputs = Array.from({ length: CUSTOM_COLOR_COUNT }, (_, index) => {
+    const input = document.createElement('input');
+    input.type = 'color';
+    input.className = 'spreadsheet-custom-color';
+    input.setAttribute('aria-label', `Change custom color ${index + 1}`);
+    input.title = `Change custom color ${index + 1}`;
+    input.hidden = true;
+    customRow.appendChild(input);
+    return input;
+  });
+  panel.append(commonRow, customRow, editButton);
+
+  const palette = {
+    trigger,
+    panel,
+    property,
+    editingCustomColors: false,
+    setEditMode(editing) {
+      palette.editingCustomColors = editing;
+      customSwatches.forEach(swatch => { swatch.hidden = editing; });
+      customInputs.forEach(input => { input.hidden = !editing; });
+      editButton.textContent = editing ? 'Done' : 'Edit custom colors';
+      editButton.setAttribute('aria-pressed', editing ? 'true' : 'false');
+    },
+    close(returnFocus = false) {
+      if (panel.hidden) return;
+      palette.setEditMode(false);
+      panel.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+      if (returnFocus) trigger.focus();
+    },
+    open() {
+      closeColorPalettes(palette);
+      panel.hidden = false;
+      trigger.setAttribute('aria-expanded', 'true');
+    },
+    sync(activeColor, customColors) {
+      const color = normalizeColor(activeColor);
+      const customMatch = COMMON_COLORS.includes(color) ? -1 : customColors.indexOf(color);
+      preview.style.backgroundColor = color;
+      commonSwatches.forEach(swatch => {
+        const selected = swatch.dataset.color === color;
+        swatch.classList.toggle('is-selected', selected);
+        swatch.setAttribute('aria-pressed', selected ? 'true' : 'false');
+      });
+      customInputs.forEach((input, index) => {
+        const customColor = normalizeColor(customColors[index]);
+        input.value = customColor;
+        customSwatches[index].style.setProperty('--swatch-color', customColor);
+        customSwatches[index].dataset.color = customColor;
+        customSwatches[index].setAttribute('aria-label', `${label} custom color ${index + 1}, ${customColor}`);
+        customSwatches[index].title = `Apply ${customColor}`;
+        const selected = index === customMatch;
+        customSwatches[index].classList.toggle('is-selected', selected);
+        customSwatches[index].setAttribute('aria-pressed', selected ? 'true' : 'false');
+      });
+    }
+  };
+
+  commonSwatches.forEach(swatch => {
+    swatch.addEventListener('click', () => {
+      applyStyle(style => { style[property] = swatch.dataset.color; });
+      palette.close(true);
+    });
+  });
+  customSwatches.forEach(swatch => {
+    swatch.addEventListener('click', () => {
+      applyStyle(style => { style[property] = swatch.dataset.color; });
+      palette.close(true);
+    });
+  });
+  customInputs.forEach((input, index) => {
+    input.addEventListener('change', event => {
+      commitFormula();
+      const color = normalizeColor(event.target.value);
+      workbook.preferences.customColors[index] = color;
+      markDirty('Unsaved custom color change');
+      colorPalettes.forEach(item => item.sync(
+        activeSheet()?.cells[activeAddress()]?.style?.[item.property]
+          || (item.property === 'textColor' ? resolvedThemeColors().text : resolvedThemeColors().background),
+        workbook.preferences.customColors
+      ));
+    });
+  });
+  editButton.addEventListener('click', async () => {
+    if (!palette.editingCustomColors) {
+      palette.setEditMode(true);
+      customInputs[0].focus();
+      return;
+    }
+
+    editButton.disabled = true;
+    editButton.textContent = 'Saving...';
+    const saved = await save();
+    editButton.disabled = false;
+    if (saved) {
+      palette.setEditMode(false);
+      customSwatches[0].focus();
+    } else {
+      editButton.textContent = 'Done';
+    }
+  });
+  trigger.addEventListener('click', () => {
+    if (panel.hidden) palette.open();
+    else palette.close();
+  });
+  return palette;
+}
+
 function toggleStyle(property, enabledValue = true) {
   const activeStyle = activeSheet().cells[activeAddress()]?.style || {};
   const enable = activeStyle[property] !== enabledValue;
@@ -621,7 +805,16 @@ async function save() {
   updateHistoryControls();
   setStatus('Saving...');
   try {
-    const savedWorkbook = normalizeWorkbook(await saveSpreadsheet(workbook));
+    const requestedCustomColors = [...workbook.preferences.customColors];
+    const response = await saveSpreadsheet(workbook);
+    const responseCustomColors = response?.preferences?.customColors;
+    const customColorsPersisted = Array.isArray(responseCustomColors)
+      && responseCustomColors.length === CUSTOM_COLOR_COUNT
+      && requestedCustomColors.every((color, index) => normalizeColor(responseCustomColors[index]) === color);
+    if (!customColorsPersisted) {
+      throw new Error('The server did not preserve custom colors. Restart the server and try again.');
+    }
+    const savedWorkbook = normalizeWorkbook(response);
     savedWorkbookState = JSON.stringify(savedWorkbook);
     if (revision === savingRevision) {
       workbook = savedWorkbook;
@@ -694,6 +887,7 @@ function setControlsDisabled(disabled) {
 async function requestClose() {
   if (!modalIsOpen() || closing || loading || saving) return;
   closing = true;
+  closeColorPalettes();
   stopPointerActions();
   commitFormula();
   const canClose = !dirty || await showMessageBox({
@@ -807,7 +1001,9 @@ function cacheElements() {
     wrap: document.querySelector('#spreadsheetWrap'),
     alignButtons: [...document.querySelectorAll('[data-align]')],
     textColor: document.querySelector('#spreadsheetTextColor'),
+    textColorPanel: document.querySelector('#spreadsheetTextColorPanel'),
     backgroundColor: document.querySelector('#spreadsheetBackgroundColor'),
+    backgroundColorPanel: document.querySelector('#spreadsheetBackgroundColorPanel'),
     autoSum: document.querySelector('#spreadsheetAutoSum'),
     clearFormatting: document.querySelector('#spreadsheetClearFormatting'),
     address: document.querySelector('#spreadsheetAddress'),
@@ -910,8 +1106,6 @@ function wireEvents() {
   elements.underline.addEventListener('click', () => toggleStyle('underline'));
   elements.wrap.addEventListener('click', () => toggleStyle('wrap', 'wrap'));
   elements.alignButtons.forEach(button => button.addEventListener('click', () => setAlignment(button.dataset.align)));
-  elements.textColor.addEventListener('input', event => applyStyle(style => { style.textColor = event.target.value; }));
-  elements.backgroundColor.addEventListener('input', event => applyStyle(style => { style.backgroundColor = event.target.value; }));
   elements.clearFormatting.addEventListener('click', clearFormatting);
   elements.autoSum.addEventListener('click', autoSum);
   elements.addRow.addEventListener('click', addRow);
@@ -947,6 +1141,9 @@ function wireEvents() {
       event.preventDefault();
       if (key === 'y' || event.shiftKey) redo();
       else undo();
+    } else if (event.key === 'Escape' && modalIsOpen() && !isMessageBoxOpen() && colorPalettes.some(palette => !palette.panel.hidden)) {
+      event.preventDefault();
+      colorPalettes.find(palette => !palette.panel.hidden)?.close(true);
     } else if (event.key === 'Escape' && modalIsOpen() && !isMessageBoxOpen() && document.activeElement !== elements.formula) {
       event.preventDefault();
       void requestClose();
@@ -965,6 +1162,12 @@ function wireEvents() {
       }
     }
   });
+  document.addEventListener('pointerdown', event => {
+    if (!modalIsOpen()) return;
+    colorPalettes.forEach(palette => {
+      if (!palette.trigger.contains(event.target) && !palette.panel.contains(event.target)) palette.close();
+    });
+  });
   window.addEventListener('resize', () => {
     stopPointerActions();
     if (isMobileView() && modalIsOpen()) void requestClose();
@@ -974,8 +1177,22 @@ function wireEvents() {
 export function initSpreadsheetUI() {
   if (initialized || isMobileView() || !cacheElements()) return;
   initialized = true;
+  colorPalettes = [
+    createColorPalette({
+      trigger: elements.textColor,
+      panel: elements.textColorPanel,
+      property: 'textColor',
+      label: 'Text color'
+    }),
+    createColorPalette({
+      trigger: elements.backgroundColor,
+      panel: elements.backgroundColorPanel,
+      property: 'backgroundColor',
+      label: 'Background color'
+    })
+  ];
   const themeColors = resolvedThemeColors();
-  elements.textColor.value = themeColors.text;
-  elements.backgroundColor.value = themeColors.background;
+  colorPalettes[0].sync(themeColors.text, normalizeCustomColors());
+  colorPalettes[1].sync(themeColors.background, normalizeCustomColors());
   wireEvents();
 }

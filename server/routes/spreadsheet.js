@@ -22,11 +22,14 @@ const DEFAULT_ROWS = 50;
 const DEFAULT_COLUMNS = 20;
 const DEFAULT_COLUMN_WIDTH = 120;
 const DEFAULT_ROW_HEIGHT = 28;
+const CUSTOM_COLOR_COUNT = 8;
+const DEFAULT_CUSTOM_COLOR = '#ffffff';
 
 function createDefaultWorkbook() {
   return {
     version: 1,
     activeSheetId: 'sheet-1',
+    preferences: { customColors: Array(CUSTOM_COLOR_COUNT).fill(DEFAULT_CUSTOM_COLOR) },
     sheets: [{
       id: 'sheet-1',
       name: 'Sheet 1',
@@ -73,6 +76,14 @@ function normalizeStyle(value) {
   if (value.wrap === 'wrap' || value.wrap === true) style.wrap = 'wrap';
 
   return style;
+}
+
+function normalizeCustomColors(value) {
+  const colors = Array.isArray(value) ? value : [];
+  return Array.from(
+    { length: CUSTOM_COLOR_COUNT },
+    (_, index) => normalizeColor(colors[index]) || DEFAULT_CUSTOM_COLOR
+  );
 }
 
 function normalizeCells(value, rowCount, columnCount) {
@@ -187,6 +198,7 @@ function normalizeWorkbook(value) {
   return {
     version: 1,
     activeSheetId: activeMapping ? activeMapping.id : sheets[0].id,
+    preferences: { customColors: normalizeCustomColors(value.preferences?.customColors) },
     sheets
   };
 }

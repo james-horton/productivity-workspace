@@ -1916,15 +1916,102 @@ body.modal-open { overflow: hidden; }
   color: var(--muted);
   font-size: .8rem;
 }
-.spreadsheet-color-control input[type="color"] {
-  width: 32px;
-  height: 28px;
-  padding: 2px;
+.spreadsheet-color-picker { position: relative; }
+.spreadsheet-color-trigger.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  min-width: 48px;
+  height: 30px;
+  padding: 3px 6px;
+}
+.spreadsheet-color-preview {
+  width: 24px;
+  height: 20px;
+  border: 1px solid color-mix(in srgb, var(--text) 35%, var(--ring));
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff 35%, transparent);
+}
+.spreadsheet-color-chevron {
+  color: var(--muted);
+  font-size: .7rem;
+  line-height: 1;
+}
+.spreadsheet-color-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  width: max-content;
+  padding: .55rem;
   border: 1px solid var(--ring);
-  border-radius: 7px;
-  background: var(--surface);
+  border-radius: 10px;
+  background: var(--surface-2);
+  box-shadow: 0 12px 28px rgb(0 0 0 / .22);
+}
+.spreadsheet-color-panel[hidden] { display: none; }
+.spreadsheet-color-row {
+  display: grid;
+  grid-template-columns: repeat(8, 26px);
+  gap: .35rem;
+}
+.spreadsheet-color-row + .spreadsheet-color-row {
+  margin-top: .55rem;
+  padding-top: .55rem;
+  border-top: 1px solid var(--ring);
+}
+.spreadsheet-color-swatch,
+.spreadsheet-custom-color {
+  width: 26px;
+  height: 26px;
+  margin: 0;
+  padding: 2px;
+  border: 1px solid color-mix(in srgb, var(--text) 35%, var(--ring));
+  border-radius: 6px;
+  background: var(--swatch-color, #fff);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff 35%, transparent);
   cursor: pointer;
 }
+.spreadsheet-color-swatch[hidden],
+.spreadsheet-custom-color[hidden] { display: none; }
+.spreadsheet-color-swatch:hover,
+.spreadsheet-custom-color:hover { transform: scale(1.08); }
+.spreadsheet-color-swatch:focus-visible,
+.spreadsheet-custom-color:focus-visible,
+.spreadsheet-color-swatch.is-selected,
+.spreadsheet-custom-color.is-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.spreadsheet-custom-color {
+  appearance: none;
+  -webkit-appearance: none;
+}
+.spreadsheet-custom-color::-webkit-color-swatch-wrapper { padding: 0; }
+.spreadsheet-custom-color::-webkit-color-swatch {
+  border: 0;
+  border-radius: 3px;
+}
+.spreadsheet-custom-color::-moz-color-swatch {
+  border: 0;
+  border-radius: 3px;
+}
+.spreadsheet-color-edit {
+  display: block;
+  width: 100%;
+  margin-top: .45rem;
+  padding: .3rem .2rem 0;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-size: .75rem;
+  text-align: right;
+  cursor: pointer;
+}
+.spreadsheet-color-edit:hover,
+.spreadsheet-color-edit:focus-visible { color: var(--accent); }
 .spreadsheet-formula-row {
   gap: .45rem;
   padding: .5rem .75rem;
