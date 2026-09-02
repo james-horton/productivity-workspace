@@ -607,7 +607,7 @@ function createColorPalette({ trigger, panel, property, label }) {
         customSwatches[index].style.setProperty('--swatch-color', customColor);
         customSwatches[index].dataset.color = customColor;
         customSwatches[index].setAttribute('aria-label', `${label} custom color ${index + 1}, ${customColor}`);
-        customSwatches[index].title = `Apply ${customColor}`;
+        customSwatches[index].title = customColor;
         const selected = index === customMatch;
         customSwatches[index].classList.toggle('is-selected', selected);
         customSwatches[index].setAttribute('aria-pressed', selected ? 'true' : 'false');
