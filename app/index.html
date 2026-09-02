@@ -637,6 +637,19 @@
             <button id="spreadsheetAlignRight" class="btn spreadsheet-tool" type="button" data-align="right" aria-pressed="false" title="Align right">R</button>
             <button id="spreadsheetWrap" class="btn spreadsheet-tool spreadsheet-tool-wide" type="button" aria-pressed="false" title="Wrap text">Wrap</button>
           </div>
+          <div class="spreadsheet-tool-group" aria-label="Cell borders">
+            <div class="spreadsheet-border-picker">
+              <div class="spreadsheet-border-buttons">
+                <button id="spreadsheetBorders" class="btn spreadsheet-tool spreadsheet-border-apply" type="button" aria-label="Apply Bottom Border" aria-pressed="false" title="Bottom Border">
+                  <span class="spreadsheet-border-icon is-bottom" aria-hidden="true"></span>
+                </button>
+                <button id="spreadsheetBorderMenuToggle" class="btn spreadsheet-border-menu-toggle" type="button" aria-label="Choose border type" aria-expanded="false" aria-controls="spreadsheetBorderPanel" title="More border options">
+                  <span class="spreadsheet-color-chevron" aria-hidden="true">▾</span>
+                </button>
+              </div>
+              <div id="spreadsheetBorderPanel" class="spreadsheet-border-panel" role="menu" aria-label="Cell borders" hidden></div>
+            </div>
+          </div>
           <div class="spreadsheet-tool-group">
             <button id="spreadsheetAutoSum" class="btn spreadsheet-tool-wide" type="button" title="Insert SUM formula">∑</button>
             <button id="spreadsheetClearFormatting" class="btn spreadsheet-tool-wide" type="button">Clear Formatting</button>
