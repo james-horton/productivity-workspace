@@ -18,15 +18,17 @@ const HISTORY_LIMIT = 100;
 const CUSTOM_COLOR_COUNT = 8;
 const DEFAULT_CUSTOM_COLOR = '#ffffff';
 const COMMON_COLORS = [
-  '#000000',
-  '#ffffff',
-  '#ef4444',
-  '#f97316',
-  '#eab308',
-  '#22c55e',
-  '#3b82f6',
-  '#a855f7'
+  { color: '#000000', name: 'Black' },
+  { color: '#ffffff', name: 'White' },
+  { color: '#ef4444', name: 'Red' },
+  { color: '#f97316', name: 'Orange' },
+  { color: '#eab308', name: 'Yellow' },
+  { color: '#22c55e', name: 'Green' },
+  { color: '#3b82f6', name: 'Blue' },
+  { color: '#a855f7', name: 'Purple' }
 ];
+const COMMON_COLOR_VALUES = COMMON_COLORS.map(({ color }) => color);
+const BORDER_SIDES = ['top', 'right', 'bottom', 'left'];
 
 let elements;
 let workbook;
@@ -50,6 +52,8 @@ let redoStack = [];
 let historyState = null;
 let savedWorkbookState = null;
 let colorPalettes = [];
+let borderMenu = null;
+let selectedBorderType = 'bottom';
 
 function createSheet(id = 'sheet-1', name = 'Sheet 1') {
   return {
@@ -165,6 +169,17 @@ function selectionSnapshot() {
 
 function workbookSnapshot() {
   return JSON.stringify(workbook);
+}
+
+function borderSnapshot(value) {
+  return JSON.stringify(value.sheets.map(sheet => Object.fromEntries(
+    Object.entries(sheet.cells).flatMap(([address, cell]) => {
+      const borders = Object.fromEntries(BORDER_SIDES.flatMap(side => (
+        cell.style?.[borderProperty(side)] === true ? [[borderProperty(side), true]] : []
+      )));
+      return Object.keys(borders).length > 0 ? [[address, borders]] : [];
+    })
+  )));
 }
 
 function captureHistoryState() {
@@ -317,6 +332,7 @@ function syncToolbarState() {
   elements.italic.setAttribute('aria-pressed', style.italic === true ? 'true' : 'false');
   elements.underline.setAttribute('aria-pressed', style.underline === true ? 'true' : 'false');
   elements.wrap.setAttribute('aria-pressed', style.wrap === 'wrap' ? 'true' : 'false');
+  elements.borders.setAttribute('aria-pressed', BORDER_SIDES.some(side => style[borderProperty(side)] === true) ? 'true' : 'false');
   elements.alignButtons.forEach(button => {
     button.setAttribute('aria-pressed', style.align === button.dataset.align ? 'true' : 'false');
   });
@@ -412,6 +428,9 @@ function renderGrid() {
       if (style.backgroundColor) cell.style.backgroundColor = style.backgroundColor;
       if (style.align) cell.style.justifyContent = style.align === 'left' ? 'flex-start' : style.align === 'right' ? 'flex-end' : 'center';
       if (style.wrap === 'wrap') cell.classList.add('is-wrapped');
+      BORDER_SIDES.forEach(side => {
+        if (style[borderProperty(side)] === true) cell.style.setProperty(`--cell-border-${side}`, '2px');
+      });
       rowElement.appendChild(cell);
     }
   }
@@ -486,9 +505,9 @@ function ensureCell(address) {
 
 function applyStyle(mutator) {
   commitFormula();
-  eachSelectedCell(address => {
+  eachSelectedCell((address, row, column) => {
     const cell = ensureCell(address);
-    mutator(cell.style);
+    mutator(cell.style, row, column);
     if (cell.value === '' && styleIsEmpty(cell.style)) delete activeSheet().cells[address];
   });
   markDirty();
@@ -517,14 +536,14 @@ function createColorPalette({ trigger, panel, property, label }) {
   commonRow.setAttribute('aria-label', 'Common colors');
   customRow.setAttribute('aria-label', 'Custom colors');
 
-  const commonSwatches = COMMON_COLORS.map(color => {
+  const commonSwatches = COMMON_COLORS.map(({ color, name }) => {
     const swatch = document.createElement('button');
     swatch.type = 'button';
     swatch.className = 'spreadsheet-color-swatch';
     swatch.style.setProperty('--swatch-color', color);
     swatch.dataset.color = color;
-    swatch.setAttribute('aria-label', `${label} ${color}`);
-    swatch.title = color;
+    swatch.setAttribute('aria-label', `${label}: ${name}`);
+    swatch.title = name;
     commonRow.appendChild(swatch);
     return swatch;
   });
@@ -569,12 +588,13 @@ function createColorPalette({ trigger, panel, property, label }) {
     },
     open() {
       closeColorPalettes(palette);
+      borderMenu?.close();
       panel.hidden = false;
       trigger.setAttribute('aria-expanded', 'true');
     },
     sync(activeColor, customColors) {
       const color = normalizeColor(activeColor);
-      const customMatch = COMMON_COLORS.includes(color) ? -1 : customColors.indexOf(color);
+      const customMatch = COMMON_COLOR_VALUES.includes(color) ? -1 : customColors.indexOf(color);
       preview.style.backgroundColor = color;
       commonSwatches.forEach(swatch => {
         const selected = swatch.dataset.color === color;
@@ -643,6 +663,133 @@ function createColorPalette({ trigger, panel, property, label }) {
     else palette.close();
   });
   return palette;
+}
+
+function borderProperty(side) {
+  return `border${side[0].toUpperCase()}${side.slice(1)}`;
+}
+
+function setCellBorder(style, side, enabled) {
+  const property = borderProperty(side);
+  if (enabled) style[property] = true;
+  else delete style[property];
+}
+
+function removeCellIfEmpty(address) {
+  const cell = activeSheet().cells[address];
+  if (cell?.value === '' && styleIsEmpty(cell.style)) delete activeSheet().cells[address];
+}
+
+function clearSelectedBorders() {
+  const sheet = activeSheet();
+  const neighbors = [
+    { row: -1, column: 0, side: 'bottom' },
+    { row: 0, column: 1, side: 'left' },
+    { row: 1, column: 0, side: 'top' },
+    { row: 0, column: -1, side: 'right' }
+  ];
+  commitFormula();
+  eachSelectedCell((address, row, column) => {
+    const cell = ensureCell(address);
+    BORDER_SIDES.forEach(side => setCellBorder(cell.style, side, false));
+    removeCellIfEmpty(address);
+    neighbors.forEach(neighbor => {
+      const neighborRow = row + neighbor.row;
+      const neighborColumn = column + neighbor.column;
+      if (neighborRow < 0 || neighborRow >= sheet.rowCount || neighborColumn < 0 || neighborColumn >= sheet.columnCount) return;
+      const neighborAddress = cellAddress(neighborRow, neighborColumn);
+      const neighborCell = sheet.cells[neighborAddress];
+      if (!neighborCell?.style) return;
+      setCellBorder(neighborCell.style, neighbor.side, false);
+      removeCellIfEmpty(neighborAddress);
+    });
+  });
+  markDirty();
+  renderGrid();
+}
+
+function applyBorders(type) {
+  if (type === 'none') {
+    clearSelectedBorders();
+    return;
+  }
+  const bounds = selectedBounds();
+  applyStyle((style, row, column) => {
+    if (type === 'all') {
+      setCellBorder(style, 'right', true);
+      setCellBorder(style, 'bottom', true);
+      if (row === bounds.startRow) setCellBorder(style, 'top', true);
+      if (column === bounds.startColumn) setCellBorder(style, 'left', true);
+      return;
+    }
+    if (BORDER_SIDES.includes(type)) setCellBorder(style, type, true);
+  });
+}
+
+function createBorderMenu() {
+  const { borders: applyButton, borderMenuToggle: trigger, borderPanel: panel } = elements;
+  const options = [
+    ['bottom', 'Bottom Border'],
+    ['top', 'Top Border'],
+    ['left', 'Left Border'],
+    ['right', 'Right Border'],
+    ['all', 'All Borders'],
+    ['none', 'No Border']
+  ];
+  const labels = Object.fromEntries(options);
+  const setSelectedType = type => {
+    selectedBorderType = type;
+    const label = labels[type];
+    const icon = applyButton.querySelector('.spreadsheet-border-icon');
+    icon.className = `spreadsheet-border-icon is-${type}`;
+    applyButton.setAttribute('aria-label', `Apply ${label}`);
+    applyButton.title = label;
+    panel.querySelectorAll('[data-border]').forEach(button => {
+      button.classList.toggle('is-selected', button.dataset.border === type);
+    });
+  };
+  options.forEach(([type, label]) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'spreadsheet-border-option';
+    button.dataset.border = type;
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    button.setAttribute('role', 'menuitem');
+    const icon = document.createElement('span');
+    icon.className = `spreadsheet-border-icon is-${type}`;
+    icon.setAttribute('aria-hidden', 'true');
+    button.appendChild(icon);
+    button.addEventListener('click', () => {
+      setSelectedType(type);
+      applyBorders(type);
+      menu.close(true);
+    });
+    panel.appendChild(button);
+  });
+  const menu = {
+    trigger,
+    panel,
+    close(returnFocus = false) {
+      if (panel.hidden) return;
+      panel.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+      if (returnFocus) trigger.focus();
+    },
+    open() {
+      closeColorPalettes();
+      panel.hidden = false;
+      trigger.setAttribute('aria-expanded', 'true');
+      panel.querySelector('button')?.focus();
+    }
+  };
+  trigger.addEventListener('click', () => {
+    if (panel.hidden) menu.open();
+    else menu.close();
+  });
+  applyButton.addEventListener('click', () => applyBorders(selectedBorderType));
+  setSelectedType(selectedBorderType);
+  return menu;
 }
 
 function toggleStyle(property, enabledValue = true) {
@@ -806,6 +953,7 @@ async function save() {
   setStatus('Saving...');
   try {
     const requestedCustomColors = [...workbook.preferences.customColors];
+    const requestedBorders = borderSnapshot(workbook);
     const response = await saveSpreadsheet(workbook);
     const responseCustomColors = response?.preferences?.customColors;
     const customColorsPersisted = Array.isArray(responseCustomColors)
@@ -813,6 +961,9 @@ async function save() {
       && requestedCustomColors.every((color, index) => normalizeColor(responseCustomColors[index]) === color);
     if (!customColorsPersisted) {
       throw new Error('The server did not preserve custom colors. Restart the server and try again.');
+    }
+    if (borderSnapshot(response) !== requestedBorders) {
+      throw new Error('The server did not preserve cell borders. Restart the server and try again.');
     }
     const savedWorkbook = normalizeWorkbook(response);
     savedWorkbookState = JSON.stringify(savedWorkbook);
@@ -888,6 +1039,7 @@ async function requestClose() {
   if (!modalIsOpen() || closing || loading || saving) return;
   closing = true;
   closeColorPalettes();
+  borderMenu.close();
   stopPointerActions();
   commitFormula();
   const canClose = !dirty || await showMessageBox({
@@ -999,6 +1151,9 @@ function cacheElements() {
     italic: document.querySelector('#spreadsheetItalic'),
     underline: document.querySelector('#spreadsheetUnderline'),
     wrap: document.querySelector('#spreadsheetWrap'),
+    borders: document.querySelector('#spreadsheetBorders'),
+    borderMenuToggle: document.querySelector('#spreadsheetBorderMenuToggle'),
+    borderPanel: document.querySelector('#spreadsheetBorderPanel'),
     alignButtons: [...document.querySelectorAll('[data-align]')],
     textColor: document.querySelector('#spreadsheetTextColor'),
     textColorPanel: document.querySelector('#spreadsheetTextColorPanel'),
@@ -1141,9 +1296,10 @@ function wireEvents() {
       event.preventDefault();
       if (key === 'y' || event.shiftKey) redo();
       else undo();
-    } else if (event.key === 'Escape' && modalIsOpen() && !isMessageBoxOpen() && colorPalettes.some(palette => !palette.panel.hidden)) {
+    } else if (event.key === 'Escape' && modalIsOpen() && !isMessageBoxOpen()
+      && (colorPalettes.some(palette => !palette.panel.hidden) || !borderMenu.panel.hidden)) {
       event.preventDefault();
-      colorPalettes.find(palette => !palette.panel.hidden)?.close(true);
+      (colorPalettes.find(palette => !palette.panel.hidden) || borderMenu).close(true);
     } else if (event.key === 'Escape' && modalIsOpen() && !isMessageBoxOpen() && document.activeElement !== elements.formula) {
       event.preventDefault();
       void requestClose();
@@ -1167,6 +1323,7 @@ function wireEvents() {
     colorPalettes.forEach(palette => {
       if (!palette.trigger.contains(event.target) && !palette.panel.contains(event.target)) palette.close();
     });
+    if (!borderMenu.trigger.contains(event.target) && !borderMenu.panel.contains(event.target)) borderMenu.close();
   });
   window.addEventListener('resize', () => {
     stopPointerActions();
@@ -1191,6 +1348,7 @@ export function initSpreadsheetUI() {
       label: 'Background color'
     })
   ];
+  borderMenu = createBorderMenu();
   const themeColors = resolvedThemeColors();
   colorPalettes[0].sync(themeColors.text, normalizeCustomColors());
   colorPalettes[1].sync(themeColors.background, normalizeCustomColors());

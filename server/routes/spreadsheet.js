@@ -67,6 +67,10 @@ function normalizeStyle(value) {
   if (value.bold === true) style.bold = true;
   if (value.italic === true) style.italic = true;
   if (value.underline === true) style.underline = true;
+  if (value.borderTop === true) style.borderTop = true;
+  if (value.borderRight === true) style.borderRight = true;
+  if (value.borderBottom === true) style.borderBottom = true;
+  if (value.borderLeft === true) style.borderLeft = true;
 
   const textColor = normalizeColor(value.textColor);
   const backgroundColor = normalizeColor(value.backgroundColor);
