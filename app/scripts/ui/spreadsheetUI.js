@@ -284,6 +284,69 @@ function eachSelectedCell(callback) {
   }
 }
 
+function serializeClipboardValue(value) {
+  const text = String(value ?? '');
+  return /["\t\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+function selectedClipboardText() {
+  const sheet = activeSheet();
+  const bounds = selectedBounds();
+  const rows = [];
+  for (let row = bounds.startRow; row <= bounds.endRow; row += 1) {
+    const values = [];
+    for (let column = bounds.startColumn; column <= bounds.endColumn; column += 1) {
+      values.push(serializeClipboardValue(sheet.cells[cellAddress(row, column)]?.value));
+    }
+    rows.push(values.join('\t'));
+  }
+  return rows.join('\r\n');
+}
+
+function parseClipboardText(text) {
+  const rows = [];
+  let row = [];
+  let value = '';
+  let quoted = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+    if (quoted) {
+      if (character === '"') {
+        if (text[index + 1] === '"') {
+          value += '"';
+          index += 1;
+        } else {
+          quoted = false;
+        }
+      } else {
+        value += character;
+      }
+    } else if (character === '"' && value === '') {
+      quoted = true;
+    } else if (character === '\t') {
+      row.push(value);
+      value = '';
+    } else if (character === '\r' || character === '\n') {
+      row.push(value);
+      rows.push(row);
+      row = [];
+      value = '';
+      if (character === '\r' && text[index + 1] === '\n') index += 1;
+    } else {
+      value += character;
+    }
+  }
+
+  row.push(value);
+  rows.push(row);
+  const lastRow = rows[rows.length - 1];
+  if (/\r\n?$|\n$/.test(text) && rows.length > 1 && lastRow.length === 1 && lastRow[0] === '') {
+    rows.pop();
+  }
+  return rows;
+}
+
 function setSelection(row, column, extend = false) {
   const sheet = activeSheet();
   if (!sheet) return;
@@ -501,6 +564,55 @@ function ensureCell(address) {
   if (!sheet.cells[address]) sheet.cells[address] = { value: '', style: {} };
   if (!sheet.cells[address].style) sheet.cells[address].style = {};
   return sheet.cells[address];
+}
+
+function clearSelectedContents() {
+  commitFormula();
+  const sheet = activeSheet();
+  let changed = false;
+  eachSelectedCell(address => {
+    const cell = sheet.cells[address];
+    if (!cell || (cell.value ?? '') === '') return;
+    if (styleIsEmpty(cell.style)) delete sheet.cells[address];
+    else cell.value = '';
+    changed = true;
+  });
+  if (!changed) return false;
+  markDirty();
+  renderGrid();
+  return true;
+}
+
+function pasteClipboardText(text) {
+  commitFormula();
+  const sheet = activeSheet();
+  const values = parseClipboardText(text);
+  const bounds = selectedBounds();
+  const rowCount = Math.min(values.length, sheet.rowCount - bounds.startRow);
+  const columnCount = Math.min(
+    values.reduce((maximum, row) => Math.max(maximum, row.length), 0),
+    sheet.columnCount - bounds.startColumn
+  );
+
+  for (let rowOffset = 0; rowOffset < rowCount; rowOffset += 1) {
+    for (let columnOffset = 0; columnOffset < columnCount; columnOffset += 1) {
+      const address = cellAddress(bounds.startRow + rowOffset, bounds.startColumn + columnOffset);
+      const current = sheet.cells[address] || { value: '', style: {} };
+      const value = String(values[rowOffset][columnOffset] ?? '').slice(0, 2000);
+      if (value === '' && styleIsEmpty(current.style)) delete sheet.cells[address];
+      else sheet.cells[address] = { value, style: current.style || {} };
+    }
+  }
+
+  selection = {
+    anchor: { row: bounds.startRow, column: bounds.startColumn },
+    end: {
+      row: bounds.startRow + rowCount - 1,
+      column: bounds.startColumn + columnCount - 1
+    }
+  };
+  markDirty();
+  renderGrid();
 }
 
 function applyStyle(mutator) {
@@ -1239,7 +1351,17 @@ function wireEvents() {
   elements.gridViewport.addEventListener('keydown', event => {
     if (!modalIsOpen() || editing) return;
     const moves = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
-    if (moves[event.key]) {
+    const shortcutKey = (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey
+      ? event.key.toLowerCase()
+      : '';
+    const styleShortcuts = { b: 'bold', i: 'italic', u: 'underline' };
+    if (styleShortcuts[shortcutKey]) {
+      event.preventDefault();
+      toggleStyle(styleShortcuts[shortcutKey]);
+    } else if (event.key === 'Delete') {
+      event.preventDefault();
+      clearSelectedContents();
+    } else if (moves[event.key]) {
       event.preventDefault();
       moveSelection(...moves[event.key]);
     } else if (event.key === 'Enter') {
@@ -1254,6 +1376,22 @@ function wireEvents() {
       elements.formula.focus();
       elements.formula.setSelectionRange(1, 1);
     }
+  });
+  elements.gridViewport.addEventListener('copy', event => {
+    if (!modalIsOpen() || editing || !event.clipboardData) return;
+    event.preventDefault();
+    event.clipboardData.setData('text/plain', selectedClipboardText());
+  });
+  elements.gridViewport.addEventListener('cut', event => {
+    if (!modalIsOpen() || editing || !event.clipboardData) return;
+    event.preventDefault();
+    event.clipboardData.setData('text/plain', selectedClipboardText());
+    clearSelectedContents();
+  });
+  elements.gridViewport.addEventListener('paste', event => {
+    if (!modalIsOpen() || editing || !event.clipboardData) return;
+    event.preventDefault();
+    pasteClipboardText(event.clipboardData.getData('text/plain'));
   });
 
   elements.bold.addEventListener('click', () => toggleStyle('bold'));
