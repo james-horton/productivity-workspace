@@ -288,7 +288,8 @@ body[data-theme="usa"] .brand .title {
 
 body[data-theme="usa"] .card,
 body[data-theme="usa"] .modal-dialog,
-body[data-theme="usa"] .model-combobox-panel {
+body[data-theme="usa"] .model-combobox-panel,
+body[data-theme="usa"] .model-provider-submenu {
   border-width: var(--theme-card-border-width);
   background-image: var(--theme-surface-texture);
 }
@@ -356,7 +357,8 @@ body[data-theme="90s"] .modal-head h2 {
 
 body[data-theme="90s"] .card,
 body[data-theme="90s"] .modal-dialog,
-body[data-theme="90s"] .model-combobox-panel {
+body[data-theme="90s"] .model-combobox-panel,
+body[data-theme="90s"] .model-provider-submenu {
   border-width: 2px;
 }
 

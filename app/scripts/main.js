@@ -1,5 +1,5 @@
 import { applyTheme } from './theme.js';
-import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings, getShowInspirationQuote, setShowInspirationQuote, getShowCalculator, setShowCalculator, getShowClock, setShowClock, getClockView, setClockView, getShowAnalogClockFrame, setShowAnalogClockFrame, getAnalogClockFrameWidth, setAnalogClockFrameWidth, getShowWebSearch, setShowWebSearch, getShowReddit, setShowReddit, getRoundedBorders, setRoundedBorders, BASIC_REASONING_LEVELS, DEFAULT_BASIC_REASONING, setBasicReasoning } from './state.js';
+import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getOpenAIModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings, getShowInspirationQuote, setShowInspirationQuote, getShowCalculator, setShowCalculator, getShowClock, setShowClock, getClockView, setClockView, getShowAnalogClockFrame, setShowAnalogClockFrame, getAnalogClockFrameWidth, setAnalogClockFrameWidth, getShowWebSearch, setShowWebSearch, getShowReddit, setShowReddit, getRoundedBorders, setRoundedBorders, BASIC_REASONING_LEVELS, DEFAULT_BASIC_REASONING, setBasicReasoning } from './state.js';
 import { getModels, loadModels, providerFor, modelIdFor, getDefaultModelKey, getFavoriteModelIds, saveFavoriteModels } from './services/modelRegistry.js';
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
@@ -629,6 +629,10 @@ function wireStateEvents() {
     const { modelKey } = e.detail || {};
     hydrateModelSelect(modelKey);
   });
+  document.addEventListener('pw:settings:loaded', () => {
+    renderModelOptions();
+    hydrateModelSelect(getState().modelKey);
+  });
   document.addEventListener('pw:mode:changed', (e) => {
     const { mode } = e.detail || {};
     hydrateModeSelect(mode);
@@ -676,20 +680,24 @@ async function populateModelSelect(selectedKey) {
   }
   availableModels = models;
   renderModelOptions();
-  hydrateModelSelect(selectedKey || getDefaultModelKey());
+  hydrateModelSelect(getState().modelKey || selectedKey || getDefaultModelKey());
   button.disabled = false;
 }
 
 function hydrateModelSelect(modelKey) {
+  if (!availableModels.length) return;
   const selected = availableModels.find(m => m.key === modelKey);
   const found = !!selected;
   const defaultKey = getDefaultModelKey();
-  const model = found ? selected : availableModels.find(m => m.key === defaultKey);
+  const fallbackKey = getOpenAIModelKey();
+  const model = found
+    ? selected
+    : (availableModels.find(m => m.key === fallbackKey) || availableModels.find(m => m.key === defaultKey));
   if (modelSelectLabel()) modelSelectLabel().textContent = model ? model.label : 'Select model';
   if (modelSelect()) modelSelect().dataset.value = model ? model.key : '';
   syncSelectedModelOption(model ? model.key : '');
-  if (!found && modelKey && modelKey !== defaultKey) {
-    setModelKey(defaultKey);
+  if (!found && modelKey && modelKey !== model?.key) {
+    setModelKey(model?.key || defaultKey, { persistOpenAIModel: false });
   }
 }
 
@@ -740,6 +748,13 @@ function wireModelCombobox() {
       return;
     }
 
+    const providerTrigger = e.target.closest('[data-model-provider-trigger="openai"]');
+    if (providerTrigger) {
+      e.preventDefault();
+      setOpenAISubmenu(true);
+      return;
+    }
+
     const favoriteToggle = e.target.closest('[data-model-favorite-toggle]');
     if (favoriteToggle) {
       e.preventDefault();
@@ -757,10 +772,51 @@ function wireModelCombobox() {
   list.addEventListener('pointermove', handleModelPointerMove);
   list.addEventListener('pointerup', handleModelPointerUp);
   list.addEventListener('pointercancel', cancelModelDrag);
+  list.addEventListener('pointerover', (e) => {
+    if (e.target.closest('[data-model-provider-trigger="openai"]')) setOpenAISubmenu(true);
+  });
+  list.addEventListener('pointerout', (e) => {
+    const group = e.target.closest('.model-provider-option');
+    if (group && !group.contains(e.relatedTarget) && !group.contains(document.activeElement)) {
+      setOpenAISubmenu(false);
+    }
+  });
 
   list.addEventListener('keydown', (e) => {
+    const providerTrigger = e.target.closest('[data-model-provider-trigger="openai"]');
+    if (providerTrigger && e.key === 'Escape') {
+      e.preventDefault();
+      if (providerTrigger.getAttribute('aria-expanded') === 'true') {
+        setOpenAISubmenu(false);
+      } else {
+        closeModelCombobox();
+        button.focus();
+      }
+      return;
+    }
+    if (providerTrigger && ['ArrowRight', 'Enter', ' '].includes(e.key)) {
+      e.preventDefault();
+      setOpenAISubmenu(true, true);
+      return;
+    }
+
     const option = e.target.closest('[data-model-key]');
     if (!option || e.target.closest('[data-model-favorite-toggle]')) return;
+
+    const submenu = option.closest('[data-model-provider-submenu="openai"]');
+    if (submenu && (e.key === 'ArrowLeft' || e.key === 'Escape')) {
+      e.preventDefault();
+      setOpenAISubmenu(false);
+      list.querySelector('[data-model-provider-trigger="openai"]')?.focus();
+      return;
+    }
+    if (submenu && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      e.preventDefault();
+      const options = Array.from(submenu.querySelectorAll('[data-model-key]'));
+      const index = options.indexOf(option);
+      options[(index + (e.key === 'ArrowUp' ? -1 : 1) + options.length) % options.length]?.focus();
+      return;
+    }
 
     if ((e.altKey || e.ctrlKey) && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
       e.preventDefault();
@@ -803,6 +859,7 @@ function closeModelCombobox() {
   if (!button || !panel) return;
   button.setAttribute('aria-expanded', 'false');
   panel.hidden = true;
+  setOpenAISubmenu(false);
   highlightedModelIndex = -1;
   updateModelHighlight();
 }
@@ -813,13 +870,17 @@ function renderModelOptions() {
   list.innerHTML = '';
 
   const query = normalizeModelSearch(modelFilterText);
-  const matches = availableModels.filter(model => {
+  const modelMatchesQuery = model => {
     if (!query) return true;
     return normalizeModelSearch(`${model.label} ${model.model} ${model.provider}`).includes(query);
-  });
+  };
+  const openAIModels = availableModels.filter(model => model.provider === 'openai');
+  const matchingOpenAIModels = openAIModels.filter(modelMatchesQuery);
+  const showOpenAI = matchingOpenAIModels.length > 0;
+  const matches = availableModels.filter(model => model.provider !== 'openai' && modelMatchesQuery(model));
 
   const selectedKey = modelSelect()?.dataset.value || getState().modelKey || getDefaultModelKey();
-  if (matches.length === 0) {
+  if (!showOpenAI && matches.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'model-combobox-empty';
     empty.textContent = 'No matching models';
@@ -827,6 +888,75 @@ function renderModelOptions() {
     highlightedModelIndex = -1;
     modelFilterInput()?.removeAttribute('aria-activedescendant');
     return;
+  }
+
+  if (showOpenAI) {
+    const visibleOpenAIModels = query ? matchingOpenAIModels : openAIModels;
+    const selectedOpenAI = visibleOpenAIModels.find(model => model.key === selectedKey)
+      || visibleOpenAIModels.find(model => model.key === getOpenAIModelKey())
+      || visibleOpenAIModels[0];
+    const group = document.createElement('div');
+    group.className = 'model-provider-option';
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.id = 'model-option-openai';
+    trigger.className = 'model-combobox-option model-provider-trigger';
+    trigger.dataset.modelKey = selectedOpenAI.key;
+    trigger.dataset.modelProviderTrigger = 'openai';
+    trigger.dataset.favorite = 'false';
+    trigger.dataset.default = 'true';
+    trigger.dataset.favoritable = 'false';
+    trigger.setAttribute('role', 'option');
+    trigger.setAttribute('aria-selected', selectedOpenAI.key === selectedKey ? 'true' : 'false');
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-controls', 'openaiModelSubmenu');
+
+    const label = document.createElement('span');
+    label.className = 'model-combobox-option-label';
+    label.textContent = selectedOpenAI.label;
+    const arrow = document.createElement('span');
+    arrow.className = 'model-provider-arrow';
+    arrow.setAttribute('aria-hidden', 'true');
+    arrow.textContent = '‹';
+    trigger.append(label, arrow);
+
+    const submenu = document.createElement('div');
+    submenu.id = 'openaiModelSubmenu';
+    submenu.className = 'model-provider-submenu';
+    submenu.dataset.modelProviderSubmenu = 'openai';
+    submenu.setAttribute('role', 'listbox');
+    submenu.setAttribute('aria-label', 'OpenAI models');
+    visibleOpenAIModels.forEach((model, index) => {
+      const option = document.createElement('button');
+      option.type = 'button';
+      option.id = `openai-model-option-${index}`;
+      option.className = 'model-combobox-option';
+      option.dataset.modelKey = model.key;
+      option.dataset.modelId = model.model;
+      option.dataset.favorite = 'false';
+      option.dataset.default = model.default ? 'true' : 'false';
+      option.dataset.favoritable = 'false';
+      option.setAttribute('role', 'option');
+      option.setAttribute('aria-selected', model.key === selectedKey ? 'true' : 'false');
+
+      const optionLabel = document.createElement('span');
+      optionLabel.className = 'model-combobox-option-label';
+      optionLabel.textContent = model.label.replace(/^OpenAI:\s*/, '');
+      option.append(optionLabel);
+      submenu.append(option);
+    });
+
+    group.append(trigger, submenu);
+    list.append(group);
+
+    if (matches.length) {
+      const separator = document.createElement('div');
+      separator.className = 'model-combobox-separator';
+      separator.setAttribute('role', 'separator');
+      list.append(separator);
+    }
   }
 
   matches.forEach((model, index) => {
@@ -873,9 +1003,38 @@ function renderModelOptions() {
     }
   });
 
-  const selectedIndex = matches.findIndex(model => model.key === selectedKey);
+  const primaryOptions = getPrimaryModelOptions();
+  const selectedIndex = primaryOptions.findIndex(option => option.getAttribute('aria-selected') === 'true');
   highlightedModelIndex = selectedIndex >= 0 ? selectedIndex : 0;
   updateModelHighlight();
+}
+
+function getPrimaryModelOptions() {
+  return Array.from(modelOptions()?.querySelectorAll(
+    ':scope > [data-model-key], :scope > .model-provider-option > [data-model-provider-trigger]'
+  ) || []);
+}
+
+function setOpenAISubmenu(open, focusSubmenu = false) {
+  const list = modelOptions();
+  const trigger = list?.querySelector('[data-model-provider-trigger="openai"]');
+  const submenu = list?.querySelector('[data-model-provider-submenu="openai"]');
+  const group = trigger?.closest('.model-provider-option');
+  if (!trigger || !submenu || !group) return;
+
+  if (open) {
+    const rect = trigger.getBoundingClientRect();
+    const width = 240;
+    const left = rect.left - width - 6 >= 8 ? rect.left - width - 6 : rect.right + 6;
+    submenu.style.setProperty('--model-submenu-left', `${Math.max(8, left)}px`);
+    submenu.style.setProperty('--model-submenu-top', `${Math.max(8, rect.top)}px`);
+  }
+  group.dataset.open = open ? 'true' : 'false';
+  trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open && focusSubmenu) {
+    const selected = submenu.querySelector('[aria-selected="true"]') || submenu.querySelector('[data-model-key]');
+    selected?.focus();
+  }
 }
 
 function normalizeModelSearch(value) {
@@ -1116,7 +1275,7 @@ function cancelModelDrag() {
 }
 
 function moveModelHighlight(direction) {
-  const options = Array.from(modelOptions()?.querySelectorAll('[data-model-key]') || []);
+  const options = getPrimaryModelOptions();
   if (!options.length) return;
   highlightedModelIndex = (highlightedModelIndex + direction + options.length) % options.length;
   updateModelHighlight();
@@ -1124,7 +1283,7 @@ function moveModelHighlight(direction) {
 
 function updateModelHighlight() {
   const filter = modelFilterInput();
-  const options = Array.from(modelOptions()?.querySelectorAll('[data-model-key]') || []);
+  const options = getPrimaryModelOptions();
   options.forEach((option, index) => {
     const active = index === highlightedModelIndex;
     option.classList.toggle('active', active);
@@ -1137,8 +1296,13 @@ function updateModelHighlight() {
 }
 
 function selectHighlightedModel() {
-  const option = Array.from(modelOptions()?.querySelectorAll('[data-model-key]') || [])[highlightedModelIndex];
-  if (option) selectModel(option.dataset.modelKey);
+  const option = getPrimaryModelOptions()[highlightedModelIndex];
+  if (!option) return;
+  if (option.dataset.modelProviderTrigger === 'openai') {
+    setOpenAISubmenu(true, true);
+  } else {
+    selectModel(option.dataset.modelKey);
+  }
 }
 
 function selectModel(modelKey) {
@@ -1153,6 +1317,16 @@ function syncSelectedModelOption(modelKey) {
   options.forEach(option => {
     option.setAttribute('aria-selected', option.dataset.modelKey === modelKey ? 'true' : 'false');
   });
+  const selected = modelByKey(modelKey);
+  const trigger = modelOptions()?.querySelector('[data-model-provider-trigger="openai"]');
+  if (trigger && selected?.provider === 'openai') {
+    trigger.dataset.modelKey = selected.key;
+    trigger.setAttribute('aria-selected', 'true');
+    const label = trigger.querySelector('.model-combobox-option-label');
+    if (label) label.textContent = selected.label;
+  } else if (trigger) {
+    trigger.setAttribute('aria-selected', 'false');
+  }
 }
 
 function hydrateModeSelect(mode) {

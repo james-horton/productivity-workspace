@@ -104,6 +104,9 @@ function loadSecrets() {
     },
     userSettings: {
       theme: (json.userSettings && typeof json.userSettings.theme === 'string') ? json.userSettings.theme : 'matrix',
+      openaiModel: (json.userSettings && ['gpt-5.6-sol', 'gpt-6-astra'].includes(json.userSettings.openaiModel))
+        ? json.userSettings.openaiModel
+        : 'gpt-5.6-sol',
       city: (json.userSettings && typeof json.userSettings.city === 'string') ? json.userSettings.city : '',
       state: (json.userSettings && typeof json.userSettings.state === 'string') ? json.userSettings.state.toUpperCase() : '',
       subreddits: (json.userSettings && Array.isArray(json.userSettings.subreddits))

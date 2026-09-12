@@ -20,6 +20,8 @@ const CLOCK_VIEWS = ['digital', 'analog-marks', 'analog-quarters', 'analog-numer
 const MIN_ANALOG_CLOCK_FRAME_WIDTH = 1;
 const MAX_ANALOG_CLOCK_FRAME_WIDTH = 10;
 const MAX_API_KEY_LEN = 1000;
+const OPENAI_MODELS = new Set(['gpt-5.6-sol', 'gpt-6-astra']);
+const DEFAULT_OPENAI_MODEL = 'gpt-5.6-sol';
 
 function readSecretsFile() {
   try {
@@ -107,6 +109,11 @@ function normalizeApiKey(value) {
   return String(value == null ? '' : value).trim().slice(0, MAX_API_KEY_LEN);
 }
 
+function normalizeOpenAIModel(value) {
+  const model = String(value == null ? '' : value).trim();
+  return OPENAI_MODELS.has(model) ? model : DEFAULT_OPENAI_MODEL;
+}
+
 function buildApiKeysResponse() {
   return {
     openaiApiKey: String((config.openai || {}).apiKey || ''),
@@ -124,6 +131,7 @@ function buildSettingsResponse() {
   }
   return {
     theme: normalizeTheme(s.theme),
+    openaiModel: normalizeOpenAIModel(s.openaiModel),
     city: String(s.city || ''),
     state: String(s.state || '').toUpperCase(),
     subreddits: slots,
@@ -190,6 +198,10 @@ router.put('/', (req, res, next) => {
     const theme = Object.prototype.hasOwnProperty.call(body, 'theme')
       ? normalizeTheme(body.theme)
       : currentTheme;
+    const currentOpenAIModel = normalizeOpenAIModel((config.userSettings || {}).openaiModel);
+    const openaiModel = Object.prototype.hasOwnProperty.call(body, 'openaiModel')
+      ? normalizeOpenAIModel(body.openaiModel)
+      : currentOpenAIModel;
     const currentShowInspirationQuote = normalizeBoolean((config.userSettings || {}).showInspirationQuote, true);
     const currentShowCalculator = normalizeBoolean((config.userSettings || {}).showCalculator, true);
     const currentShowClock = normalizeBoolean((config.userSettings || {}).showClock, true);
@@ -240,6 +252,7 @@ router.put('/', (req, res, next) => {
       ? secrets.userSettings
       : {};
     secrets.userSettings.theme = theme;
+    secrets.userSettings.openaiModel = openaiModel;
     secrets.userSettings.city = city;
     secrets.userSettings.state = state;
     secrets.userSettings.subreddits = subreddits;
@@ -255,7 +268,7 @@ router.put('/', (req, res, next) => {
     writeSecretsFile(secrets);
 
     // Sync in-memory config so subsequent GETs reflect the change immediately.
-    config.userSettings = { theme, city, state, subreddits, showInspirationQuote, showCalculator, showClock, clockView, showAnalogClockFrame, analogClockFrameWidth, showWebSearch, showReddit, roundedBorders };
+    config.userSettings = { theme, openaiModel, city, state, subreddits, showInspirationQuote, showCalculator, showClock, clockView, showAnalogClockFrame, analogClockFrameWidth, showWebSearch, showReddit, roundedBorders };
 
     res.json(buildSettingsResponse());
   } catch (err) {
