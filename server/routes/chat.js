@@ -74,6 +74,7 @@ const MODE_SPECS = {
 // Reasoning levels the client is allowed to override on a per-request basis.
 // Only honored when mode === 'basic'; every other mode keeps its fixed MODE_SPECS reasoning.
 const VALID_BASIC_REASONING = new Set(['none', 'low', 'medium', 'high', 'xhigh']);
+const SELECTABLE_OPENAI_MODELS = new Set(['gpt-5.6-sol', 'gpt-6-astra']);
 
 function coerceArray(val) {
   return Array.isArray(val) ? val : [];
@@ -249,12 +250,13 @@ router.post('/', async (req, res, next) => {
     const requestedModel = typeof model === 'string' && model.trim() ? model.trim() : '';
     const selectedModel = requestedProvider === 'openrouter'
       ? (requestedModel || config.openrouter.defaultModel || undefined)
-      : spec.model;
+      : (SELECTABLE_OPENAI_MODELS.has(requestedModel) ? requestedModel : spec.model);
+    const usingAstra = requestedProvider === 'openai' && selectedModel === 'gpt-6-astra';
     const finalMessages = [systemMsg, ...userMessages];
 
     // Call provider with optional model override and provider-native web search.
     const response = await callPreferredModels({
-        reasoning: effectiveReasoning,
+        reasoning: usingAstra && effectiveReasoning === 'none' ? 'low' : effectiveReasoning,
         reasoningMode: spec.reasoningMode,
         messages: finalMessages,
         prefer,

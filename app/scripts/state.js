@@ -1,8 +1,8 @@
 /**
  * Client session state (in-memory) + lightweight persistence for preferences.
  *
- * Model / mode are stored in localStorage (per-browser UI prefs).
- * Theme / city / state / reddit subreddits / UI options are stored server-side in secrets.json
+ * Mode and a model cache are stored in localStorage (per-browser UI prefs).
+ * The OpenAI model, theme, city, state, reddit subreddits, and UI options are stored server-side in secrets.json
  * via /api/settings and cached here in-memory after `loadUserSettings()`.
  */
 
@@ -12,6 +12,21 @@ const LS_KEYS = {
   model: 'pw.model',
   mode: 'pw.mode'
 };
+
+const DEFAULT_OPENAI_MODEL = 'gpt-5.6-sol';
+const OPENAI_MODEL_KEYS = {
+  'gpt-5.6-sol': 'openai:gpt-5',
+  'gpt-6-astra': 'openai:gpt-6-astra'
+};
+
+function normalizeOpenAIModel(value) {
+  const model = String(value || '').trim();
+  return OPENAI_MODEL_KEYS[model] ? model : DEFAULT_OPENAI_MODEL;
+}
+
+function openAIModelForKey(modelKey) {
+  return Object.keys(OPENAI_MODEL_KEYS).find(model => OPENAI_MODEL_KEYS[model] === modelKey) || '';
+}
 
 export const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow', 'bumblebee', 'orangeade', 'sky-blue', 'usa', '90s'];
 
@@ -157,10 +172,23 @@ export function setTheme(theme) {
   dispatch('pw:theme:changed', { theme });
 }
 
-export function setModelKey(modelKey) {
+export function setModelKey(modelKey, { persistOpenAIModel = true } = {}) {
   state.modelKey = modelKey;
   localStorage.setItem(LS_KEYS.model, modelKey);
+  const openAIModel = openAIModelForKey(modelKey);
+  if (openAIModel && persistOpenAIModel) {
+    userSettings.openaiModel = openAIModel;
+    if (settingsPersistenceReady) {
+      void persistUserSettings();
+    } else {
+      openAIModelChangedBeforeSettingsLoad = true;
+    }
+  }
   dispatch('pw:model:changed', { modelKey });
+}
+
+export function getOpenAIModelKey() {
+  return OPENAI_MODEL_KEYS[userSettings.openaiModel] || OPENAI_MODEL_KEYS[DEFAULT_OPENAI_MODEL];
 }
 
 export function setMode(mode) {
@@ -209,6 +237,7 @@ const SUBREDDIT_SLOTS = 10;
 
 const userSettings = {
   theme: state.theme,
+  openaiModel: DEFAULT_OPENAI_MODEL,
   city: '',
   state: '',
   subreddits: ['', '', '', '', '', '', '', '', '', ''],
@@ -224,6 +253,8 @@ const userSettings = {
 };
 
 let settingsLoaded = false;
+let settingsPersistenceReady = false;
+let openAIModelChangedBeforeSettingsLoad = false;
 
 function clampSlotIndex(index) {
   const i = parseInt(index, 10);
@@ -259,6 +290,14 @@ export async function loadUserSettings() {
     loadedTheme = THEMES.includes(data?.theme) ? data.theme : state.theme;
     userSettings.theme = loadedTheme;
     state.theme = loadedTheme;
+    if (!openAIModelChangedBeforeSettingsLoad) {
+      userSettings.openaiModel = normalizeOpenAIModel(data?.openaiModel);
+    }
+    if (String(state.modelKey || '').startsWith('openai:')) {
+      state.modelKey = OPENAI_MODEL_KEYS[userSettings.openaiModel];
+      localStorage.setItem(LS_KEYS.model, state.modelKey);
+      dispatch('pw:model:changed', { modelKey: state.modelKey });
+    }
     userSettings.city = String(data?.city || '').trim();
     userSettings.state = String(data?.state || '').trim().toUpperCase();
     userSettings.showInspirationQuote = data?.showInspirationQuote !== false;
@@ -274,12 +313,14 @@ export async function loadUserSettings() {
     for (let i = 0; i < SUBREDDIT_SLOTS; i += 1) {
       userSettings.subreddits[i] = normalizeSubredditName(subs[i]);
     }
+    settingsPersistenceReady = true;
   } catch (err) {
     console.warn('[settings] failed to load from server:', err && err.message);
   } finally {
     settingsLoaded = true;
     dispatch('pw:settings:loaded', {
       theme: userSettings.theme,
+      openaiModel: userSettings.openaiModel,
       city: userSettings.city,
       state: userSettings.state,
       subreddits: [...userSettings.subreddits],
@@ -294,6 +335,10 @@ export async function loadUserSettings() {
       roundedBorders: userSettings.roundedBorders
     });
     dispatch('pw:theme:changed', { theme: loadedTheme });
+    if (openAIModelChangedBeforeSettingsLoad && settingsPersistenceReady) {
+      openAIModelChangedBeforeSettingsLoad = false;
+      void persistUserSettings();
+    }
   }
 }
 
@@ -309,6 +354,7 @@ const PERSIST_DEBOUNCE_MS = 50;
 let persistTimer = null;
 let persistPending = null;
 let resolvePersistPending = null;
+let persistWriteChain = Promise.resolve();
 
 function persistUserSettings() {
   if (!persistPending) {
@@ -320,8 +366,9 @@ function persistUserSettings() {
     const resolver = resolvePersistPending;
     persistPending = null;
     resolvePersistPending = null;
-    saveSettings({
+    const settings = {
       theme: userSettings.theme,
+      openaiModel: userSettings.openaiModel,
       city: userSettings.city,
       state: userSettings.state,
       subreddits: [...userSettings.subreddits],
@@ -334,11 +381,15 @@ function persistUserSettings() {
       showWebSearch: userSettings.showWebSearch,
       showReddit: userSettings.showReddit,
       roundedBorders: userSettings.roundedBorders
-    }).catch(err => {
-      console.warn('[settings] failed to save to server:', err && err.message);
-    }).finally(() => {
-      if (resolver) resolver();
-    });
+    };
+    persistWriteChain = persistWriteChain
+      .then(() => saveSettings(settings))
+      .catch(err => {
+        console.warn('[settings] failed to save to server:', err && err.message);
+      })
+      .finally(() => {
+        if (resolver) resolver();
+      });
   }, PERSIST_DEBOUNCE_MS);
   return persistPending;
 }

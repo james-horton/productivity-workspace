@@ -4,10 +4,10 @@
  * Settings are persisted server-side in secrets.json (the `userSettings` section).
  */
 
-import { ENDPOINTS, JSON_HEADERS } from '../config.js';
+import { ENDPOINTS, JSON_HEADERS, TIMEOUTS } from '../config.js';
 
 /**
- * @typedef {{ theme: string, city: string, state: string, subreddits: string[], showInspirationQuote: boolean, showCalculator: boolean, showClock: boolean, clockView: 'digital' | 'analog-marks' | 'analog-quarters' | 'analog-numerals' | 'analog-roman-numerals', showAnalogClockFrame: boolean, analogClockFrameWidth: number, showWebSearch: boolean, showReddit: boolean, roundedBorders: boolean }} UserSettings
+ * @typedef {{ theme: string, openaiModel: 'gpt-5.6-sol' | 'gpt-6-astra', city: string, state: string, subreddits: string[], showInspirationQuote: boolean, showCalculator: boolean, showClock: boolean, clockView: 'digital' | 'analog-marks' | 'analog-quarters' | 'analog-numerals' | 'analog-roman-numerals', showAnalogClockFrame: boolean, analogClockFrameWidth: number, showWebSearch: boolean, showReddit: boolean, roundedBorders: boolean }} UserSettings
  */
 
 /**
@@ -15,13 +15,19 @@ import { ENDPOINTS, JSON_HEADERS } from '../config.js';
  * @returns {Promise<UserSettings>}
  */
 export async function fetchSettings() {
-  const res = await fetch(ENDPOINTS.settings, { method: 'GET' });
-  if (!res.ok) {
-    let info = '';
-    try { info = (await res.json()).error?.message || ''; } catch {}
-    throw new Error(`Settings load failed (${res.status}): ${info}`);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), TIMEOUTS.defaultMs);
+  try {
+    const res = await fetch(ENDPOINTS.settings, { method: 'GET', signal: ctrl.signal });
+    if (!res.ok) {
+      let info = '';
+      try { info = (await res.json()).error?.message || ''; } catch {}
+      throw new Error(`Settings load failed (${res.status}): ${info}`);
+    }
+    return res.json();
+  } finally {
+    clearTimeout(timer);
   }
-  return res.json();
 }
 
 /**
@@ -32,6 +38,9 @@ export async function fetchSettings() {
 export async function saveSettings(settings) {
   const payload = {
     theme: String(settings?.theme || ''),
+    openaiModel: ['gpt-5.6-sol', 'gpt-6-astra'].includes(settings?.openaiModel)
+      ? settings.openaiModel
+      : 'gpt-5.6-sol',
     city: String(settings?.city || ''),
     state: String(settings?.state || ''),
     subreddits: Array.isArray(settings?.subreddits)
@@ -52,15 +61,22 @@ export async function saveSettings(settings) {
     roundedBorders: settings?.roundedBorders !== false
   };
 
-  const res = await fetch(ENDPOINTS.settings, {
-    method: 'PUT',
-    headers: JSON_HEADERS,
-    body: JSON.stringify(payload)
-  });
-  if (!res.ok) {
-    let info = '';
-    try { info = (await res.json()).error?.message || ''; } catch {}
-    throw new Error(`Settings save failed (${res.status}): ${info}`);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), TIMEOUTS.defaultMs);
+  try {
+    const res = await fetch(ENDPOINTS.settings, {
+      method: 'PUT',
+      headers: JSON_HEADERS,
+      body: JSON.stringify(payload),
+      signal: ctrl.signal
+    });
+    if (!res.ok) {
+      let info = '';
+      try { info = (await res.json()).error?.message || ''; } catch {}
+      throw new Error(`Settings save failed (${res.status}): ${info}`);
+    }
+    return res.json();
+  } finally {
+    clearTimeout(timer);
   }
-  return res.json();
 }
