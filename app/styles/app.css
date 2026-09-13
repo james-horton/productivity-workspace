@@ -2293,15 +2293,36 @@ body.modal-open { overflow: hidden; }
   white-space: nowrap;
 }
 .spreadsheet-sheet-actions { gap: .35rem; }
-.spreadsheet-actions { align-items: center; }
+.spreadsheet-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+}
 .spreadsheet-status {
-  flex: 1 1 auto;
+  grid-column: 1;
   min-width: 0;
   color: var(--muted);
   overflow-wrap: anywhere;
 }
 .spreadsheet-status.is-dirty { color: var(--accent); }
 .spreadsheet-status.is-error { color: #ef4444; }
+.spreadsheet-quick-sum {
+  grid-column: 2;
+  padding: .25rem .55rem;
+  border: 1px solid var(--ring);
+  border-radius: 999px;
+  color: var(--text);
+  background: var(--surface-2);
+  font-size: .8rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.spreadsheet-action-buttons {
+  grid-column: 3;
+  display: flex;
+  justify-self: end;
+  gap: .5rem;
+}
 .spreadsheet-loading {
   grid-row: 3;
   z-index: 10;

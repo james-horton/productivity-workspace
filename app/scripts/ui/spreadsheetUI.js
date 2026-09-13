@@ -366,6 +366,30 @@ function cellDisplayValue(address) {
   return String(raw);
 }
 
+function numericCellValue(row, column) {
+  const address = cellAddress(row, column);
+  const raw = activeSheet().cells[address]?.value;
+  if (raw == null || raw === '') return null;
+  const value = String(raw).startsWith('=') ? calculatedValues.get(address) : Number(raw);
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function syncQuickSum(bounds) {
+  const visible = bounds.startColumn === bounds.endColumn && bounds.startRow < bounds.endRow;
+  elements.quickSum.hidden = !visible;
+  if (!visible) {
+    elements.quickSum.textContent = '';
+    return;
+  }
+
+  let sum = 0;
+  for (let row = bounds.startRow; row <= bounds.endRow; row += 1) {
+    sum += numericCellValue(row, bounds.startColumn) ?? 0;
+  }
+  const displaySum = Object.is(sum, -0) ? 0 : sum;
+  elements.quickSum.textContent = `Sum: ${displaySum.toLocaleString(undefined, { maximumSignificantDigits: 15 })}`;
+}
+
 function syncSelectionUI() {
   if (!workbook) return;
   const bounds = selectedBounds();
@@ -387,6 +411,7 @@ function syncSelectionUI() {
     editOriginal = elements.formula.value;
   }
   syncToolbarState();
+  syncQuickSum(bounds);
 }
 
 function syncToolbarState() {
@@ -927,11 +952,7 @@ function clearFormatting() {
 }
 
 function numericCell(row, column) {
-  const address = cellAddress(row, column);
-  const raw = activeSheet().cells[address]?.value;
-  if (raw == null || raw === '') return false;
-  const value = String(raw).startsWith('=') ? calculatedValues.get(address) : Number(raw);
-  return typeof value === 'number' && Number.isFinite(value);
+  return numericCellValue(row, column) !== null;
 }
 
 function autoSum() {
@@ -1285,6 +1306,7 @@ function cacheElements() {
     renameSheet: document.querySelector('#spreadsheetRenameSheet'),
     clearSheet: document.querySelector('#spreadsheetClearSheet'),
     status: document.querySelector('#spreadsheetStatus'),
+    quickSum: document.querySelector('#spreadsheetQuickSum'),
     save: document.querySelector('#spreadsheetSave')
   };
   return elements.trigger && elements.modal;
