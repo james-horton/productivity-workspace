@@ -452,6 +452,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   border-color: transparent;
   border-radius: 0;
   overflow: visible;
+  block-size: auto;
 }
 .clock-card[data-controls-visible="false"] .clock {
   grid-template-rows: auto auto;
