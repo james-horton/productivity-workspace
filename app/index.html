@@ -681,8 +681,11 @@
 
       <div class="modal-actions spreadsheet-actions">
         <div id="spreadsheetStatus" class="spreadsheet-status" role="status" aria-live="polite" tabindex="-1">Not loaded</div>
-        <button id="spreadsheetCloseAction" class="btn" type="button">Close</button>
-        <button id="spreadsheetSave" class="btn primary" type="button">Save</button>
+        <output id="spreadsheetQuickSum" class="spreadsheet-quick-sum" aria-live="polite" aria-atomic="true" hidden></output>
+        <div class="spreadsheet-action-buttons">
+          <button id="spreadsheetCloseAction" class="btn" type="button">Close</button>
+          <button id="spreadsheetSave" class="btn primary" type="button">Save</button>
+        </div>
       </div>
     </div>
   </div>
