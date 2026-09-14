@@ -1928,6 +1928,13 @@ body.modal-open { overflow: hidden; }
   border-right: 1px solid var(--ring);
 }
 .spreadsheet-tool-group:last-child { border-right: 0; }
+.spreadsheet-toolbar .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding-block: .35rem;
+}
 .spreadsheet-tool.btn {
   min-width: 34px;
   padding-inline: .55rem;
@@ -1962,9 +1969,10 @@ body.modal-open { overflow: hidden; }
   align-items: center;
   gap: .25rem;
   min-width: 48px;
-  height: 30px;
+  height: 34px;
   padding: 3px 6px;
 }
+.spreadsheet-align-icon { display: block; }
 .spreadsheet-color-preview {
   width: 24px;
   height: 20px;
