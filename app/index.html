@@ -632,9 +632,27 @@
             </div>
           </div>
           <div class="spreadsheet-tool-group" aria-label="Alignment">
-            <button id="spreadsheetAlignLeft" class="btn spreadsheet-tool" type="button" data-align="left" aria-pressed="false" title="Align left">L</button>
-            <button id="spreadsheetAlignCenter" class="btn spreadsheet-tool" type="button" data-align="center" aria-pressed="false" title="Align center">C</button>
-            <button id="spreadsheetAlignRight" class="btn spreadsheet-tool" type="button" data-align="right" aria-pressed="false" title="Align right">R</button>
+            <button id="spreadsheetAlignLeft" class="btn spreadsheet-tool" type="button" data-align="left" aria-label="Left Align" aria-pressed="false" title="Left Align">
+              <svg class="spreadsheet-align-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="16" y2="12"></line>
+                <line x1="3" y1="18" x2="19" y2="18"></line>
+              </svg>
+            </button>
+            <button id="spreadsheetAlignCenter" class="btn spreadsheet-tool" type="button" data-align="center" aria-label="Center Align" aria-pressed="false" title="Center Align">
+              <svg class="spreadsheet-align-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="6" y1="12" x2="18" y2="12"></line>
+                <line x1="4" y1="18" x2="20" y2="18"></line>
+              </svg>
+            </button>
+            <button id="spreadsheetAlignRight" class="btn spreadsheet-tool" type="button" data-align="right" aria-label="Right Align" aria-pressed="false" title="Right Align">
+              <svg class="spreadsheet-align-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="5" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
             <button id="spreadsheetWrap" class="btn spreadsheet-tool spreadsheet-tool-wide" type="button" aria-pressed="false" title="Wrap text">Wrap</button>
           </div>
           <div class="spreadsheet-tool-group" aria-label="Cell borders">
