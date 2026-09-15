@@ -16,6 +16,10 @@ function ensureMessageBox() {
       </div>
       <div class="message-box-body">
         <p id="messageBoxMessage" class="message-box-message"></p>
+        <div class="message-box-input-group" hidden>
+          <label id="messageBoxInputLabel" for="messageBoxInput"></label>
+          <input id="messageBoxInput" class="message-box-input" type="text" autocomplete="off" />
+        </div>
       </div>
       <div class="modal-actions message-box-actions">
         <button type="button" class="btn" data-message-box-cancel="true"></button>
@@ -29,6 +33,9 @@ function ensureMessageBox() {
     modal,
     title: modal.querySelector('#messageBoxTitle'),
     message: modal.querySelector('#messageBoxMessage'),
+    inputGroup: modal.querySelector('.message-box-input-group'),
+    inputLabel: modal.querySelector('#messageBoxInputLabel'),
+    input: modal.querySelector('#messageBoxInput'),
     cancel: modal.querySelector('[data-message-box-cancel].btn'),
     confirm: modal.querySelector('[data-message-box-confirm]')
   };
@@ -46,8 +53,17 @@ function ensureMessageBox() {
       finish(false);
       return;
     }
+    if (event.key === 'Enter' && event.target === elements.input && !elements.inputGroup.hidden) {
+      event.preventDefault();
+      finish(true);
+      return;
+    }
     if (event.key !== 'Tab') return;
-    const focusable = [elements.cancel, elements.confirm].filter(control => !control.disabled);
+    const focusable = [
+      ...(elements.inputGroup.hidden ? [] : [elements.input]),
+      elements.cancel,
+      elements.confirm
+    ].filter(control => !control.disabled);
     if (focusable.length === 0) return;
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
@@ -65,13 +81,14 @@ function ensureMessageBox() {
 
 function finish(confirmed) {
   if (!pendingRequest) return;
-  const { resolve, previouslyFocused } = pendingRequest;
+  const { resolve, previouslyFocused, inputMode } = pendingRequest;
+  const value = inputMode && confirmed ? elements.input.value : null;
   pendingRequest = null;
   elements.modal.setAttribute('aria-hidden', 'true');
   const visibleModal = document.querySelector('.modal[aria-hidden="false"]');
   document.body.classList.toggle('modal-open', Boolean(visibleModal));
   if (previouslyFocused && previouslyFocused.isConnected) previouslyFocused.focus();
-  resolve(confirmed);
+  resolve(inputMode ? value : confirmed);
 }
 
 export function isMessageBoxOpen() {
@@ -82,21 +99,32 @@ export function showMessageBox({
   title = 'Confirm action',
   message = '',
   confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel'
+  cancelLabel = 'Cancel',
+  inputValue,
+  inputLabel = 'Value'
 } = {}) {
   if (pendingRequest) return Promise.resolve(false);
 
   const messageBox = ensureMessageBox();
   const previouslyFocused = document.activeElement;
+  const inputMode = inputValue !== undefined;
   messageBox.title.textContent = title;
   messageBox.message.textContent = message;
+  messageBox.inputGroup.hidden = !inputMode;
+  messageBox.inputLabel.textContent = inputLabel;
+  messageBox.input.value = inputMode ? String(inputValue ?? '') : '';
   messageBox.cancel.textContent = cancelLabel;
   messageBox.confirm.textContent = confirmLabel;
   messageBox.modal.setAttribute('aria-hidden', 'false');
   document.body.classList.add('modal-open');
 
   return new Promise(resolve => {
-    pendingRequest = { resolve, previouslyFocused };
-    messageBox.cancel.focus();
+    pendingRequest = { resolve, previouslyFocused, inputMode };
+    if (inputMode) {
+      messageBox.input.focus();
+      messageBox.input.select();
+    } else {
+      messageBox.cancel.focus();
+    }
   });
 }
