@@ -1007,11 +1007,18 @@ function addSheet() {
   renderWorkbook();
 }
 
-function renameSheet(sheetId = workbook.activeSheetId) {
+async function renameSheet(sheetId = workbook.activeSheetId) {
   commitFormula();
   const sheet = workbook.sheets.find(item => item.id === sheetId);
-  if (!sheet) return;
-  const proposed = window.prompt('Sheet name:', sheet.name);
+  if (!sheet || isMessageBoxOpen()) return;
+  const proposed = await showMessageBox({
+    title: 'Rename sheet',
+    message: 'Enter a new name for this sheet.',
+    inputValue: sheet.name,
+    inputLabel: 'Sheet name',
+    confirmLabel: 'Rename',
+    cancelLabel: 'Cancel'
+  });
   if (proposed == null) return;
   const name = proposed.trim().slice(0, 80);
   if (!name) return setStatus('Sheet name cannot be blank.', 'error');

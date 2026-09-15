@@ -1701,6 +1701,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   display: none;
 }
 .modal-body input[type="text"],
+.message-box-body input[type="text"],
 .modal-body select {
   width: 100%;
   padding: .55rem .7rem;
@@ -1728,6 +1729,16 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   color: var(--text);
   line-height: 1.5;
   overflow-wrap: anywhere;
+}
+.message-box-input-group {
+  display: grid;
+  gap: .35rem;
+  margin-top: 1rem;
+}
+.message-box-input-group[hidden] { display: none; }
+.message-box-input-group label {
+  color: var(--muted);
+  font-size: .8rem;
 }
 .message-box-actions {
   flex-wrap: wrap;
