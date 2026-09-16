@@ -7,7 +7,7 @@
 import { ENDPOINTS, JSON_HEADERS, TIMEOUTS } from '../config.js';
 
 /**
- * @typedef {{ theme: string, openaiModel: 'gpt-5.6-sol' | 'gpt-6-astra', city: string, state: string, subreddits: string[], showInspirationQuote: boolean, showCalculator: boolean, showClock: boolean, clockView: 'digital' | 'analog-marks' | 'analog-quarters' | 'analog-numerals' | 'analog-roman-numerals', showAnalogClockFrame: boolean, analogClockFrameWidth: number, showWebSearch: boolean, showReddit: boolean, roundedBorders: boolean }} UserSettings
+ * @typedef {{ theme: string, openaiModel: 'gpt-5.6-sol' | 'gpt-6-astra', city: string, state: string, subreddits: string[], showInspirationQuote: boolean, showCalculator: boolean, showClock: boolean, clockView: 'digital' | 'analog-marks' | 'analog-quarters' | 'analog-numerals' | 'analog-roman-numerals', showAnalogClockFrame: boolean, analogClockFrameWidth: number, showWebSearch: boolean, showAgent: boolean, showReddit: boolean, roundedBorders: boolean }} UserSettings
  */
 
 /**
@@ -57,6 +57,7 @@ export async function saveSettings(settings) {
       ? Math.max(1, Math.min(10, Math.round(Number(settings.analogClockFrameWidth))))
       : 10,
     showWebSearch: settings?.showWebSearch !== false,
+    showAgent: settings?.showAgent !== false,
     showReddit: settings?.showReddit === true,
     roundedBorders: settings?.roundedBorders !== false
   };

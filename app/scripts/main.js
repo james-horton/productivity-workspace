@@ -1,5 +1,5 @@
 import { applyTheme } from './theme.js';
-import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getOpenAIModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings, getShowInspirationQuote, setShowInspirationQuote, getShowCalculator, setShowCalculator, getShowClock, setShowClock, getClockView, setClockView, getShowAnalogClockFrame, setShowAnalogClockFrame, getAnalogClockFrameWidth, setAnalogClockFrameWidth, getShowWebSearch, setShowWebSearch, getShowReddit, setShowReddit, getRoundedBorders, setRoundedBorders, BASIC_REASONING_LEVELS, DEFAULT_BASIC_REASONING, setBasicReasoning } from './state.js';
+import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getOpenAIModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings, getShowInspirationQuote, setShowInspirationQuote, getShowCalculator, setShowCalculator, getShowClock, setShowClock, getClockView, setClockView, getShowAnalogClockFrame, setShowAnalogClockFrame, getAnalogClockFrameWidth, setAnalogClockFrameWidth, getShowWebSearch, setShowWebSearch, getShowAgent, setShowAgent, getShowReddit, setShowReddit, getRoundedBorders, setRoundedBorders, BASIC_REASONING_LEVELS, DEFAULT_BASIC_REASONING, setBasicReasoning } from './state.js';
 import { getModels, loadModels, providerFor, modelIdFor, getDefaultModelKey, getFavoriteModelIds, saveFavoriteModels } from './services/modelRegistry.js';
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
@@ -17,6 +17,7 @@ import { $, isMobileView } from './utils/helpers.js';
 import { REDDIT, NEWS, UI_DEFAULTS } from './config.js';
 import { initCalculatorUI } from './ui/calculatorUI.js';
 import { initSpreadsheetUI } from './ui/spreadsheetUI.js';
+import { initAgentUI } from './ui/agentUI.js';
 import { fetchApiKeys, saveApiKeys } from './services/apiKeyService.js';
 
 const REDDIT_MAX_POSTS = REDDIT.maxPosts;
@@ -117,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSettingsUI();
   initNewsModalUI();
   initCalculatorUI();
+  initAgentUI();
   if (!isMobileView()) initSpreadsheetUI();
   window.addEventListener('resize', () => {
     if (!isMobileView()) initSpreadsheetUI();
@@ -133,6 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     syncCalculatorSection();
     syncClockSection();
     syncWebSearchSection();
+    syncAgentSection();
     syncRedditSection();
     document.body.dataset.userSettingsReady = 'true';
     applyRoundedBorders(getRoundedBorders());
@@ -657,6 +660,7 @@ function wireStateEvents() {
     syncCalculatorSection();
     syncClockSection();
     syncWebSearchSection();
+    syncAgentSection();
     syncRedditSection();
     applyRoundedBorders(getRoundedBorders());
   });
@@ -916,6 +920,7 @@ function renderModelOptions() {
     const label = document.createElement('span');
     label.className = 'model-combobox-option-label';
     label.textContent = selectedOpenAI.label;
+    appendModelCapabilityBadge(label, selectedOpenAI);
     const arrow = document.createElement('span');
     arrow.className = 'model-provider-arrow';
     arrow.setAttribute('aria-hidden', 'true');
@@ -944,6 +949,7 @@ function renderModelOptions() {
       const optionLabel = document.createElement('span');
       optionLabel.className = 'model-combobox-option-label';
       optionLabel.textContent = model.label.replace(/^OpenAI:\s*/, '');
+      appendModelCapabilityBadge(optionLabel, model);
       option.append(optionLabel);
       submenu.append(option);
     });
@@ -976,6 +982,7 @@ function renderModelOptions() {
     const label = document.createElement('span');
     label.className = 'model-combobox-option-label';
     label.textContent = model.label;
+    appendModelCapabilityBadge(label, model);
 
     option.append(label);
 
@@ -1013,6 +1020,15 @@ function getPrimaryModelOptions() {
   return Array.from(modelOptions()?.querySelectorAll(
     ':scope > [data-model-key], :scope > .model-provider-option > [data-model-provider-trigger]'
   ) || []);
+}
+
+function appendModelCapabilityBadge(parent, model) {
+  if (!parent || model?.supportsToolCalling !== true) return;
+  const badge = document.createElement('span');
+  badge.className = 'model-tool-badge';
+  badge.textContent = 'Tools';
+  badge.title = 'Supports Agent tool calling';
+  parent.appendChild(badge);
 }
 
 function setOpenAISubmenu(open, focusSubmenu = false) {
@@ -1323,7 +1339,10 @@ function syncSelectedModelOption(modelKey) {
     trigger.dataset.modelKey = selected.key;
     trigger.setAttribute('aria-selected', 'true');
     const label = trigger.querySelector('.model-combobox-option-label');
-    if (label) label.textContent = selected.label;
+    if (label) {
+      label.textContent = selected.label;
+      appendModelCapabilityBadge(label, selected);
+    }
   } else if (trigger) {
     trigger.setAttribute('aria-selected', 'false');
   }
@@ -1671,6 +1690,20 @@ function syncWebSearchSection() {
   }
 }
 
+function syncAgentSection() {
+  const show = getShowAgent();
+  const card = document.getElementById('agent');
+  if (card) {
+    card.hidden = !show;
+    card.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
+  const tab = document.querySelector('.menu-bar .tabs a[href="#agent"]');
+  if (tab) {
+    tab.hidden = !show;
+    tab.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
+}
+
 function syncRedditSection() {
   const show = getShowReddit();
   const card = document.getElementById('reddit');
@@ -1794,6 +1827,7 @@ function initSettingsUI() {
   const inputShowCalculator = document.getElementById('settingsShowCalculator');
   const inputShowClock = document.getElementById('settingsShowClock');
   const inputShowWebSearch = document.getElementById('settingsShowWebSearch');
+  const inputShowAgent = document.getElementById('settingsShowAgent');
   const inputShowReddit = document.getElementById('settingsShowReddit');
   const inputRoundedBorders = document.getElementById('settingsRoundedBorders');
   const inputCity = document.getElementById('settingsCity');
@@ -1865,6 +1899,7 @@ function initSettingsUI() {
     if (inputShowCalculator) inputShowCalculator.checked = getShowCalculator();
     if (inputShowClock) inputShowClock.checked = getShowClock();
     if (inputShowWebSearch) inputShowWebSearch.checked = getShowWebSearch();
+    if (inputShowAgent) inputShowAgent.checked = getShowAgent();
     if (inputShowReddit) inputShowReddit.checked = getShowReddit();
     if (inputRoundedBorders) inputRoundedBorders.checked = getRoundedBorders();
     const { city, state } = getLocation();
@@ -1980,6 +2015,7 @@ function initSettingsUI() {
     if (inputShowCalculator) setShowCalculator(inputShowCalculator.checked);
     if (inputShowClock) setShowClock(inputShowClock.checked);
     if (inputShowWebSearch) setShowWebSearch(inputShowWebSearch.checked);
+    if (inputShowAgent) setShowAgent(inputShowAgent.checked);
     if (inputShowReddit) setShowReddit(inputShowReddit.checked);
     if (inputRoundedBorders) setRoundedBorders(inputRoundedBorders.checked);
     const city = (inputCity.value || '').trim();
@@ -2033,6 +2069,7 @@ function initSettingsUI() {
     syncCalculatorSection();
     syncClockSection();
     syncWebSearchSection();
+    syncAgentSection();
     syncRedditSection();
     applyRoundedBorders(getRoundedBorders());
     if (!wasShowingInspiration && getShowInspirationQuote()) void refreshQuote();

@@ -13,6 +13,7 @@ const STATIC_MODELS = [
     model: 'gpt-5.6-sol',
     favorite: false,
     default: true,
+    supportsToolCalling: true,
     tier: 'high'
   },
   {
@@ -22,6 +23,7 @@ const STATIC_MODELS = [
     model: 'gpt-6-astra',
     favorite: false,
     default: false,
+    supportsToolCalling: true,
     tier: 'high'
   }
 ];
@@ -99,6 +101,9 @@ function normalizeRemoteModel(model) {
   const provider = typeof model.provider === 'string' ? model.provider.trim() : '';
   const modelId = typeof model.model === 'string' ? model.model.trim() : '';
   if (!key || !provider || !modelId) return null;
+  const supportedParameters = Array.isArray(model.supportedParameters)
+    ? model.supportedParameters
+    : (Array.isArray(model.supported_parameters) ? model.supported_parameters : []);
   return {
     key,
     label: String(model.label || modelId),
@@ -106,6 +111,8 @@ function normalizeRemoteModel(model) {
     model: modelId,
     favorite: model.favorite === true,
     default: model.default === true,
+    supportsToolCalling: model.supportsToolCalling === true,
+    supportedParameters: supportedParameters.map(value => String(value || '')).filter(Boolean),
     tier: model.tier || 'medium'
   };
 }
@@ -199,6 +206,11 @@ export function providerFor(modelKey) {
 
 export function modelIdFor(modelKey) {
   return findByKey(modelKey).model;
+}
+
+export function supportsToolCallingFor(modelKey) {
+  const model = getModels().find(item => item.key === modelKey);
+  return model?.supportsToolCalling === true;
 }
 
 export function tierFor(modelKey) {

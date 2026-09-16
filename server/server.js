@@ -15,9 +15,12 @@ const searchRouter = require('./routes/search');
 const modelsRouter = require('./routes/models');
 const settingsRouter = require('./routes/settings');
 const spreadsheetRouter = require('./routes/spreadsheet');
+const { createAgentRuntime } = require('./lib/agent/runtime');
+const { createAgentRouter } = require('./routes/agent');
 
 const app = express();
 const staticDir = path.resolve(__dirname, '..', 'app');
+const agentRuntime = createAgentRuntime({ config });
 
 const THEMES = ['matrix', 'dark', 'dark-black', 'aurora', 'light', 'bright-white', 'nyan-cat', 'rainbow', 'bumblebee', 'orangeade', 'sky-blue', 'usa', '90s'];
 
@@ -92,6 +95,7 @@ app.use('/api/reddit', redditRouter);
 app.use('/api/models', modelsRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/spreadsheet', spreadsheetRouter);
+app.use('/api/agent', createAgentRouter({ runtime: agentRuntime, config }));
 
 // Serve SPA static assets
 app.get(['/', '/index.html'], sendIndexHtml);
@@ -128,37 +132,76 @@ app.use((err, req, res, next) => {
 const port = config.server.port || 8787;
 const httpsConfig = config.server.https;
 
-// Start HTTP server
-const httpServer = app.listen(port, () => {
-  console.log(`HTTP server listening on http://localhost:${port}`);
+let httpServer;
+let httpsServer;
+let shutdownPromise;
+
+function closeServer(server) {
+  if (!server || !server.listening) return Promise.resolve();
+  return new Promise(resolve => server.close(resolve));
+}
+
+async function shutdown(signal) {
+  if (shutdownPromise) return shutdownPromise;
+  shutdownPromise = (async () => {
+    console.log(`[server] ${signal} received; shutting down.`);
+    const servers = [httpServer, httpsServer].filter(Boolean);
+    const closingServers = servers.map(closeServer);
+    await agentRuntime.close();
+    for (const server of servers) server.closeAllConnections?.();
+    await Promise.all(closingServers);
+  })().catch(error => {
+    console.error('[server] Shutdown failed:', error);
+    process.exitCode = 1;
+  });
+  return shutdownPromise;
+}
+
+async function startServers() {
+  await agentRuntime.initialize();
+
+  httpServer = app.listen(port, () => {
+    console.log(`HTTP server listening on http://localhost:${port}`);
+  });
+
+  // Start HTTPS server if enabled and certificates are provided
+  if (httpsConfig.enabled && httpsConfig.key && httpsConfig.cert) {
+    try {
+      // Check if certificate files exist
+      if (fs.existsSync(httpsConfig.key) && fs.existsSync(httpsConfig.cert)) {
+        const httpsOptions = {
+          key: fs.readFileSync(httpsConfig.key),
+          cert: fs.readFileSync(httpsConfig.cert)
+        };
+
+        const httpsPort = httpsConfig.port;
+        httpsServer = https.createServer(httpsOptions, app);
+
+        httpsServer.listen(httpsPort, () => {
+          console.log(`HTTPS server listening on https://localhost:${httpsPort}`);
+        });
+
+        console.log(`SSL certificates loaded from ${httpsConfig.key} and ${httpsConfig.cert}`);
+      } else {
+        console.warn('HTTPS enabled but certificate files not found. HTTPS server not started.');
+        console.warn(`Expected key: ${httpsConfig.key}`);
+        console.warn(`Expected cert: ${httpsConfig.cert}`);
+      }
+    } catch (error) {
+      console.error('Error starting HTTPS server:', error.message);
+    }
+  } else if (httpsConfig.enabled) {
+    console.warn('HTTPS enabled but key or cert not configured. HTTPS server not started.');
+  }
+}
+
+process.once('SIGINT', () => { void shutdown('SIGINT'); });
+process.once('SIGTERM', () => { void shutdown('SIGTERM'); });
+
+void startServers().catch(async error => {
+  console.error('[server] Startup failed:', error);
+  process.exitCode = 1;
+  await agentRuntime.close();
 });
 
-// Start HTTPS server if enabled and certificates are provided
-if (httpsConfig.enabled && httpsConfig.key && httpsConfig.cert) {
-  try {
-    // Check if certificate files exist
-    if (fs.existsSync(httpsConfig.key) && fs.existsSync(httpsConfig.cert)) {
-      const httpsOptions = {
-        key: fs.readFileSync(httpsConfig.key),
-        cert: fs.readFileSync(httpsConfig.cert)
-      };
-
-      const httpsPort = httpsConfig.port;
-      const httpsServer = https.createServer(httpsOptions, app);
-
-      httpsServer.listen(httpsPort, () => {
-        console.log(`HTTPS server listening on https://localhost:${httpsPort}`);
-      });
-
-      console.log(`SSL certificates loaded from ${httpsConfig.key} and ${httpsConfig.cert}`);
-    } else {
-      console.warn('HTTPS enabled but certificate files not found. HTTPS server not started.');
-      console.warn(`Expected key: ${httpsConfig.key}`);
-      console.warn(`Expected cert: ${httpsConfig.cert}`);
-    }
-  } catch (error) {
-    console.error('Error starting HTTPS server:', error.message);
-  }
-} else if (httpsConfig.enabled) {
-  console.warn('HTTPS enabled but key or cert not configured. HTTPS server not started.');
-}
+module.exports = { app, agentRuntime, shutdown, startServers };

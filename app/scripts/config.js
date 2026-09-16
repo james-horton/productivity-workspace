@@ -15,7 +15,8 @@ export const ENDPOINTS = Object.freeze({
   modelFavorites: `${API_BASE}/models/favorites`,
   settings: `${API_BASE}/settings`,
   apiKeys: `${API_BASE}/settings/api-keys`,
-  spreadsheet: `${API_BASE}/spreadsheet`
+  spreadsheet: `${API_BASE}/spreadsheet`,
+  agentRuns: `${API_BASE}/agent/runs`
 });
 
 export const JSON_HEADERS = Object.freeze({
@@ -29,6 +30,42 @@ export const TIMEOUTS = Object.freeze({
   chatMs: 180000,
   // Quote is quick
   quoteMs: 20000
+});
+
+export const AGENT_EVENTS = Object.freeze({
+  reconnectBaseMs: 1000,
+  reconnectMaxMs: 15000,
+  maxRememberedIds: 2000,
+  types: Object.freeze([
+    'run_created',
+    'run_started',
+    'run_status',
+    'status',
+    'agent_message',
+    'message',
+    'message_chunk',
+    'progress',
+    'tool_proposal',
+    'approval_required',
+    'approval_requested',
+    'approval_decided',
+    'approval_resolved',
+    'shell_started',
+    'command_started',
+    'shell_output',
+    'command_output',
+    'shell_completed',
+    'command_completed',
+    'tool_result',
+    'final',
+    'completed',
+    'run_completed',
+    'failed',
+    'run_failed',
+    'cancelled',
+    'run_cancelled',
+    'error'
+  ])
 });
 
 export const NEWS = Object.freeze({
