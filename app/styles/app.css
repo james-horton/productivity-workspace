@@ -2401,7 +2401,8 @@ body.modal-open { overflow: hidden; }
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: .85rem 1rem;
+  padding: .6rem .9rem;
+  min-height: 44px;
   border-bottom: 1px solid var(--ring);
   background: var(--surface-2);
 }
@@ -2412,13 +2413,6 @@ body.modal-open { overflow: hidden; }
 .agent-title-group h2 {
   font-size: 1.5rem;
   line-height: 1.1;
-}
-.agent-kicker {
-  color: var(--accent);
-  font-size: .68rem;
-  font-weight: 800;
-  letter-spacing: .14em;
-  text-transform: uppercase;
 }
 .agent-run-controls {
   display: flex;
@@ -2813,7 +2807,6 @@ body.modal-open { overflow: hidden; }
 }
 
 @media (max-width: 600px) {
-  .agent-command-bar,
   .agent-composer { padding: .8rem; }
   .agent-run-controls select { flex-basis: 100%; min-width: 0; }
   .agent-run-controls .btn { flex: 1 1 0; min-height: 44px; }

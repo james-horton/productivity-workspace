@@ -763,14 +763,13 @@ export function initAgentUI() {
   document.addEventListener('pw:model:changed', refreshCapability);
   document.addEventListener('pw:settings:loaded', refreshCapability);
 
+  // A page load always starts in the new-run state; history remains available in the dropdown.
+  setSelectedAgentRunId('');
   renderAll();
   autoGrowRequest();
   void loadModels().finally(refreshCapability);
   void (async () => {
     await refreshHistory();
-    const saved = getSelectedAgentRunId();
-    const initial = saved || runId(ui.runs.find(isActive)) || runId(ui.runs[0]);
-    if (initial) await selectRun(initial);
-    else renderAll();
+    renderAll();
   })();
 }
