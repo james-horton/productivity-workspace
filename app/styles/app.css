@@ -1137,11 +1137,22 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   overflow-wrap: anywhere;
   word-break: break-word;
 }
+.agent-message-markup,
+.agent-message-markup .chat-markup {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 .msg .bubble .chat-markup > :first-child { margin-top: 0; }
 .msg .bubble .chat-markup > :last-child { margin-bottom: 0; }
+.agent-message-markup .chat-markup > :first-child { margin-top: 0; }
+.agent-message-markup .chat-markup > :last-child { margin-bottom: 0; }
 .msg .bubble .chat-markup p {
   margin: 0.4rem 0;
 }
+.agent-message-markup .chat-markup p { margin: 0.4rem 0; }
 .msg .bubble .chat-markup h1,
 .msg .bubble .chat-markup h2,
 .msg .bubble .chat-markup h3 {
@@ -1149,18 +1160,40 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   line-height: 1.25;
   font-weight: 750;
 }
+.agent-message-markup .chat-markup h1,
+.agent-message-markup .chat-markup h2,
+.agent-message-markup .chat-markup h3 {
+  margin: 0.65rem 0 0.35rem;
+  line-height: 1.25;
+  font-weight: 750;
+}
 .msg .bubble .chat-markup h1 { font-size: 1.35rem; }
 .msg .bubble .chat-markup h2 { font-size: 1.18rem; }
 .msg .bubble .chat-markup h3 { font-size: 1.04rem; }
+.agent-message-markup .chat-markup h1 { font-size: 1.35rem; }
+.agent-message-markup .chat-markup h2 { font-size: 1.18rem; }
+.agent-message-markup .chat-markup h3 { font-size: 1.04rem; }
 .msg .bubble .chat-markup ul,
 .msg .bubble .chat-markup ol {
+  margin: 0.4rem 0;
+  padding-inline-start: 1.35rem;
+}
+.agent-message-markup .chat-markup ul,
+.agent-message-markup .chat-markup ol {
   margin: 0.4rem 0;
   padding-inline-start: 1.35rem;
 }
 .msg .bubble .chat-markup li {
   margin: 0.18rem 0;
 }
+.agent-message-markup .chat-markup li { margin: 0.18rem 0; }
 .msg .bubble .chat-markup blockquote {
+  margin: 0.55rem 0;
+  padding: 0.15rem 0 0.15rem 0.8rem;
+  border-left: 3px solid color-mix(in oklab, var(--accent) 62%, var(--ring));
+  color: color-mix(in oklab, var(--text) 86%, var(--muted));
+}
+.agent-message-markup .chat-markup blockquote {
   margin: 0.55rem 0;
   padding: 0.15rem 0 0.15rem 0.8rem;
   border-left: 3px solid color-mix(in oklab, var(--accent) 62%, var(--ring));
@@ -1169,7 +1202,17 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
 .msg .bubble .chat-markup blockquote p {
   margin: 0.3rem 0;
 }
+.agent-message-markup .chat-markup blockquote p { margin: 0.3rem 0; }
 .msg .bubble .chat-markup code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.92em;
+  padding: 0.08rem 0.28rem;
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--surface) 70%, #000 16%);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.agent-message-markup .chat-markup code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 0.92em;
   padding: 0.08rem 0.28rem;
@@ -1185,7 +1228,28 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+.agent-message-markup .chat-markup pre {
+  margin: 0.65rem 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 .msg .bubble .chat-markup pre code {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  padding: 0.75rem;
+  border: 1px solid color-mix(in oklab, var(--ring) 80%, #000 20%);
+  border-radius: 8px;
+  background: #0d1117;
+  color: #c9d1d9;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  text-shadow: none;
+}
+.agent-message-markup .chat-markup pre code {
   display: block;
   width: max-content;
   min-width: 100%;
@@ -2599,9 +2663,18 @@ body.modal-open { overflow: hidden; }
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.agent-no-output {
+  padding: .55rem .65rem;
+  border: 1px dashed color-mix(in oklab, #f59e0b 62%, var(--ring));
+  border-radius: 8px;
+  background: color-mix(in oklab, #f59e0b 9%, var(--surface-2));
+  color: color-mix(in oklab, #f59e0b 78%, var(--text));
+  font-weight: 700;
+}
 .agent-event-error,
 .agent-event-failed,
 .agent-event-run_failed { border-color: color-mix(in oklab, #ef4444 52%, var(--ring)); }
+.agent-event-no-output { border-color: color-mix(in oklab, #f59e0b 52%, var(--ring)); }
 .agent-detail {
   display: grid;
   grid-template-columns: 9.5rem minmax(0, 1fr);
