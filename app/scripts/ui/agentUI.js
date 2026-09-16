@@ -100,6 +100,21 @@ function formatTime(value) {
   return Number.isNaN(date.getTime()) ? '' : date.toLocaleString();
 }
 
+function formatHistoryTime(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? ''
+    : date.toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+}
+
 function announce(message, kind = '') {
   const live = byId('agentLive');
   if (!live) return;
@@ -152,7 +167,7 @@ function renderHeader() {
 function historyLabel(run) {
   const request = text(firstValue(run, ['request', 'prompt', 'mission'])).replace(/\s+/g, ' ').trim();
   const shortRequest = request.length > 58 ? `${request.slice(0, 57)}...` : request;
-  const date = formatTime(firstValue(run, ['updatedAt', 'updated_at', 'createdAt', 'created_at']));
+  const date = formatHistoryTime(firstValue(run, ['updatedAt', 'updated_at', 'createdAt', 'created_at']));
   return [statusLabel(runStatus(run)), shortRequest || runId(run), date].filter(Boolean).join(' | ');
 }
 
