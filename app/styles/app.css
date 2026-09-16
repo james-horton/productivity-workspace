@@ -2710,8 +2710,10 @@ body.modal-open { overflow: hidden; }
 }
 .agent-output pre {
   max-width: 100%;
+  max-height: min(28rem, 50vh);
   margin: 0;
   overflow-x: auto;
+  overflow-y: auto;
   overscroll-behavior-inline: contain;
   -webkit-overflow-scrolling: touch;
   border: 1px solid #30363d;
