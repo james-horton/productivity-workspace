@@ -293,13 +293,10 @@
         <span id="agentCurrentRequest" class="agent-current-request"></span>
       </div>
 
-      <form id="agentForm" class="agent-composer" autocomplete="off">
-        <div class="agent-composer-copy">
-          <label for="agentRequest">Mission</label>
-          <p>Describe an outcome. The Agent may inspect and modify the workspace, but every shell command pauses for your approval.</p>
-        </div>
-        <textarea id="agentRequest" rows="3" required maxlength="20000" placeholder="Inspect the project, make the requested change, and verify it..."></textarea>
-        <button id="agentStart" class="btn primary" type="submit" disabled>Start Run</button>
+      <form id="agentForm" class="chat-input" autocomplete="off">
+        <label class="sr-only" for="agentRequest">Agent request</label>
+        <textarea id="agentRequest" rows="1" required maxlength="20000" placeholder="Type your message..."></textarea>
+        <button id="agentStart" class="btn primary" type="submit" title="Start Run" aria-label="Start Run" disabled>Send</button>
         <p id="agentCapability" class="agent-capability" data-supported="false">Checking the selected model...</p>
       </form>
 
