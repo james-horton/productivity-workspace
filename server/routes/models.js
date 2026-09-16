@@ -7,6 +7,31 @@ const { config } = require('../config');
 const router = express.Router();
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
+const STATIC_OPENAI_MODELS = [
+  {
+    key: 'openai:gpt-5',
+    label: 'OpenAI: GPT 5.6 Sol',
+    provider: 'openai',
+    model: 'gpt-5.6-sol',
+    favorite: false,
+    default: true,
+    tier: 'high',
+    supportedParameters: ['tools'],
+    supportsToolCalling: true
+  },
+  {
+    key: 'openai:gpt-6-astra',
+    label: 'OpenAI: GPT 6 Astra',
+    provider: 'openai',
+    model: 'gpt-6-astra',
+    favorite: false,
+    default: false,
+    tier: 'high',
+    supportedParameters: ['tools'],
+    supportsToolCalling: true
+  }
+];
+
 let cachedPayload = null;
 let cachedAt = 0;
 
@@ -108,6 +133,13 @@ function normalizeTier(modelId) {
   return 'medium';
 }
 
+function normalizeSupportedParameters(model) {
+  const parameters = model.supported_parameters || model.supportedParameters;
+  return Array.isArray(parameters)
+    ? [...new Set(parameters.map(parameter => String(parameter || '').trim()).filter(Boolean))]
+    : [];
+}
+
 function normalizeModels(rawModels) {
   const seen = new Set();
   return (Array.isArray(rawModels) ? rawModels : [])
@@ -117,6 +149,7 @@ function normalizeModels(rawModels) {
     .map(model => {
       const modelId = model.id.trim();
       const labelName = modelName(model) || modelId;
+      const supportedParameters = normalizeSupportedParameters(model);
       return {
         key: `openrouter:${modelId}`,
         label: `OpenRouter: ${labelName}`,
@@ -124,7 +157,9 @@ function normalizeModels(rawModels) {
         model: modelId,
         favorite: favoriteRank(modelId) !== -1,
         default: false,
-        tier: normalizeTier(modelId)
+        tier: normalizeTier(modelId),
+        supportedParameters,
+        supportsToolCalling: supportedParameters.includes('tools')
       };
     })
     .filter(model => {
@@ -178,10 +213,14 @@ router.get('/', async (req, res, next) => {
     }
 
     cachedPayload = {
-      models: openrouter,
+      models: [...STATIC_OPENAI_MODELS, ...openrouter],
       favoriteModels: configuredFavorites(),
       defaultModel: defaultModelId(),
       providers: {
+        openai: {
+          configured: !!(config.openai && config.openai.apiKey),
+          modelCount: STATIC_OPENAI_MODELS.length
+        },
         openrouter: {
           configured: !!(config.openrouter && config.openrouter.apiKey),
           modelCount: openrouter.length

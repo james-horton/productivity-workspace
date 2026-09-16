@@ -30,6 +30,13 @@ spreadsheet.json
 .env.*.local
 server/.env
 
+# Agent database
+agent.sqlite
+agent.sqlite-wal
+agent.sqlite-shm
+agent.sqlite-*
+agent.sqlite*.tmp
+
 # Editor
 .vscode/
 

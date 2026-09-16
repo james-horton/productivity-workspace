@@ -62,6 +62,7 @@
     <nav class="menu-bar" aria-label="Sections">
       <div class="tabs">
         <a class="tab" href="#chat">Chat</a>
+        <a class="tab" href="#agent">Agent</a>
         <a class="tab" href="#websearch">Web Search</a>
         <a class="tab" href="#news">News</a>
         <a class="tab" href="#reddit" hidden aria-hidden="true">Reddit</a>
@@ -269,6 +270,62 @@
         <textarea id="chatInput" placeholder="Type your message..." required rows="1"></textarea>
         <button id="chatSend" class="btn primary" type="submit">Send</button>
       </form>
+    </section>
+
+    <section id="agent" class="card agent-card" aria-labelledby="agentTitle" aria-busy="false">
+      <div class="agent-command-bar">
+        <div class="agent-title-group">
+          <span class="agent-kicker">Local mission control</span>
+          <h2 id="agentTitle">Agent</h2>
+        </div>
+        <div class="agent-run-controls">
+          <label class="agent-history-label" for="agentHistory">Recent runs</label>
+          <select id="agentHistory" aria-label="Recent Agent runs">
+            <option value="">New run</option>
+          </select>
+          <button id="agentNewRun" class="btn" type="button">New Run</button>
+          <button id="agentStop" class="btn agent-stop" type="button" disabled>Stop</button>
+        </div>
+      </div>
+
+      <div class="agent-run-strip">
+        <span id="agentStatus" class="agent-status" data-status="idle">Idle</span>
+        <span id="agentModelSnapshot" class="agent-model-snapshot">No run selected</span>
+        <span id="agentCurrentRequest" class="agent-current-request"></span>
+      </div>
+
+      <form id="agentForm" class="agent-composer" autocomplete="off">
+        <div class="agent-composer-copy">
+          <label for="agentRequest">Mission</label>
+          <p>Describe an outcome. The Agent may inspect and modify the workspace, but every shell command pauses for your approval.</p>
+        </div>
+        <textarea id="agentRequest" rows="3" required maxlength="20000" placeholder="Inspect the project, make the requested change, and verify it..."></textarea>
+        <button id="agentStart" class="btn primary" type="submit" disabled>Start Run</button>
+        <p id="agentCapability" class="agent-capability" data-supported="false">Checking the selected model...</p>
+      </form>
+
+      <div class="agent-security-note" role="note">
+        <strong>Shell access is not sandboxed.</strong>
+        <span>Approved commands run with the server process user's permissions. Output is capped and known keys are redacted best-effort, but arbitrary output may still contain sensitive data.</span>
+      </div>
+
+      <div class="agent-workspace">
+        <section class="agent-pane agent-timeline-pane" aria-labelledby="agentTimelineTitle">
+          <div class="agent-pane-head">
+            <h3 id="agentTimelineTitle">Run Timeline</h3>
+            <span>Visible progress only</span>
+          </div>
+          <div id="agentTimeline" class="agent-timeline"></div>
+        </section>
+        <aside class="agent-pane agent-approval-pane" aria-labelledby="agentApprovalsTitle">
+          <div class="agent-pane-head">
+            <h3 id="agentApprovalsTitle">Approval Queue</h3>
+            <span>One decision per command</span>
+          </div>
+          <div id="agentApprovals" class="agent-approvals"></div>
+        </aside>
+      </div>
+      <div id="agentLive" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
     </section>
 
     <section id="websearch" class="card search-card" aria-labelledby="webSearchTitle">
@@ -543,6 +600,10 @@
           <div class="control-row checkbox-row">
             <input id="settingsShowWebSearch" type="checkbox" />
             <label for="settingsShowWebSearch" class="label">Web search</label>
+          </div>
+          <div class="control-row checkbox-row">
+            <input id="settingsShowAgent" type="checkbox" />
+            <label for="settingsShowAgent" class="label">Agent</label>
           </div>
           <div class="control-row checkbox-row">
             <input id="settingsShowReddit" type="checkbox" />

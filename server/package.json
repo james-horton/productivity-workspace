@@ -7,15 +7,24 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "test": "node --test"
   },
   "dependencies": {
+    "@langchain/core": "1.2.11",
+    "@langchain/langgraph": "1.4.15",
+    "@langchain/langgraph-checkpoint-sqlite": "1.0.4",
+    "@langchain/openai": "1.5.13",
+    "@langchain/openrouter": "0.4.13",
     "axios": "^1.12.2",
+    "better-sqlite3": "12.10.0",
     "cors": "^2.8.5",
     "express": "^4.21.2",
-    "express-rate-limit": "^5.5.1"
+    "express-rate-limit": "^5.5.1",
+    "langchain": "1.5.11",
+    "zod": "4.2.1"
   },
   "engines": {
-    "node": ">=12"
+    "node": ">=22"
   }
 }

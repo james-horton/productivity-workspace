@@ -3,6 +3,31 @@
 const fs = require('fs');
 const path = require('path');
 
+const PROJECT_ROOT = path.resolve(__dirname, '..');
+
+function configBoolean(envValue, jsonValue, fallback) {
+  const value = envValue !== undefined ? envValue : jsonValue;
+  if (typeof value === 'boolean') return value;
+  if (value == null || value === '') return fallback;
+  const normalized = String(value).trim().toLowerCase();
+  if (['true', '1', 'yes', 'on'].includes(normalized)) return true;
+  if (['false', '0', 'no', 'off'].includes(normalized)) return false;
+  return fallback;
+}
+
+function positiveInteger(envValue, jsonValue, fallback) {
+  const value = envValue !== undefined ? envValue : jsonValue;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function resolveProjectPath(value, fallback) {
+  const configuredPath = String(value || fallback).trim() || fallback;
+  return path.isAbsolute(configuredPath)
+    ? path.normalize(configuredPath)
+    : path.resolve(PROJECT_ROOT, configuredPath);
+}
+
 function loadSecrets() {
   const secretsPath = path.resolve(__dirname, '..', 'secrets.json');
   let json = {};
@@ -30,6 +55,8 @@ function loadSecrets() {
       : (process.env.NEWS_ALLOWED_SOURCES
           ? process.env.NEWS_ALLOWED_SOURCES.split(',').map(s => s.trim()).filter(Boolean)
           : ['apnews.com', 'cnn.com', 'foxnews.com', 'meidastouch.com', 'msnbc.com']);
+
+  const agentConfig = (json.agent && typeof json.agent === 'object') ? json.agent : {};
 
   return {
     openai: {
@@ -102,6 +129,20 @@ function loadSecrets() {
       // PM2 process name to restart after update
       pm2ProcessName: (json.updater && json.updater.pm2ProcessName) || process.env.UPDATER_PM2_PROCESS_NAME || 'workspace-ai'
     },
+    agent: {
+      enabled: configBoolean(process.env.AGENT_ENABLED, agentConfig.enabled, true),
+      localOnly: configBoolean(process.env.AGENT_LOCAL_ONLY, agentConfig.localOnly, true),
+      projectRoot: PROJECT_ROOT,
+      dbPath: resolveProjectPath(process.env.AGENT_DB_PATH || agentConfig.dbPath, 'agent.sqlite'),
+      commandTimeoutMs: positiveInteger(process.env.AGENT_COMMAND_TIMEOUT_MS, agentConfig.commandTimeoutMs, 600000),
+      maxOutputBytes: positiveInteger(process.env.AGENT_MAX_OUTPUT_BYTES, agentConfig.maxOutputBytes, 1024 * 1024),
+      requestMaxLength: positiveInteger(process.env.AGENT_REQUEST_MAX_LENGTH, agentConfig.requestMaxLength, 20000),
+      commandMaxLength: positiveInteger(process.env.AGENT_COMMAND_MAX_LENGTH, agentConfig.commandMaxLength, 20000),
+      maxActionsPerApproval: positiveInteger(process.env.AGENT_MAX_ACTIONS_PER_APPROVAL, agentConfig.maxActionsPerApproval, 32),
+      retentionDays: positiveInteger(process.env.AGENT_RETENTION_DAYS, agentConfig.retentionDays, 30),
+      maxRuns: positiveInteger(process.env.AGENT_MAX_RUNS, agentConfig.maxRuns, 100),
+      maxEventsPerRun: positiveInteger(process.env.AGENT_MAX_EVENTS_PER_RUN, agentConfig.maxEventsPerRun, 2000)
+    },
     userSettings: {
       theme: (json.userSettings && typeof json.userSettings.theme === 'string') ? json.userSettings.theme : 'matrix',
       openaiModel: (json.userSettings && ['gpt-5.6-sol', 'gpt-6-astra'].includes(json.userSettings.openaiModel))
@@ -138,6 +179,9 @@ function loadSecrets() {
       showReddit: (json.userSettings && typeof json.userSettings.showReddit === 'boolean')
         ? json.userSettings.showReddit
         : false,
+      showAgent: (json.userSettings && typeof json.userSettings.showAgent === 'boolean')
+        ? json.userSettings.showAgent
+        : true,
       roundedBorders: (json.userSettings && typeof json.userSettings.roundedBorders === 'boolean')
         ? json.userSettings.roundedBorders
         : true

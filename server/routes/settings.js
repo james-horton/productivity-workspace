@@ -143,6 +143,7 @@ function buildSettingsResponse() {
     analogClockFrameWidth: normalizeAnalogClockFrameWidth(s.analogClockFrameWidth),
     showWebSearch: normalizeBoolean(s.showWebSearch, true),
     showReddit: normalizeBoolean(s.showReddit, false),
+    showAgent: normalizeBoolean(s.showAgent, true),
     roundedBorders: normalizeBoolean(s.roundedBorders, true)
   };
 }
@@ -210,6 +211,7 @@ router.put('/', (req, res, next) => {
     const currentAnalogClockFrameWidth = normalizeAnalogClockFrameWidth((config.userSettings || {}).analogClockFrameWidth);
     const currentShowWebSearch = normalizeBoolean((config.userSettings || {}).showWebSearch, true);
     const currentShowReddit = normalizeBoolean((config.userSettings || {}).showReddit, false);
+    const currentShowAgent = normalizeBoolean((config.userSettings || {}).showAgent, true);
     const currentRoundedBorders = normalizeBoolean((config.userSettings || {}).roundedBorders, true);
     const city = normalizeCity(body.city);
     const state = normalizeState(body.state);
@@ -237,6 +239,9 @@ router.put('/', (req, res, next) => {
     const showReddit = Object.prototype.hasOwnProperty.call(body, 'showReddit')
       ? normalizeBoolean(body.showReddit, false)
       : currentShowReddit;
+    const showAgent = Object.prototype.hasOwnProperty.call(body, 'showAgent')
+      ? normalizeBoolean(body.showAgent, true)
+      : currentShowAgent;
     const roundedBorders = Object.prototype.hasOwnProperty.call(body, 'roundedBorders')
       ? normalizeBoolean(body.roundedBorders, true)
       : currentRoundedBorders;
@@ -264,11 +269,12 @@ router.put('/', (req, res, next) => {
     secrets.userSettings.analogClockFrameWidth = analogClockFrameWidth;
     secrets.userSettings.showWebSearch = showWebSearch;
     secrets.userSettings.showReddit = showReddit;
+    secrets.userSettings.showAgent = showAgent;
     secrets.userSettings.roundedBorders = roundedBorders;
     writeSecretsFile(secrets);
 
     // Sync in-memory config so subsequent GETs reflect the change immediately.
-    config.userSettings = { theme, openaiModel, city, state, subreddits, showInspirationQuote, showCalculator, showClock, clockView, showAnalogClockFrame, analogClockFrameWidth, showWebSearch, showReddit, roundedBorders };
+    config.userSettings = { theme, openaiModel, city, state, subreddits, showInspirationQuote, showCalculator, showClock, clockView, showAnalogClockFrame, analogClockFrameWidth, showWebSearch, showReddit, showAgent, roundedBorders };
 
     res.json(buildSettingsResponse());
   } catch (err) {

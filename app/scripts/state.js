@@ -10,7 +10,8 @@ import { fetchSettings, saveSettings } from './services/settingsService.js';
 
 const LS_KEYS = {
   model: 'pw.model',
-  mode: 'pw.mode'
+  mode: 'pw.mode',
+  selectedAgentRun: 'pw.agent.selectedRun'
 };
 
 const DEFAULT_OPENAI_MODEL = 'gpt-5.6-sol';
@@ -132,16 +133,19 @@ const state = {
   modelKey: 'openai:gpt-5', // populated by modelRegistry defaults
   mode: 'basic',
   // Session-only reasoning level for Basic Info mode. Not persisted to localStorage.
-  basicReasoning: DEFAULT_BASIC_REASONING
+  basicReasoning: DEFAULT_BASIC_REASONING,
+  selectedAgentRunId: ''
 };
 
 function loadPersisted() {
   const m = localStorage.getItem(LS_KEYS.model);
   const md = localStorage.getItem(LS_KEYS.mode);
+  const agentRunId = localStorage.getItem(LS_KEYS.selectedAgentRun);
   if (m) state.modelKey = m;
   if (md && MODES[md]) {
     state.mode = md;
   }
+  if (agentRunId) state.selectedAgentRunId = String(agentRunId).trim();
 }
 
 function loadRenderedTheme() {
@@ -198,6 +202,18 @@ export function setMode(mode) {
   dispatch('pw:mode:changed', { mode });
 }
 
+export function getSelectedAgentRunId() {
+  return state.selectedAgentRunId || '';
+}
+
+export function setSelectedAgentRunId(runId) {
+  const value = String(runId || '').trim();
+  state.selectedAgentRunId = value;
+  if (value) localStorage.setItem(LS_KEYS.selectedAgentRun, value);
+  else localStorage.removeItem(LS_KEYS.selectedAgentRun);
+  dispatch('pw:agent-run:changed', { runId: value });
+}
+
 // Session-only setter for the Basic Info reasoning level. Invalid values are ignored.
 export function setBasicReasoning(level) {
   if (!BASIC_REASONING_LEVELS.includes(level)) return;
@@ -248,6 +264,7 @@ const userSettings = {
   showAnalogClockFrame: true,
   analogClockFrameWidth: 10,
   showWebSearch: true,
+  showAgent: true,
   showReddit: false,
   roundedBorders: true
 };
@@ -307,6 +324,7 @@ export async function loadUserSettings() {
     userSettings.showAnalogClockFrame = data?.showAnalogClockFrame !== false;
     userSettings.analogClockFrameWidth = normalizeAnalogClockFrameWidth(data?.analogClockFrameWidth);
     userSettings.showWebSearch = data?.showWebSearch !== false;
+    userSettings.showAgent = data?.showAgent !== false;
     userSettings.showReddit = data?.showReddit === true;
     userSettings.roundedBorders = data?.roundedBorders !== false;
     const subs = Array.isArray(data?.subreddits) ? data.subreddits : [];
@@ -331,6 +349,7 @@ export async function loadUserSettings() {
       showAnalogClockFrame: userSettings.showAnalogClockFrame,
       analogClockFrameWidth: userSettings.analogClockFrameWidth,
       showWebSearch: userSettings.showWebSearch,
+      showAgent: userSettings.showAgent,
       showReddit: userSettings.showReddit,
       roundedBorders: userSettings.roundedBorders
     });
@@ -379,6 +398,7 @@ function persistUserSettings() {
       showAnalogClockFrame: userSettings.showAnalogClockFrame,
       analogClockFrameWidth: userSettings.analogClockFrameWidth,
       showWebSearch: userSettings.showWebSearch,
+      showAgent: userSettings.showAgent,
       showReddit: userSettings.showReddit,
       roundedBorders: userSettings.roundedBorders
     };
@@ -421,6 +441,7 @@ export function setShowInspirationQuote(show) {
     showCalculator: getShowCalculator(),
     showClock: getShowClock(),
     showWebSearch: getShowWebSearch(),
+    showAgent: getShowAgent(),
     showReddit: getShowReddit(),
     roundedBorders: getRoundedBorders()
   });
@@ -439,6 +460,7 @@ export function setShowCalculator(show) {
     showCalculator: value,
     showClock: getShowClock(),
     showWebSearch: getShowWebSearch(),
+    showAgent: getShowAgent(),
     showReddit: getShowReddit(),
     roundedBorders: getRoundedBorders()
   });
@@ -457,6 +479,7 @@ export function setShowClock(show) {
     showCalculator: getShowCalculator(),
     showClock: value,
     showWebSearch: getShowWebSearch(),
+    showAgent: getShowAgent(),
     showReddit: getShowReddit(),
     roundedBorders: getRoundedBorders()
   });
@@ -517,6 +540,26 @@ export function setShowWebSearch(show) {
     showCalculator: getShowCalculator(),
     showClock: getShowClock(),
     showWebSearch: value,
+    showAgent: getShowAgent(),
+    showReddit: getShowReddit(),
+    roundedBorders: getRoundedBorders()
+  });
+}
+
+export function getShowAgent() {
+  return userSettings.showAgent !== false;
+}
+
+export function setShowAgent(show) {
+  const value = show !== false;
+  userSettings.showAgent = value;
+  void persistUserSettings();
+  dispatch('pw:ui-settings:changed', {
+    showInspirationQuote: getShowInspirationQuote(),
+    showCalculator: getShowCalculator(),
+    showClock: getShowClock(),
+    showWebSearch: getShowWebSearch(),
+    showAgent: value,
     showReddit: getShowReddit(),
     roundedBorders: getRoundedBorders()
   });
@@ -535,6 +578,7 @@ export function setShowReddit(show) {
     showCalculator: getShowCalculator(),
     showClock: getShowClock(),
     showWebSearch: getShowWebSearch(),
+    showAgent: getShowAgent(),
     showReddit: value,
     roundedBorders: getRoundedBorders()
   });
@@ -553,6 +597,7 @@ export function setRoundedBorders(rounded) {
     showCalculator: getShowCalculator(),
     showClock: getShowClock(),
     showWebSearch: getShowWebSearch(),
+    showAgent: getShowAgent(),
     showReddit: getShowReddit(),
     roundedBorders: value
   });
