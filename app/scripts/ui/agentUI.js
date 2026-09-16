@@ -15,6 +15,7 @@ import {
   providerFor,
   supportsToolCallingFor
 } from '../services/modelRegistry.js';
+import { applyHighlight, renderAgentMessage } from './chatUI.js';
 import {
   getAgentRun,
   listAgentRuns,
@@ -461,11 +462,19 @@ function renderTimelineEvent(event) {
     const value = firstValue(payload, ['message', 'content', 'text', 'delta', 'output', 'finalOutput', 'final_output']);
     const message = visibleText(value);
     if (!message) return null;
-    card.appendChild(create('div', 'agent-message-text', message));
+    const markup = create('div', 'agent-message-markup');
+    markup.appendChild(renderAgentMessage(message));
+    card.appendChild(markup);
+    applyHighlight(markup);
   } else if (statusEvent) {
     const value = firstValue(payload, ['message', 'error', 'statusText', 'status_text']);
-    const message = visibleText(value) || statusLabel(firstValue(payload, ['status']) || type);
-    card.appendChild(create('div', 'agent-status-text', message));
+    if (type === 'run_completed' && payload.hasAgentOutput === false) {
+      card.classList.add('agent-event-no-output');
+      card.appendChild(create('div', 'agent-no-output', 'Agent completed without producing any visible output.'));
+    } else {
+      const message = visibleText(value) || statusLabel(firstValue(payload, ['status']) || type);
+      card.appendChild(create('div', 'agent-status-text', message));
+    }
   } else {
     return null;
   }

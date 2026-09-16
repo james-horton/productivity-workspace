@@ -269,6 +269,28 @@ test('one active run is enforced and start returns before its worker finishes', 
   );
 });
 
+test('records when a completed run produced no visible Agent output', async t => {
+  const store = new MemoryStore();
+  const runtime = createAgentRuntime(runtimeOptions(store, () => ({
+    async *stream() {}
+  })));
+  await runtime.initialize();
+  t.after(() => runtime.close());
+
+  const run = await runtime.startRun({
+    request: 'return nothing',
+    provider: 'openai',
+    model: 'gpt-5.6-sol',
+    supportsToolCalling: true
+  });
+
+  await waitFor(() => store.getRun(run.id).status === 'completed', 'empty run completion');
+  const completion = store.events.find(event => event.type === 'run_completed');
+
+  assert.deepEqual(completion?.payload, { hasAgentOutput: false });
+  assert.equal(store.events.some(event => event.type === 'agent_message'), false);
+});
+
 test('grouped approvals resume all actions, skip rejects, and serialize approved shells', async t => {
   const proposedActions = [
     { name: 'execute_shell', args: { command: 'first' }, id: 'tool-1' },

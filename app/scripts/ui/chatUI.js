@@ -214,7 +214,28 @@ function renderCoderBlocks(raw) {
   }
 }
 
-function applyHighlight(root) {
+function isCoderBlocksContent(raw) {
+  try {
+    const obj = JSON.parse(String(raw || ''));
+    return !!(obj && obj.format === 'coder_blocks_v1' && Array.isArray(obj.blocks));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Render an Agent response with the same Chat/Coder formatting pipeline.
+ * Agent responses are normally Markdown-like text, but valid Coder payloads
+ * should retain the Coder renderer's file headers and code controls.
+ */
+export function renderAgentMessage(raw) {
+  const content = String(raw || '');
+  return isCoderBlocksContent(content)
+    ? renderCoderBlocks(content)
+    : renderChatMarkup(content);
+}
+
+export function applyHighlight(root) {
   try {
     if (!hljsAvailable()) return;
     root.querySelectorAll('pre code').forEach(el => {
