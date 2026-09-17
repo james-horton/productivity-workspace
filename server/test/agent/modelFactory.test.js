@@ -9,6 +9,7 @@ const {
   isSupportedProvider,
   normalizeOpenAIResponsesBaseURL,
   normalizeOpenRouterChatCompletionsBaseURL,
+  normalizeAgentReasoningLevel,
   validateModelSelection,
   validateProviderAndModel,
   validateProviderKey
@@ -130,13 +131,14 @@ test('builds ChatOpenAI for the exact model with Responses API settings', () => 
     temperature: 0.25,
     maxTokens: 12345,
     timeout: 45678,
+    reasoning: { effort: 'high' },
     configuration: {
       baseURL: 'https://openai-proxy.example/custom/v1'
     }
   });
 });
 
-test('builds ChatOpenRouter for the exact model with fallback disabled', () => {
+test('builds ChatOpenRouter without requiring every optional parameter', () => {
   let received;
   let runnableConfig;
   class FakeChatOpenRouter {
@@ -163,16 +165,67 @@ test('builds ChatOpenRouter for the exact model with fallback disabled', () => {
     temperature: 0.75,
     maxTokens: 4096,
     modelKwargs: {
-      reasoning: { exclude: true }
+      reasoning: { effort: 'high', exclude: true }
     },
     provider: {
       allow_fallbacks: false,
-      require_parameters: true
+      require_parameters: false
     }
   });
   assert.deepEqual(runnableConfig, { timeout: 98765 });
   assert.equal('models' in received, false);
   assert.equal('route' in received, false);
+});
+
+test('uses the configured Agent reasoning level for both provider adapters', () => {
+  let openaiReceived;
+  class FakeChatOpenAI {
+    constructor(options) {
+      openaiReceived = options;
+    }
+  }
+  createAgentModel(
+    { provider: 'openai', model: 'gpt-5.6-sol', supportsToolCalling: true },
+    {
+      config: { ...config, agent: { reasoningLevel: 'low' } },
+      dependencies: { ChatOpenAI: FakeChatOpenAI }
+    }
+  );
+  assert.deepEqual(openaiReceived.reasoning, { effort: 'low' });
+
+  let openrouterReceived;
+  class FakeChatOpenRouter {
+    constructor(options) {
+      openrouterReceived = options;
+    }
+  }
+  createAgentModel(
+    { provider: 'openrouter', model: 'vendor/model', supportsToolCalling: true },
+    {
+      config: { ...config, agent: { reasoningLevel: 'medium' } },
+      dependencies: { ChatOpenRouter: FakeChatOpenRouter }
+    }
+  );
+  assert.deepEqual(openrouterReceived.modelKwargs.reasoning, { effort: 'medium', exclude: true });
+});
+
+test('falls back to high Agent reasoning when the configured level is invalid', () => {
+  let received;
+  class FakeChatOpenAI {
+    constructor(options) {
+      received = options;
+    }
+  }
+  createAgentModel(
+    { provider: 'openai', model: 'gpt-5.6-sol', supportsToolCalling: true },
+    {
+      config: { ...config, agent: { reasoningLevel: 'invalid' } },
+      dependencies: { ChatOpenAI: FakeChatOpenAI }
+    }
+  );
+  assert.deepEqual(received.reasoning, { effort: 'high' });
+  assert.equal(normalizeAgentReasoningLevel(undefined), 'high');
+  assert.equal(normalizeAgentReasoningLevel('HIGH'), 'high');
 });
 
 test('fails validation before constructing or loading an adapter', () => {

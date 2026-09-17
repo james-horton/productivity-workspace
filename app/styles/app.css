@@ -2510,7 +2510,7 @@ body.modal-open { overflow: hidden; }
 }
 .agent-run-strip {
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr);
+  grid-template-columns: auto auto auto minmax(0, 1fr);
   align-items: center;
   gap: .65rem;
   min-width: 0;
@@ -2556,6 +2556,20 @@ body.modal-open { overflow: hidden; }
   color: var(--text);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
+.agent-approval-mode {
+  width: max-content;
+  padding: .18rem .5rem;
+  border: 1px solid var(--ring);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: .72rem;
+  font-weight: 750;
+}
+.agent-approval-mode[data-mode="yolo"] {
+  border-color: color-mix(in oklab, #ef4444 64%, var(--ring));
+  color: color-mix(in oklab, #ef4444 78%, var(--text));
+  background: color-mix(in oklab, #ef4444 10%, var(--surface));
+}
 .agent-current-request {
   min-width: 0;
   overflow: hidden;
@@ -2585,6 +2599,31 @@ body.modal-open { overflow: hidden; }
   margin: -.2rem 0 0;
   color: var(--muted);
   font-size: .76rem;
+}
+.agent-run-options {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .45rem .65rem;
+  margin-top: -.1rem;
+}
+.agent-yolo-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  color: color-mix(in oklab, #ef4444 78%, var(--text));
+  font-size: .78rem;
+  font-weight: 800;
+}
+.agent-yolo-toggle input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: #ef4444;
+}
+.agent-yolo-help {
+  color: var(--muted);
+  font-size: .74rem;
 }
 .agent-capability[data-supported="false"] { color: color-mix(in oklab, #ef4444 74%, var(--text)); }
 .agent-security-note {
@@ -2851,6 +2890,7 @@ body.modal-open { overflow: hidden; }
   .agent-run-controls select { flex-basis: 100%; min-width: 0; }
   .agent-run-controls .btn { flex: 1 1 0; min-height: 44px; }
   .agent-run-strip { grid-template-columns: auto minmax(0, 1fr); padding-inline: .8rem; }
+  .agent-approval-mode { grid-column: 2; }
   .agent-current-request { grid-column: 1 / -1; white-space: normal; }
   .agent-security-note { margin-inline: .8rem; }
   .agent-pane-head { align-items: flex-start; flex-direction: column; }

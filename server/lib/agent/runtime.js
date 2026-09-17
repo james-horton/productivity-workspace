@@ -7,13 +7,15 @@ const SYSTEM_PROMPT = [
   'Work autonomously on the user request in the local workspace.',
   'Inspect the workspace before changing it, verify your work, and never claim a change without checking it.',
   'Use execute_shell for all workspace actions and prefer one command at a time.',
-  'Every execute_shell call pauses for human approval, and rejection means the command did not run.',
+  'Approval requirements depend on the selected run mode, and rejection means the command did not run.',
   'Keep user-facing updates concise and never reveal hidden reasoning.'
 ].join(' ');
 
 const ACTIVE_STATUSES = new Set(['running', 'awaiting_approval']);
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled']);
 const DEFAULT_ALLOWED_DECISIONS = Object.freeze(['approve', 'edit', 'reject']);
+const APPROVAL_MODES = new Set(['manual', 'yolo']);
+const DEFAULT_APPROVAL_MODE = 'manual';
 
 class AgentRuntimeError extends Error {
   constructor(code, message, status = 500, details) {
@@ -60,6 +62,20 @@ function shellName() {
 function positiveInteger(value, fallback) {
   const parsed = Number(value);
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function normalizeApprovalMode(value) {
+  const normalized = value === undefined || value === null || value === ''
+    ? DEFAULT_APPROVAL_MODE
+    : String(value).trim().toLowerCase();
+  if (!APPROVAL_MODES.has(normalized)) {
+    throw new AgentRuntimeError(
+      'INVALID_APPROVAL_MODE',
+      `Unsupported Agent approval mode: ${normalized}`,
+      400
+    );
+  }
+  return normalized;
 }
 
 function utf8Prefix(value, byteLimit) {
@@ -353,6 +369,15 @@ class AgentRuntime {
       );
     }
 
+    const approvalMode = normalizeApprovalMode(input.approvalMode);
+    if (approvalMode === 'yolo' && this.config.allowYolo === false) {
+      throw new AgentRuntimeError(
+        'YOLO_DISABLED',
+        'YOLO mode is disabled by the Agent configuration.',
+        403
+      );
+    }
+
     return this.#mutate(async () => {
       try {
         await this.#cleanupRetention();
@@ -362,14 +387,16 @@ class AgentRuntime {
           provider: input.provider,
           model: input.model,
           shell: shellName(),
-          cwd: this.projectRoot
+          cwd: this.projectRoot,
+          approvalMode
         });
         await this.#append(run.id, 'run_started', {
           request: run.request,
           provider: run.provider,
           model: run.model,
           shell: run.shell,
-          cwd: run.cwd
+          cwd: run.cwd,
+          approvalMode: run.approvalMode
         });
         this.#enqueue(run.id, { kind: 'start' });
         return run;
@@ -583,17 +610,18 @@ class AgentRuntime {
       }
     }, {
       name: 'execute_shell',
-      description: 'Execute one non-interactive command using the host default shell. Every call requires human approval.',
+      description: 'Execute one non-interactive command using the host default shell. Approval depends on the selected Agent run mode.',
       schema
     });
+    const interruptOn = run.approvalMode === 'yolo'
+      ? { execute_shell: false }
+      : { execute_shell: { allowedDecisions: [...DEFAULT_ALLOWED_DECISIONS] } };
     return dependencies.createAgent({
       model,
       tools: [shellTool],
       systemPrompt: SYSTEM_PROMPT,
       middleware: [dependencies.humanInTheLoopMiddleware({
-        interruptOn: {
-          execute_shell: { allowedDecisions: [...DEFAULT_ALLOWED_DECISIONS] }
-        }
+        interruptOn
       })],
       checkpointer: this.checkpointer
     });
@@ -837,9 +865,12 @@ function createAgentRuntime(options) {
 
 module.exports = {
   ACTIVE_STATUSES,
+  APPROVAL_MODES,
   AgentRuntime,
   AgentRuntimeError,
   DEFAULT_ALLOWED_DECISIONS,
+  DEFAULT_APPROVAL_MODE,
+  normalizeApprovalMode,
   SYSTEM_PROMPT,
   TERMINAL_STATUSES,
   createAgentRuntime,

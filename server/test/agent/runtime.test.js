@@ -263,10 +263,80 @@ test('one active run is enforced and start returns before its worker finishes', 
   await waitFor(() => agentOptions, 'Agent construction');
   assert.equal(agentOptions.systemPrompt, SYSTEM_PROMPT);
   assert.equal(Object.hasOwn(agentOptions, 'prompt'), false);
+  assert.deepEqual(agentOptions.middleware[0].interruptOn.execute_shell, {
+    allowedDecisions: ['approve', 'edit', 'reject']
+  });
   await assert.rejects(
     runtime.startRun({ request: 'other', provider: 'openai', model: 'gpt-5.6-sol', supportsToolCalling: true }),
     error => error instanceof AgentRuntimeError && error.code === 'ACTIVE_RUN_EXISTS'
   );
+});
+
+test('YOLO runs disable the shell approval interrupt for the run lifetime', async t => {
+  let agentOptions;
+  const store = new MemoryStore();
+  const runtime = createAgentRuntime(runtimeOptions(store, options => {
+    agentOptions = options;
+    return { async *stream() {} };
+  }));
+  await runtime.initialize();
+  t.after(() => runtime.close());
+
+  const run = await runtime.startRun({
+    request: 'Run autonomously',
+    provider: 'openai',
+    model: 'gpt-5.6-sol',
+    supportsToolCalling: true,
+    approvalMode: 'yolo'
+  });
+
+  await waitFor(() => agentOptions, 'YOLO Agent construction');
+  assert.equal(run.approvalMode, 'yolo');
+  assert.equal(agentOptions.middleware[0].interruptOn.execute_shell, false);
+  assert.equal(store.events.find(event => event.type === 'run_started').payload.approvalMode, 'yolo');
+});
+
+test('actual LangGraph YOLO runs execute proposed shells without creating an approval', async () => {
+  const Database = require('better-sqlite3');
+  const { SqliteSaver } = require('@langchain/langgraph-checkpoint-sqlite');
+  const { FakeToolCallingModel } = require('langchain');
+  const { AgentStore } = require('../../lib/agent/store');
+  const db = new Database(':memory:');
+  const store = new AgentStore({ db, dbPath: ':memory:', recoverOrphans: false });
+  const checkpointer = new SqliteSaver(db);
+  const commands = [];
+  const model = new FakeToolCallingModel({
+    toolCalls: [[{ name: 'execute_shell', args: { command: 'yolo-command' }, id: 'yolo-tool' }], []]
+  });
+  const runtime = createAgentRuntime({
+    config: {
+      agent: { enabled: true, projectRoot: process.cwd(), maxEventsPerRun: 100 }
+    },
+    store,
+    checkpointer,
+    createModel: async () => model,
+    executeShell: async options => {
+      commands.push(options.command);
+      return { status: 'succeeded', ok: true, exitCode: 0, output: 'yolo-ok' };
+    }
+  });
+
+  try {
+    await runtime.initialize();
+    const run = await runtime.startRun({
+      request: 'Run the smoke command without approval',
+      provider: 'openai',
+      model: 'fake-tool-model',
+      supportsToolCalling: true,
+      approvalMode: 'yolo'
+    });
+    await waitFor(() => store.getRun(run.id).status === 'completed', 'YOLO completion');
+    assert.deepEqual(commands, ['yolo-command']);
+    assert.equal(store.getEvents(run.id).some(event => event.type === 'approval_requested'), false);
+  } finally {
+    await runtime.close();
+    db.close();
+  }
 });
 
 test('records when a completed run produced no visible Agent output', async t => {

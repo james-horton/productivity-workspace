@@ -15,6 +15,7 @@ function sampleRun(overrides = {}) {
     request: 'Inspect the workspace',
     provider: 'openai',
     model: 'gpt-5.6-sol',
+    approvalMode: 'manual',
     shell: process.platform === 'win32' ? 'cmd.exe' : '/bin/sh',
     cwd: process.cwd(),
     status: 'running',
@@ -108,6 +109,60 @@ test('POST runs returns 202 with the exact provider/model snapshot', async t => 
   });
   assert.equal(received.supportsToolCalling, true);
   assert.equal(received.model, 'vendor/exact-model');
+});
+
+test('POST runs preserves the requested YOLO approval mode', async t => {
+  let received;
+  const runtime = createFakeRuntime({
+    async startRun(input) {
+      received = input;
+      return sampleRun({ approvalMode: input.approvalMode });
+    }
+  });
+  const server = await listen(runtime);
+  t.after(server.close);
+
+  const response = await fetch(`${server.baseUrl}/runs`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      request: 'Run autonomously',
+      provider: 'openai',
+      model: 'gpt-5.6-sol',
+      approvalMode: 'yolo'
+    })
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 202);
+  assert.equal(received.approvalMode, 'yolo');
+  assert.equal(body.run.approvalMode, 'yolo');
+});
+
+test('POST runs rejects YOLO when it is disabled by configuration', async t => {
+  const runtime = createFakeRuntime();
+  const server = await listen(runtime, {
+    config: {
+      agent: { localOnly: true, allowYolo: false, requestMaxLength: 1000, maxEventsPerRun: 100 },
+      openrouter: {}
+    }
+  });
+  t.after(server.close);
+
+  const response = await fetch(`${server.baseUrl}/runs`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      request: 'Run autonomously',
+      provider: 'openai',
+      model: 'gpt-5.6-sol',
+      approvalMode: 'yolo'
+    })
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 403);
+  assert.equal(body.error.code, 'YOLO_DISABLED');
 });
 
 test('OpenAI capability validation accepts the model picker key without fallback', async () => {

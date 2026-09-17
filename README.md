@@ -43,7 +43,8 @@ The Agent is a dedicated, full-width workspace with its own navigation tab, sepa
 
 Run and approval behavior:
 - Only one run may be active at a time, including a run paused for approval. Completed, failed, cancelled, and paused runs remain available in history.
-- Every proposed shell command requires an `approve`, `edit`, or `reject` decision before execution. Approve runs the original command; edit runs the validated replacement; reject does not execute the command and may provide feedback to the Agent.
+- Manual runs require an `approve`, `edit`, or `reject` decision for every proposed shell command. Approve runs the original command; edit runs the validated replacement; reject does not execute the command and may provide feedback to the Agent.
+- New runs can be started in YOLO mode from the Agent workspace. YOLO mode skips the approval interrupt for every shell command in that run and is disabled globally with `agent.allowYolo: false` or `AGENT_ALLOW_YOLO=false`.
 - Stop cancels the run. If approval is pending, the command is never executed. If a command is running, Stop terminates its process tree; cancelled runs do not resume automatically.
 - Commands run non-interactively in the host platform's default shell (`cmd.exe` on Windows and `/bin/sh` on Unix-like systems) with the server process environment.
 - Each command has a configurable hard timeout, defaulting to 10 minutes. Timeout and Stop terminate the complete process tree using the platform-appropriate mechanism.
@@ -54,6 +55,7 @@ Persistence and model behavior:
 - Browser reloads and server restarts can recover history and resume a checkpoint paused for approval. A shell process interrupted by a server crash cannot be resumed; its run is marked orphaned or failed instead.
 - SQLite state remains on the server machine and is intended for a trusted, single-user deployment, not horizontal scaling.
 - The provider and model selected when a run starts are snapshotted for the full run. Later model-picker changes affect only new runs, and Agent runs do not silently fall back to another provider or model.
+- Agent reasoning effort is configured with `agent.reasoningLevel` in `secrets.json` (or `AGENT_REASONING_LEVEL`) and defaults to `high` when missing or invalid.
 - A selected model must be recognized as supporting tool calling, and the selected provider must have its required API key configured. Unsupported selections are rejected rather than substituted.
 - The first version is local-only: only clients on the server machine can use the Agent control plane. CORS is not authentication, and remote or multi-user Agent access is outside this plan.
 

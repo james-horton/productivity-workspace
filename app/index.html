@@ -290,6 +290,7 @@
       <div class="agent-run-strip">
         <span id="agentStatus" class="agent-status" data-status="idle">Idle</span>
         <span id="agentModelSnapshot" class="agent-model-snapshot">No run selected</span>
+        <span id="agentApprovalMode" class="agent-approval-mode" data-mode="manual">Manual approvals</span>
         <span id="agentCurrentRequest" class="agent-current-request"></span>
       </div>
 
@@ -297,12 +298,19 @@
         <label class="sr-only" for="agentRequest">Agent request</label>
         <textarea id="agentRequest" rows="1" required maxlength="20000" placeholder="Type your message..."></textarea>
         <button id="agentStart" class="btn primary" type="submit" title="Start Run" aria-label="Start Run" disabled>Send</button>
+        <div class="agent-run-options">
+          <label class="agent-yolo-toggle" for="agentYolo">
+            <input id="agentYolo" type="checkbox" />
+            <span>YOLO mode</span>
+          </label>
+          <span class="agent-yolo-help">Skip human approval for every shell command in this run.</span>
+        </div>
         <p id="agentCapability" class="agent-capability" data-supported="false">Checking the selected model...</p>
       </form>
 
       <div class="agent-security-note" role="note">
         <strong>Shell access is not sandboxed.</strong>
-        <span>Approved commands run with the server process user's permissions. Output is capped and may contain sensitive data.</span>
+        <span>Approved or YOLO commands run with the server process user's permissions. Output is capped and may contain sensitive data.</span>
       </div>
 
       <div class="agent-workspace">

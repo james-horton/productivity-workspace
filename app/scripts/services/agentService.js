@@ -41,11 +41,11 @@ export async function getAgentRun(runId) {
   return data?.run || data;
 }
 
-export async function startAgentRun({ request, provider, model, modelKey }) {
+export async function startAgentRun({ request, provider, model, modelKey, approvalMode }) {
   const data = await requestJson(ENDPOINTS.agentRuns, {
     method: 'POST',
     headers: JSON_HEADERS,
-    body: JSON.stringify({ request, provider, model, modelKey })
+    body: JSON.stringify({ request, provider, model, modelKey, approvalMode })
   });
   return data?.run || data;
 }

@@ -13,6 +13,9 @@ const RUN_STATUSES = Object.freeze([
 const ACTIVE_STATUSES = new Set(['running', 'awaiting_approval']);
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled']);
 const DECISIONS = new Set(['approve', 'edit', 'reject']);
+const APPROVAL_MODES = new Set(['manual', 'yolo']);
+const DEFAULT_APPROVAL_MODE = 'manual';
+const CURRENT_SCHEMA_VERSION = 2;
 const PROCESS_OWNER_ID = `${process.pid}:${crypto.randomUUID()}`;
 const ORPHANED_RUN_ERROR =
   'The server restarted while this Agent run was executing. The interrupted process cannot be resumed; start a new run.';
@@ -77,6 +80,7 @@ function mapRun(row) {
     startedAt: row.started_at,
     completedAt: row.completed_at,
     error: row.error,
+    approvalMode: row.approval_mode || DEFAULT_APPROVAL_MODE,
     activeApprovalId: row.active_approval_id,
     ownerId: row.owner_id
   };
@@ -168,83 +172,94 @@ class AgentStore {
 
   #migrate() {
     const version = this.db.pragma('user_version', { simple: true });
-    if (version > 1) {
+    if (version > CURRENT_SCHEMA_VERSION) {
       throw new AgentStoreError(
         'UNSUPPORTED_SCHEMA',
-        `Agent database schema version ${version} is newer than supported version 1`
+        `Agent database schema version ${version} is newer than supported version ${CURRENT_SCHEMA_VERSION}`
       );
     }
-    if (version === 1) return;
 
     const migrate = this.db.transaction(() => {
-      this.db.exec(`
-        CREATE TABLE agent_runs (
-          id TEXT PRIMARY KEY,
-          thread_id TEXT NOT NULL UNIQUE,
-          request TEXT NOT NULL,
-          provider TEXT NOT NULL,
-          model TEXT NOT NULL,
-          shell TEXT NOT NULL,
-          cwd TEXT NOT NULL,
-          status TEXT NOT NULL CHECK (
-            status IN ('running', 'awaiting_approval', 'completed', 'failed', 'cancelled')
-          ),
-          created_at TEXT NOT NULL,
-          updated_at TEXT NOT NULL,
-          started_at TEXT NOT NULL,
-          completed_at TEXT,
-          error TEXT,
-          active_approval_id TEXT,
-          owner_id TEXT
-        );
+      if (version === 0) {
+        this.db.exec(`
+          CREATE TABLE agent_runs (
+            id TEXT PRIMARY KEY,
+            thread_id TEXT NOT NULL UNIQUE,
+            request TEXT NOT NULL,
+            provider TEXT NOT NULL,
+            model TEXT NOT NULL,
+            shell TEXT NOT NULL,
+            cwd TEXT NOT NULL,
+            approval_mode TEXT NOT NULL DEFAULT 'manual' CHECK (
+              approval_mode IN ('manual', 'yolo')
+            ),
+            status TEXT NOT NULL CHECK (
+              status IN ('running', 'awaiting_approval', 'completed', 'failed', 'cancelled')
+            ),
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            started_at TEXT NOT NULL,
+            completed_at TEXT,
+            error TEXT,
+            active_approval_id TEXT,
+            owner_id TEXT
+          );
 
-        CREATE UNIQUE INDEX one_active_agent_run
-          ON agent_runs ((1))
-          WHERE status IN ('running', 'awaiting_approval');
-        CREATE INDEX agent_runs_history
-          ON agent_runs (updated_at DESC, created_at DESC);
+          CREATE UNIQUE INDEX one_active_agent_run
+            ON agent_runs ((1))
+            WHERE status IN ('running', 'awaiting_approval');
+          CREATE INDEX agent_runs_history
+            ON agent_runs (updated_at DESC, created_at DESC);
 
-        CREATE TABLE agent_events (
-          event_id INTEGER PRIMARY KEY AUTOINCREMENT,
-          run_id TEXT NOT NULL REFERENCES agent_runs(id) ON DELETE CASCADE,
-          type TEXT NOT NULL,
-          payload_json TEXT NOT NULL,
-          created_at TEXT NOT NULL
-        );
-        CREATE INDEX agent_events_replay
-          ON agent_events (run_id, event_id);
+          CREATE TABLE agent_events (
+            event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id TEXT NOT NULL REFERENCES agent_runs(id) ON DELETE CASCADE,
+            type TEXT NOT NULL,
+            payload_json TEXT NOT NULL,
+            created_at TEXT NOT NULL
+          );
+          CREATE INDEX agent_events_replay
+            ON agent_events (run_id, event_id);
 
-        CREATE TABLE agent_approvals (
-          id TEXT PRIMARY KEY,
-          run_id TEXT NOT NULL REFERENCES agent_runs(id) ON DELETE CASCADE,
-          tool_call_id TEXT,
-          action_name TEXT NOT NULL,
-          shell TEXT NOT NULL,
-          cwd TEXT NOT NULL,
-          allowed_decisions_json TEXT NOT NULL,
-          original_args_json TEXT NOT NULL,
-          edited_args_json TEXT,
-          decision TEXT CHECK (decision IS NULL OR decision IN ('approve', 'edit', 'reject')),
-          feedback TEXT,
-          created_at TEXT NOT NULL,
-          decided_at TEXT
-        );
-        CREATE INDEX agent_approvals_run
-          ON agent_approvals (run_id, created_at DESC);
+          CREATE TABLE agent_approvals (
+            id TEXT PRIMARY KEY,
+            run_id TEXT NOT NULL REFERENCES agent_runs(id) ON DELETE CASCADE,
+            tool_call_id TEXT,
+            action_name TEXT NOT NULL,
+            shell TEXT NOT NULL,
+            cwd TEXT NOT NULL,
+            allowed_decisions_json TEXT NOT NULL,
+            original_args_json TEXT NOT NULL,
+            edited_args_json TEXT,
+            decision TEXT CHECK (decision IS NULL OR decision IN ('approve', 'edit', 'reject')),
+            feedback TEXT,
+            created_at TEXT NOT NULL,
+            decided_at TEXT
+          );
+          CREATE INDEX agent_approvals_run
+            ON agent_approvals (run_id, created_at DESC);
 
-        PRAGMA user_version = 1;
-      `);
+          PRAGMA user_version = ${CURRENT_SCHEMA_VERSION};
+        `);
+      } else if (version === 1) {
+        this.db.exec(`
+          ALTER TABLE agent_runs
+            ADD COLUMN approval_mode TEXT NOT NULL DEFAULT 'manual'
+            CHECK (approval_mode IN ('manual', 'yolo'));
+          PRAGMA user_version = ${CURRENT_SCHEMA_VERSION};
+        `);
+      }
     });
-    migrate.immediate();
+    if (version < CURRENT_SCHEMA_VERSION) migrate.immediate();
   }
 
   #prepareStatements() {
     this.statements = {
       insertRun: this.db.prepare(`
         INSERT INTO agent_runs (
-          id, thread_id, request, provider, model, shell, cwd, status,
+          id, thread_id, request, provider, model, shell, cwd, approval_mode, status,
           created_at, updated_at, started_at, owner_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'running', ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'running', ?, ?, ?, ?)
       `),
       getRun: this.db.prepare('SELECT * FROM agent_runs WHERE id = ?'),
       getActiveRun: this.db.prepare(`
@@ -314,6 +329,10 @@ class AgentStore {
       'shell'
     );
     const cwd = requireNonEmptyString(input.cwd || process.cwd(), 'cwd');
+    const approvalMode = input.approvalMode || DEFAULT_APPROVAL_MODE;
+    if (!APPROVAL_MODES.has(approvalMode)) {
+      throw new AgentStoreError('INVALID_ARGUMENT', `Unsupported approval mode: ${approvalMode}`);
+    }
     const timestamp = this.now();
 
     const create = this.db.transaction(() => {
@@ -325,6 +344,7 @@ class AgentStore {
         model,
         shell,
         cwd,
+        approvalMode,
         timestamp,
         timestamp,
         timestamp,

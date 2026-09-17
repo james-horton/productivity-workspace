@@ -56,7 +56,7 @@ sqliteTest('migrates a WAL database and enforces one active run across connectio
   const second = harness.open({ ownerId: 'owner-1' });
 
   assert.equal(first.getDatabase(), first.rawDb);
-  assert.equal(first.getDatabase().pragma('user_version', { simple: true }), 1);
+  assert.equal(first.getDatabase().pragma('user_version', { simple: true }), 2);
   assert.equal(first.getDatabase().pragma('journal_mode', { simple: true }), 'wal');
 
   first.createRun(runInput('run-1'));
@@ -69,6 +69,76 @@ sqliteTest('migrates a WAL database and enforces one active run across connectio
 
   first.completeRun('run-1');
   assert.equal(second.createRun(runInput('run-2')).status, 'running');
+});
+
+sqliteTest('upgrades legacy run records to manual approval mode', t => {
+  const db = new Database(':memory:');
+  db.exec(`
+    CREATE TABLE agent_runs (
+      id TEXT PRIMARY KEY,
+      thread_id TEXT NOT NULL UNIQUE,
+      request TEXT NOT NULL,
+      provider TEXT NOT NULL,
+      model TEXT NOT NULL,
+      shell TEXT NOT NULL,
+      cwd TEXT NOT NULL,
+      status TEXT NOT NULL CHECK (
+        status IN ('running', 'awaiting_approval', 'completed', 'failed', 'cancelled')
+      ),
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      started_at TEXT NOT NULL,
+      completed_at TEXT,
+      error TEXT,
+      active_approval_id TEXT,
+      owner_id TEXT
+    );
+    CREATE UNIQUE INDEX one_active_agent_run
+      ON agent_runs ((1))
+      WHERE status IN ('running', 'awaiting_approval');
+    CREATE INDEX agent_runs_history
+      ON agent_runs (updated_at DESC, created_at DESC);
+    CREATE TABLE agent_events (
+      event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      run_id TEXT NOT NULL REFERENCES agent_runs(id) ON DELETE CASCADE,
+      type TEXT NOT NULL,
+      payload_json TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX agent_events_replay ON agent_events (run_id, event_id);
+    CREATE TABLE agent_approvals (
+      id TEXT PRIMARY KEY,
+      run_id TEXT NOT NULL REFERENCES agent_runs(id) ON DELETE CASCADE,
+      tool_call_id TEXT,
+      action_name TEXT NOT NULL,
+      shell TEXT NOT NULL,
+      cwd TEXT NOT NULL,
+      allowed_decisions_json TEXT NOT NULL,
+      original_args_json TEXT NOT NULL,
+      edited_args_json TEXT,
+      decision TEXT CHECK (decision IS NULL OR decision IN ('approve', 'edit', 'reject')),
+      feedback TEXT,
+      created_at TEXT NOT NULL,
+      decided_at TEXT
+    );
+    CREATE INDEX agent_approvals_run ON agent_approvals (run_id, created_at DESC);
+    PRAGMA user_version = 1;
+  `);
+  const store = new AgentStore({ db, dbPath: ':memory:', recoverOrphans: false });
+  t.after(() => store.close({ force: true }));
+
+  assert.equal(db.pragma('user_version', { simple: true }), 2);
+  store.createRun(runInput('legacy-run'));
+  assert.equal(store.getRun('legacy-run').approvalMode, 'manual');
+});
+
+sqliteTest('persists the approval mode with each run', t => {
+  const harness = createHarness(t);
+  const store = harness.open();
+  store.createRun({ ...runInput('yolo-run'), approvalMode: 'yolo' });
+
+  assert.equal(store.getRun('yolo-run').approvalMode, 'yolo');
+  assert.equal(store.listRuns({ limit: 1 })[0].approvalMode, 'yolo');
 });
 
 sqliteTest('replays sanitized events in monotonic order after an event ID', t => {
