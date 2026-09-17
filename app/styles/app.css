@@ -1769,6 +1769,7 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   display: none;
 }
 .modal-body input[type="text"],
+.modal-body input[type="password"],
 .message-box-body input[type="text"],
 .modal-body select {
   width: 100%;
@@ -1778,6 +1779,47 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   background: var(--surface-2);
   color: var(--text);
   outline: none;
+}
+.settings-group {
+  min-width: 0;
+  margin: 0;
+  padding: .75rem;
+  border: 1px solid var(--ring);
+  border-radius: 10px;
+  display: grid;
+  gap: .75rem;
+}
+.settings-group legend {
+  padding: 0 .35rem;
+  color: var(--text);
+  font-weight: 700;
+}
+.api-key-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .5rem;
+}
+.api-key-input-row input {
+  min-width: 0;
+}
+.api-key-toggle.btn.icon-only {
+  inline-size: 38px;
+  block-size: 38px;
+  padding: 0;
+}
+.api-key-toggle .api-key-eye {
+  width: 18px;
+  height: 18px;
+}
+.api-key-toggle .icon.api-key-eye-hide {
+  display: none;
+}
+.api-key-toggle[aria-pressed="true"] .api-key-eye-show {
+  display: none;
+}
+.api-key-toggle[aria-pressed="true"] .api-key-eye-hide {
+  display: block;
 }
 .modal-actions {
   display: flex;

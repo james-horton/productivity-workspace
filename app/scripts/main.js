@@ -1832,6 +1832,9 @@ function initSettingsUI() {
   const inputOpenAiApiKey = document.getElementById('settingsOpenAiApiKey');
   const inputTavilyApiKey = document.getElementById('settingsTavilyApiKey');
   const inputOpenRouterApiKey = document.getElementById('settingsOpenRouterApiKey');
+  const inputOpenAiApiKeyToggle = document.getElementById('settingsOpenAiApiKeyToggle');
+  const inputTavilyApiKeyToggle = document.getElementById('settingsTavilyApiKeyToggle');
+  const inputOpenRouterApiKeyToggle = document.getElementById('settingsOpenRouterApiKeyToggle');
   const btnClose = document.getElementById('settingsClose');
   const btnCancel = document.getElementById('settingsCancel');
 
@@ -1843,8 +1846,35 @@ function initSettingsUI() {
   let apiKeysLoaded = false;
   let apiKeysLoading = false;
   let loadedApiKeys = null;
+  const apiKeyVisibilityControls = [
+    { input: inputOpenAiApiKey, button: inputOpenAiApiKeyToggle, provider: 'OpenAI' },
+    { input: inputTavilyApiKey, button: inputTavilyApiKeyToggle, provider: 'Tavily' },
+    { input: inputOpenRouterApiKey, button: inputOpenRouterApiKeyToggle, provider: 'OpenRouter' }
+  ];
 
   if (!btn || !modal || !form || !selectTheme || !inputCity || !selectState) return;
+
+  function setApiKeyVisibility(control, visible) {
+    if (!control.input || !control.button) return;
+    control.input.type = visible ? 'text' : 'password';
+    control.button.setAttribute('aria-pressed', String(visible));
+    const action = visible ? 'Hide' : 'Show';
+    const label = `${action} ${control.provider} API key`;
+    control.button.setAttribute('aria-label', label);
+    control.button.title = label;
+  }
+
+  apiKeyVisibilityControls.forEach(control => {
+    if (!control.input || !control.button) return;
+    control.button.addEventListener('click', () => {
+      setApiKeyVisibility(control, control.input.type === 'password');
+      control.input.focus();
+    });
+  });
+
+  function resetApiKeyVisibility() {
+    apiKeyVisibilityControls.forEach(control => setApiKeyVisibility(control, false));
+  }
 
   if (settingsTabs && panelGeneral && panelReddit && panelUI && panelApi) {
     const tabButtons = settingsTabs.querySelectorAll('.tab');
@@ -1929,6 +1959,7 @@ function initSettingsUI() {
 
   function open() {
     prefill();
+    resetApiKeyVisibility();
     apiKeysLoaded = false;
     loadedApiKeys = null;
     void prefillApiKeys();
@@ -1954,6 +1985,7 @@ function initSettingsUI() {
   }
 
   function close() {
+    resetApiKeyVisibility();
     modal.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('modal-open');
   }

@@ -553,18 +553,63 @@
 
         <!-- API Tab Panel -->
         <div id="settingsPanelApi" class="settings-panel hidden">
-          <div class="control-row">
-            <label for="settingsOpenAiApiKey" class="label">OpenAI API key</label>
-            <input id="settingsOpenAiApiKey" type="text" autocomplete="off" spellcheck="false" />
-          </div>
-          <div class="control-row">
-            <label for="settingsTavilyApiKey" class="label">Tavily API key</label>
-            <input id="settingsTavilyApiKey" type="text" autocomplete="off" spellcheck="false" />
-          </div>
-          <div class="control-row">
-            <label for="settingsOpenRouterApiKey" class="label">OpenRouter API key</label>
-            <input id="settingsOpenRouterApiKey" type="text" autocomplete="off" spellcheck="false" />
-          </div>
+          <fieldset class="settings-group">
+            <legend>Keys</legend>
+            <div class="control-row">
+              <label for="settingsOpenAiApiKey" class="label">OpenAI</label>
+              <div class="api-key-input-row">
+                <input id="settingsOpenAiApiKey" type="password" autocomplete="off" spellcheck="false" />
+                <button id="settingsOpenAiApiKeyToggle" class="btn icon-only api-key-toggle" type="button" aria-label="Show OpenAI API key" aria-controls="settingsOpenAiApiKey" aria-pressed="false" title="Show OpenAI API key">
+                  <svg class="icon api-key-eye api-key-eye-show" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-5 10-5 10 5 10 5-3 5-10 5-10-5-10-5Z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                  <svg class="icon api-key-eye api-key-eye-hide" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m3 3 18 18"></path>
+                    <path d="M10.58 10.58a2 2 0 0 0 2.83 2.83"></path>
+                    <path d="M9.88 4.24A10.94 10.94 0 0 1 12 4c7 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+                    <path d="M6.61 6.61C3.91 8.49 2 12 2 12s3 8 10 8a10.94 10.94 0 0 0 2.12-.21"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="control-row">
+              <label for="settingsTavilyApiKey" class="label">Tavily</label>
+              <div class="api-key-input-row">
+                <input id="settingsTavilyApiKey" type="password" autocomplete="off" spellcheck="false" />
+                <button id="settingsTavilyApiKeyToggle" class="btn icon-only api-key-toggle" type="button" aria-label="Show Tavily API key" aria-controls="settingsTavilyApiKey" aria-pressed="false" title="Show Tavily API key">
+                  <svg class="icon api-key-eye api-key-eye-show" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-5 10-5 10 5 10 5-3 5-10 5-10-5-10-5Z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                  <svg class="icon api-key-eye api-key-eye-hide" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m3 3 18 18"></path>
+                    <path d="M10.58 10.58a2 2 0 0 0 2.83 2.83"></path>
+                    <path d="M9.88 4.24A10.94 10.94 0 0 1 12 4c7 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+                    <path d="M6.61 6.61C3.91 8.49 2 12 2 12s3 8 10 8a10.94 10.94 0 0 0 2.12-.21"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="control-row">
+              <label for="settingsOpenRouterApiKey" class="label">OpenRouter</label>
+              <div class="api-key-input-row">
+                <input id="settingsOpenRouterApiKey" type="password" autocomplete="off" spellcheck="false" />
+                <button id="settingsOpenRouterApiKeyToggle" class="btn icon-only api-key-toggle" type="button" aria-label="Show OpenRouter API key" aria-controls="settingsOpenRouterApiKey" aria-pressed="false" title="Show OpenRouter API key">
+                  <svg class="icon api-key-eye api-key-eye-show" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-5 10-5 10 5 10 5-3 5-10 5-10-5-10-5Z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                  <svg class="icon api-key-eye api-key-eye-hide" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m3 3 18 18"></path>
+                    <path d="M10.58 10.58a2 2 0 0 0 2.83 2.83"></path>
+                    <path d="M9.88 4.24A10.94 10.94 0 0 1 12 4c7 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+                    <path d="M6.61 6.61C3.91 8.49 2 12 2 12s3 8 10 8a10.94 10.94 0 0 0 2.12-.21"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </fieldset>
         </div>
 
         <!-- UI Tab Panel -->
