@@ -2439,23 +2439,6 @@ body.modal-open { overflow: hidden; }
   display: none !important; /* override .calc-btn.equals */
 }
 
-/* Agent mission control */
-.model-tool-badge {
-  display: inline-block;
-  margin-inline-start: .45rem;
-  padding: .08rem .35rem;
-  border: 1px solid color-mix(in oklab, var(--accent) 48%, var(--ring));
-  border-radius: 999px;
-  color: var(--accent);
-  background: color-mix(in oklab, var(--accent) 10%, transparent);
-  font-size: .67rem;
-  font-weight: 800;
-  letter-spacing: .04em;
-  line-height: 1.25;
-  text-transform: uppercase;
-  vertical-align: .08em;
-}
-
 .agent-card {
   padding-bottom: 0;
   background:

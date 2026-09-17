@@ -920,7 +920,6 @@ function renderModelOptions() {
     const label = document.createElement('span');
     label.className = 'model-combobox-option-label';
     label.textContent = selectedOpenAI.label;
-    appendModelCapabilityBadge(label, selectedOpenAI);
     const arrow = document.createElement('span');
     arrow.className = 'model-provider-arrow';
     arrow.setAttribute('aria-hidden', 'true');
@@ -949,7 +948,6 @@ function renderModelOptions() {
       const optionLabel = document.createElement('span');
       optionLabel.className = 'model-combobox-option-label';
       optionLabel.textContent = model.label.replace(/^OpenAI:\s*/, '');
-      appendModelCapabilityBadge(optionLabel, model);
       option.append(optionLabel);
       submenu.append(option);
     });
@@ -982,7 +980,6 @@ function renderModelOptions() {
     const label = document.createElement('span');
     label.className = 'model-combobox-option-label';
     label.textContent = model.label;
-    appendModelCapabilityBadge(label, model);
 
     option.append(label);
 
@@ -1020,15 +1017,6 @@ function getPrimaryModelOptions() {
   return Array.from(modelOptions()?.querySelectorAll(
     ':scope > [data-model-key], :scope > .model-provider-option > [data-model-provider-trigger]'
   ) || []);
-}
-
-function appendModelCapabilityBadge(parent, model) {
-  if (!parent || model?.supportsToolCalling !== true) return;
-  const badge = document.createElement('span');
-  badge.className = 'model-tool-badge';
-  badge.textContent = 'Tools';
-  badge.title = 'Supports Agent tool calling';
-  parent.appendChild(badge);
 }
 
 function setOpenAISubmenu(open, focusSubmenu = false) {
@@ -1341,7 +1329,6 @@ function syncSelectedModelOption(modelKey) {
     const label = trigger.querySelector('.model-combobox-option-label');
     if (label) {
       label.textContent = selected.label;
-      appendModelCapabilityBadge(label, selected);
     }
   } else if (trigger) {
     trigger.setAttribute('aria-selected', 'false');
