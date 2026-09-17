@@ -2621,10 +2621,6 @@ body.modal-open { overflow: hidden; }
   height: 1.05rem;
   accent-color: #ef4444;
 }
-.agent-yolo-help {
-  color: var(--muted);
-  font-size: .74rem;
-}
 .agent-capability[data-supported="false"] { color: color-mix(in oklab, #ef4444 74%, var(--text)); }
 .agent-security-note {
   display: flex;
