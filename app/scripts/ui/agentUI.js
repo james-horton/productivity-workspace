@@ -151,9 +151,14 @@ function modelSnapshot(run) {
   return [provider, model].filter(Boolean).join(' / ');
 }
 
+function approvalMode(run) {
+  return firstValue(run, ['approvalMode', 'approval_mode']).toLowerCase() === 'yolo' ? 'yolo' : 'manual';
+}
+
 function renderHeader() {
   const status = byId('agentStatus');
   const snapshot = byId('agentModelSnapshot');
+  const mode = byId('agentApprovalMode');
   const request = byId('agentCurrentRequest');
   const currentStatus = ui.currentRun ? runStatus(ui.currentRun) : 'idle';
   if (status) {
@@ -161,6 +166,11 @@ function renderHeader() {
     status.dataset.status = currentStatus;
   }
   if (snapshot) snapshot.textContent = ui.currentRun ? (modelSnapshot(ui.currentRun) || 'Model snapshot unavailable') : 'No run selected';
+  if (mode) {
+    const currentMode = ui.currentRun ? approvalMode(ui.currentRun) : 'manual';
+    mode.textContent = currentMode === 'yolo' ? 'YOLO mode' : 'Manual approvals';
+    mode.dataset.mode = currentMode;
+  }
   if (request) request.textContent = ui.currentRun ? text(firstValue(ui.currentRun, ['request', 'prompt', 'mission'])) : '';
 }
 
@@ -200,11 +210,15 @@ function syncControls() {
   const newRun = byId('agentNewRun');
   const request = byId('agentRequest');
   const history = byId('agentHistory');
+  const yolo = byId('agentYolo');
   if (start) start.disabled = ui.busy || anyActive || !ui.modelCapable;
   if (stop) stop.disabled = ui.busy || !selectedActive;
   if (newRun) newRun.disabled = ui.busy;
   if (request) request.disabled = ui.busy;
   if (history) history.disabled = ui.busy;
+  if (yolo) {
+    yolo.disabled = ui.busy || anyActive;
+  }
 }
 
 function shellDetails(payload) {
@@ -722,20 +736,33 @@ async function handleStart(event) {
     return;
   }
 
+  const yolo = byId('agentYolo');
+  const approvalMode = yolo?.checked === true ? 'yolo' : 'manual';
+  if (approvalMode === 'yolo' && !window.confirm(
+    'YOLO mode will execute every shell command without human approval using the server process permissions. Continue?'
+  )) {
+    announce('YOLO run cancelled.');
+    return;
+  }
+
   setBusy(true);
-  announce(`Starting a run with ${model.label}...`);
+  announce(`Starting a ${approvalMode === 'yolo' ? 'YOLO ' : ''}run with ${model.label}...`);
   try {
     const run = await startAgentRun({
       request,
       provider: providerFor(model.key),
-      model: modelIdFor(model.key)
+      model: modelIdFor(model.key),
+      approvalMode
     });
     if (!runId(run)) throw new Error('The Agent server did not return a run ID.');
     input.value = '';
     input.dispatchEvent(new Event('input'));
+    if (yolo) yolo.checked = false;
     ui.runs = [run, ...ui.runs.filter(item => runId(item) !== runId(run))];
     await selectRun(runId(run));
-    announce('Agent run started. Shell commands will require approval.');
+    announce(approvalMode === 'yolo'
+      ? 'YOLO Agent run started. Shell commands will execute without approval.'
+      : 'Agent run started. Shell commands will require approval.');
   } catch (err) {
     announce(err?.message || 'Could not start the Agent run.', 'error');
   } finally {
@@ -784,6 +811,7 @@ export function initAgentUI() {
       byId('agentForm')?.requestSubmit();
     }
   });
+  byId('agentYolo')?.addEventListener('change', syncControls);
   document.addEventListener('pw:model:changed', refreshCapability);
   document.addEventListener('pw:settings:loaded', refreshCapability);
 

@@ -118,6 +118,7 @@ function publicRun(run) {
     provider: run.provider,
     model: run.model,
     modelSnapshot: { provider: run.provider, model: run.model },
+    approvalMode: run.approvalMode || 'manual',
     shell: run.shell,
     cwd: run.cwd,
     status: run.status,
@@ -158,6 +159,9 @@ function createAgentRouter(options = {}) {
       requestMaxLength: agentConfig.requestMaxLength,
       commandMaxLength: agentConfig.commandMaxLength
     });
+    if (input.approvalMode === 'yolo' && agentConfig.allowYolo === false) {
+      throw new AgentRuntimeError('YOLO_DISABLED', 'YOLO mode is disabled by the Agent configuration.', 403);
+    }
     await capabilityResolver(input, { config, fetch: options.fetch });
     const runRecord = await runtime.startRun({ ...input, supportsToolCalling: true });
     res.status(202).json({ run: publicRun(runRecord) });

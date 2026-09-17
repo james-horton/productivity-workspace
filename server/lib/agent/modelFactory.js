@@ -1,6 +1,15 @@
 'use strict';
 
 const SUPPORTED_PROVIDERS = new Set(['openai', 'openrouter']);
+const AGENT_REASONING_LEVELS = new Set(['low', 'medium', 'high']);
+const DEFAULT_AGENT_REASONING_LEVEL = 'high';
+
+function normalizeAgentReasoningLevel(value) {
+  const normalized = String(value == null ? '' : value).trim().toLowerCase();
+  return AGENT_REASONING_LEVELS.has(normalized)
+    ? normalized
+    : DEFAULT_AGENT_REASONING_LEVEL;
+}
 
 class ModelFactoryError extends Error {
   constructor(message, code) {
@@ -126,7 +135,7 @@ function loadAdapter(packageName, exportName) {
   }
 }
 
-function buildOpenAIModel(model, providerConfig, ChatOpenAI) {
+function buildOpenAIModel(model, providerConfig, ChatOpenAI, reasoningLevel = DEFAULT_AGENT_REASONING_LEVEL) {
   const ModelClass = ChatOpenAI || loadAdapter('@langchain/openai', 'ChatOpenAI');
   return new ModelClass({
     model,
@@ -135,13 +144,14 @@ function buildOpenAIModel(model, providerConfig, ChatOpenAI) {
     temperature: providerConfig.defaultTemperature,
     maxTokens: providerConfig.defaultMaxTokens,
     timeout: providerConfig.timeoutMs,
+    reasoning: { effort: normalizeAgentReasoningLevel(reasoningLevel) },
     configuration: {
       baseURL: normalizeOpenAIResponsesBaseURL(providerConfig.responsesUrl)
     }
   });
 }
 
-function buildOpenRouterModel(model, providerConfig, ChatOpenRouter) {
+function buildOpenRouterModel(model, providerConfig, ChatOpenRouter, reasoningLevel = DEFAULT_AGENT_REASONING_LEVEL) {
   const ModelClass = ChatOpenRouter || loadAdapter('@langchain/openrouter', 'ChatOpenRouter');
   const instance = new ModelClass({
     model,
@@ -150,11 +160,18 @@ function buildOpenRouterModel(model, providerConfig, ChatOpenRouter) {
     temperature: providerConfig.defaultTemperature,
     maxTokens: providerConfig.defaultMaxTokens,
     modelKwargs: {
-      reasoning: { exclude: true }
+      reasoning: {
+        effort: normalizeAgentReasoningLevel(reasoningLevel),
+        exclude: true
+      }
     },
     provider: {
       allow_fallbacks: false,
-      require_parameters: true
+      // Agent defaults include optional fields such as max_tokens, temperature,
+      // and reasoning that are not supported by every OpenRouter endpoint.
+      // Let OpenRouter omit unsupported fields instead of filtering out all
+      // otherwise usable endpoints.
+      require_parameters: false
     }
   });
 
@@ -168,16 +185,21 @@ function createAgentModel(selection, options = {}) {
   const appConfig = options.config || require('../../config').config;
   const providerConfig = validateProviderKey(validated.provider, appConfig);
   const dependencies = options.dependencies || {};
+  const reasoningLevel = normalizeAgentReasoningLevel(
+    options.reasoningLevel ?? appConfig.agent?.reasoningLevel
+  );
 
   if (validated.provider === 'openai') {
-    return buildOpenAIModel(validated.model, providerConfig, dependencies.ChatOpenAI);
+    return buildOpenAIModel(validated.model, providerConfig, dependencies.ChatOpenAI, reasoningLevel);
   }
 
-  return buildOpenRouterModel(validated.model, providerConfig, dependencies.ChatOpenRouter);
+  return buildOpenRouterModel(validated.model, providerConfig, dependencies.ChatOpenRouter, reasoningLevel);
 }
 
 module.exports = {
   ModelFactoryError,
+  AGENT_REASONING_LEVELS,
+  DEFAULT_AGENT_REASONING_LEVEL,
   assertToolCapability,
   buildOpenAIModel,
   buildOpenRouterModel,
@@ -185,6 +207,7 @@ module.exports = {
   isSupportedProvider,
   normalizeOpenAIResponsesBaseURL,
   normalizeOpenRouterChatCompletionsBaseURL,
+  normalizeAgentReasoningLevel,
   validateModelSelection,
   validateProviderAndModel,
   validateProviderKey

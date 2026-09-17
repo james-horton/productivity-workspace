@@ -13,6 +13,7 @@ const DEFAULT_LIMITS = Object.freeze({
 });
 
 const PROVIDERS = new Set(['openai', 'openrouter']);
+const APPROVAL_MODES = new Set(['manual', 'yolo']);
 const DECISION_TYPES = new Set(['approve', 'edit', 'reject']);
 
 class AgentRequestError extends Error {
@@ -175,14 +176,21 @@ function validateStartRequest(body, options = {}) {
     'modelKey',
     readLimit(options, 'modelKeyMaxLength')
   );
+  const approvalMode = optionalString(body.approvalMode, 'approvalMode', 16);
 
   if (!PROVIDERS.has(provider)) {
     invalid('provider must be "openai" or "openrouter".', 'provider');
   }
 
-  return modelKey === undefined
+  if (approvalMode !== undefined && !APPROVAL_MODES.has(approvalMode.toLowerCase())) {
+    invalid('approvalMode must be "manual" or "yolo".', 'approvalMode');
+  }
+
+  const result = modelKey === undefined
     ? { request, provider, model }
     : { request, provider, model, modelKey };
+  if (approvalMode !== undefined) result.approvalMode = approvalMode.toLowerCase();
+  return result;
 }
 
 function validateShellAction(action, options = {}, field = 'editedAction') {
@@ -262,6 +270,7 @@ function validateApprovalRequest(body, options = {}) {
 module.exports = {
   AgentRequestError,
   DEFAULT_LIMITS,
+  APPROVAL_MODES,
   normalizeSocketAddress,
   isLoopbackAddress,
   isLocalRequest,

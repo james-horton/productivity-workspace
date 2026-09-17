@@ -118,6 +118,13 @@ test('validates and normalizes Agent start payloads', () => {
     provider: 'openrouter',
     model: 'vendor/model'
   });
+
+  assert.equal(validateStartRequest({
+    request: 'Run without approval',
+    provider: 'openai',
+    model: 'gpt-tool-model',
+    approvalMode: ' YOLO '
+  }).approvalMode, 'yolo');
 });
 
 test('rejects malformed start payloads and configured length overflows', () => {
@@ -139,6 +146,12 @@ test('rejects malformed start payloads and configured length overflows', () => {
       { modelKeyMaxLength: 3 }
     ),
     { field: 'modelKey' }
+  );
+  assertRequestError(
+    () => validateStartRequest({
+      request: 'task', provider: 'openai', model: 'model', approvalMode: 'automatic'
+    }),
+    { field: 'approvalMode' }
   );
 });
 

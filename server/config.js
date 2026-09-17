@@ -4,6 +4,12 @@ const fs = require('fs');
 const path = require('path');
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
+const AGENT_REASONING_LEVELS = new Set(['low', 'medium', 'high']);
+
+function normalizeAgentReasoningLevel(value) {
+  const normalized = String(value == null ? '' : value).trim().toLowerCase();
+  return AGENT_REASONING_LEVELS.has(normalized) ? normalized : 'high';
+}
 
 function configBoolean(envValue, jsonValue, fallback) {
   const value = envValue !== undefined ? envValue : jsonValue;
@@ -132,6 +138,12 @@ function loadSecrets() {
     agent: {
       enabled: configBoolean(process.env.AGENT_ENABLED, agentConfig.enabled, true),
       localOnly: configBoolean(process.env.AGENT_LOCAL_ONLY, agentConfig.localOnly, true),
+      allowYolo: configBoolean(process.env.AGENT_ALLOW_YOLO, agentConfig.allowYolo, true),
+      reasoningLevel: normalizeAgentReasoningLevel(
+        process.env.AGENT_REASONING_LEVEL !== undefined
+          ? process.env.AGENT_REASONING_LEVEL
+          : agentConfig.reasoningLevel
+      ),
       projectRoot: PROJECT_ROOT,
       dbPath: resolveProjectPath(process.env.AGENT_DB_PATH || agentConfig.dbPath, 'agent.sqlite'),
       commandTimeoutMs: positiveInteger(process.env.AGENT_COMMAND_TIMEOUT_MS, agentConfig.commandTimeoutMs, 600000),
@@ -191,4 +203,4 @@ function loadSecrets() {
 
 const config = loadSecrets();
 
-module.exports = { config };
+module.exports = { config, normalizeAgentReasoningLevel };
