@@ -129,19 +129,9 @@ function currentModel() {
 }
 
 function refreshCapability() {
-  const box = byId('agentCapability');
   const model = currentModel();
   ui.modelCapable = !!model && supportsToolCallingFor(model.key);
-  if (box) {
-    box.dataset.supported = ui.modelCapable ? 'true' : 'false';
-    if (!model) {
-      box.textContent = 'The selected model is not in the current registry. Refresh models or choose another model.';
-    } else if (ui.modelCapable) {
-      box.textContent = `New runs use ${model.label}. Tool calling is available.`;
-    } else {
-      box.textContent = `${model.label} is not known to support tool calling. Choose a tool-capable model.`;
-    }
-  }
+  renderHeader();
   syncControls();
 }
 
@@ -166,7 +156,7 @@ function renderHeader() {
     status.textContent = statusLabel(currentStatus);
     status.dataset.status = currentStatus;
   }
-  if (snapshot) snapshot.textContent = ui.currentRun ? (modelSnapshot(ui.currentRun) || 'Model snapshot unavailable') : 'No run selected';
+  if (snapshot) snapshot.textContent = modelSnapshot(ui.currentRun || currentModel());
   if (mode) {
     const currentMode = ui.currentRun ? approvalMode(ui.currentRun) : 'manual';
     mode.textContent = currentMode === 'yolo' ? 'YOLO mode' : 'Manual approvals';

@@ -2594,12 +2594,6 @@ body.modal-open { overflow: hidden; }
   border-color: color-mix(in oklab, var(--accent) 65%, var(--ring));
   box-shadow: var(--focus-ring);
 }
-.agent-capability {
-  grid-column: 1 / -1;
-  margin: -.2rem 0 0;
-  color: var(--muted);
-  font-size: .76rem;
-}
 .agent-run-options {
   display: flex;
   grid-column: 1 / -1;
@@ -2621,7 +2615,6 @@ body.modal-open { overflow: hidden; }
   height: 1.05rem;
   accent-color: #ef4444;
 }
-.agent-capability[data-supported="false"] { color: color-mix(in oklab, #ef4444 74%, var(--text)); }
 .agent-security-note {
   display: flex;
   gap: .5rem;
