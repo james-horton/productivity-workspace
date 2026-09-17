@@ -2886,7 +2886,7 @@ body.modal-open { overflow: hidden; }
   .agent-run-controls select { flex-basis: 100%; min-width: 0; }
   .agent-run-controls .btn { flex: 1 1 0; min-height: 44px; }
   .agent-run-strip { grid-template-columns: auto minmax(0, 1fr); padding-inline: .8rem; }
-  .agent-approval-mode { grid-column: 2; }
+  .agent-approval-mode { grid-column: 1 / -1; justify-self: start; }
   .agent-current-request { grid-column: 1 / -1; white-space: normal; }
   .agent-security-note { margin-inline: .8rem; }
   .agent-pane-head { align-items: flex-start; flex-direction: column; }
