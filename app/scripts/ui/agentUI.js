@@ -16,6 +16,7 @@ import {
   supportsToolCallingFor
 } from '../services/modelRegistry.js';
 import { applyHighlight, renderAgentMessage } from './chatUI.js';
+import { showMessageBox } from './messageBox.js';
 import {
   getAgentRun,
   listAgentRuns,
@@ -738,11 +739,17 @@ async function handleStart(event) {
 
   const yolo = byId('agentYolo');
   const approvalMode = yolo?.checked === true ? 'yolo' : 'manual';
-  if (approvalMode === 'yolo' && !window.confirm(
-    'YOLO mode will execute every shell command without human approval using the server process permissions. Continue?'
-  )) {
-    announce('YOLO run cancelled.');
-    return;
+  if (approvalMode === 'yolo') {
+    const confirmed = await showMessageBox({
+      title: 'Run in YOLO mode?',
+      message: 'YOLO mode will execute every shell command without human approval using the server process permissions. Continue?',
+      confirmLabel: 'Continue',
+      cancelLabel: 'Cancel'
+    });
+    if (!confirmed) {
+      announce('YOLO run cancelled.');
+      return;
+    }
   }
 
   setBusy(true);
