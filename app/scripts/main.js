@@ -617,7 +617,7 @@ function wireControls() {
   // Reddit refresh
   redditRefresh().addEventListener('click', async () => {
     if (!getShowReddit()) return;
-    await loadReddit(getActiveRedditTabIndex());
+    await loadReddit(getActiveRedditTabIndex(), { forceRefresh: true });
   });
 }
 
@@ -1781,7 +1781,7 @@ function setRedditHeaderFromIndex(index = getActiveRedditTabIndex()) {
   h.textContent = name ? `Reddit - /r/${name}` : 'Reddit';
 }
 
-async function loadReddit(index = getActiveRedditTabIndex()) {
+async function loadReddit(index = getActiveRedditTabIndex(), { forceRefresh = false } = {}) {
   if (!getShowReddit()) return;
   setRedditBusy(true);
   renderRedditLoading();
@@ -1794,7 +1794,7 @@ async function loadReddit(index = getActiveRedditTabIndex()) {
       return;
     }
     const LIMIT = REDDIT_MAX_POSTS;
-    const data = await fetchReddit(sub, { limit: LIMIT });
+    const data = await fetchReddit(sub, { limit: LIMIT, forceRefresh });
     renderRedditItems(data.items || []);
     updateRedditSummariesForViewport();
   } catch (err) {
