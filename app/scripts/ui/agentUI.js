@@ -530,7 +530,7 @@ function renderTimeline() {
     const node = renderTimelineEvent(event);
     if (node) timeline.appendChild(node);
   });
-  if (!timeline.childElementCount) timeline.appendChild(create('p', 'agent-empty', 'Select a run or describe a new mission.'));
+  if (!timeline.childElementCount) timeline.appendChild(create('p', 'agent-empty', 'Select a run or start a new one.'));
 }
 
 function renderAll() {
