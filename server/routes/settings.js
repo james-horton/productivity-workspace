@@ -142,6 +142,7 @@ function buildSettingsResponse() {
     showAnalogClockFrame: normalizeBoolean(s.showAnalogClockFrame, true),
     analogClockFrameWidth: normalizeAnalogClockFrameWidth(s.analogClockFrameWidth),
     showWebSearch: normalizeBoolean(s.showWebSearch, true),
+    showNews: normalizeBoolean(s.showNews, true),
     showReddit: normalizeBoolean(s.showReddit, false),
     showAgent: normalizeBoolean(s.showAgent, true),
     roundedBorders: normalizeBoolean(s.roundedBorders, true)
@@ -210,6 +211,7 @@ router.put('/', (req, res, next) => {
     const currentShowAnalogClockFrame = normalizeBoolean((config.userSettings || {}).showAnalogClockFrame, true);
     const currentAnalogClockFrameWidth = normalizeAnalogClockFrameWidth((config.userSettings || {}).analogClockFrameWidth);
     const currentShowWebSearch = normalizeBoolean((config.userSettings || {}).showWebSearch, true);
+    const currentShowNews = normalizeBoolean((config.userSettings || {}).showNews, true);
     const currentShowReddit = normalizeBoolean((config.userSettings || {}).showReddit, false);
     const currentShowAgent = normalizeBoolean((config.userSettings || {}).showAgent, true);
     const currentRoundedBorders = normalizeBoolean((config.userSettings || {}).roundedBorders, true);
@@ -236,6 +238,9 @@ router.put('/', (req, res, next) => {
     const showWebSearch = Object.prototype.hasOwnProperty.call(body, 'showWebSearch')
       ? normalizeBoolean(body.showWebSearch, true)
       : currentShowWebSearch;
+    const showNews = Object.prototype.hasOwnProperty.call(body, 'showNews')
+      ? normalizeBoolean(body.showNews, true)
+      : currentShowNews;
     const showReddit = Object.prototype.hasOwnProperty.call(body, 'showReddit')
       ? normalizeBoolean(body.showReddit, false)
       : currentShowReddit;
@@ -268,13 +273,14 @@ router.put('/', (req, res, next) => {
     secrets.userSettings.showAnalogClockFrame = showAnalogClockFrame;
     secrets.userSettings.analogClockFrameWidth = analogClockFrameWidth;
     secrets.userSettings.showWebSearch = showWebSearch;
+    secrets.userSettings.showNews = showNews;
     secrets.userSettings.showReddit = showReddit;
     secrets.userSettings.showAgent = showAgent;
     secrets.userSettings.roundedBorders = roundedBorders;
     writeSecretsFile(secrets);
 
     // Sync in-memory config so subsequent GETs reflect the change immediately.
-    config.userSettings = { theme, openaiModel, city, state, subreddits, showInspirationQuote, showCalculator, showClock, clockView, showAnalogClockFrame, analogClockFrameWidth, showWebSearch, showReddit, showAgent, roundedBorders };
+    config.userSettings = { theme, openaiModel, city, state, subreddits, showInspirationQuote, showCalculator, showClock, clockView, showAnalogClockFrame, analogClockFrameWidth, showWebSearch, showNews, showReddit, showAgent, roundedBorders };
 
     res.json(buildSettingsResponse());
   } catch (err) {
