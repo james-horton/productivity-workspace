@@ -202,11 +202,13 @@ function syncControls() {
   const request = byId('agentRequest');
   const history = byId('agentHistory');
   const yolo = byId('agentYolo');
+  const securityNote = byId('agentSecurityNote');
   if (start) start.disabled = ui.busy || anyActive || !ui.modelCapable;
   if (stop) stop.disabled = ui.busy || !selectedActive;
   if (newRun) newRun.disabled = ui.busy;
   if (request) request.disabled = ui.busy;
   if (history) history.disabled = ui.busy;
+  if (securityNote) securityNote.hidden = yolo?.checked !== true;
   if (yolo) {
     yolo.disabled = ui.busy || anyActive;
   }
