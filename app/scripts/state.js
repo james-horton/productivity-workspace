@@ -264,6 +264,7 @@ const userSettings = {
   showAnalogClockFrame: true,
   analogClockFrameWidth: 10,
   showWebSearch: true,
+  showNews: true,
   showAgent: true,
   showReddit: false,
   roundedBorders: true
@@ -324,6 +325,7 @@ export async function loadUserSettings() {
     userSettings.showAnalogClockFrame = data?.showAnalogClockFrame !== false;
     userSettings.analogClockFrameWidth = normalizeAnalogClockFrameWidth(data?.analogClockFrameWidth);
     userSettings.showWebSearch = data?.showWebSearch !== false;
+    userSettings.showNews = data?.showNews !== false;
     userSettings.showAgent = data?.showAgent !== false;
     userSettings.showReddit = data?.showReddit === true;
     userSettings.roundedBorders = data?.roundedBorders !== false;
@@ -349,6 +351,7 @@ export async function loadUserSettings() {
       showAnalogClockFrame: userSettings.showAnalogClockFrame,
       analogClockFrameWidth: userSettings.analogClockFrameWidth,
       showWebSearch: userSettings.showWebSearch,
+      showNews: userSettings.showNews,
       showAgent: userSettings.showAgent,
       showReddit: userSettings.showReddit,
       roundedBorders: userSettings.roundedBorders
@@ -398,6 +401,7 @@ function persistUserSettings() {
       showAnalogClockFrame: userSettings.showAnalogClockFrame,
       analogClockFrameWidth: userSettings.analogClockFrameWidth,
       showWebSearch: userSettings.showWebSearch,
+      showNews: userSettings.showNews,
       showAgent: userSettings.showAgent,
       showReddit: userSettings.showReddit,
       roundedBorders: userSettings.roundedBorders
@@ -441,6 +445,7 @@ export function setShowInspirationQuote(show) {
     showCalculator: getShowCalculator(),
     showClock: getShowClock(),
     showWebSearch: getShowWebSearch(),
+    showNews: getShowNews(),
     showAgent: getShowAgent(),
     showReddit: getShowReddit(),
     roundedBorders: getRoundedBorders()
@@ -460,6 +465,7 @@ export function setShowCalculator(show) {
     showCalculator: value,
     showClock: getShowClock(),
     showWebSearch: getShowWebSearch(),
+    showNews: getShowNews(),
     showAgent: getShowAgent(),
     showReddit: getShowReddit(),
     roundedBorders: getRoundedBorders()
@@ -479,6 +485,7 @@ export function setShowClock(show) {
     showCalculator: getShowCalculator(),
     showClock: value,
     showWebSearch: getShowWebSearch(),
+    showNews: getShowNews(),
     showAgent: getShowAgent(),
     showReddit: getShowReddit(),
     roundedBorders: getRoundedBorders()
@@ -540,6 +547,27 @@ export function setShowWebSearch(show) {
     showCalculator: getShowCalculator(),
     showClock: getShowClock(),
     showWebSearch: value,
+    showNews: getShowNews(),
+    showAgent: getShowAgent(),
+    showReddit: getShowReddit(),
+    roundedBorders: getRoundedBorders()
+  });
+}
+
+export function getShowNews() {
+  return userSettings.showNews !== false;
+}
+
+export function setShowNews(show) {
+  const value = show !== false;
+  userSettings.showNews = value;
+  void persistUserSettings();
+  dispatch('pw:ui-settings:changed', {
+    showInspirationQuote: getShowInspirationQuote(),
+    showCalculator: getShowCalculator(),
+    showClock: getShowClock(),
+    showWebSearch: getShowWebSearch(),
+    showNews: value,
     showAgent: getShowAgent(),
     showReddit: getShowReddit(),
     roundedBorders: getRoundedBorders()
@@ -559,6 +587,7 @@ export function setShowAgent(show) {
     showCalculator: getShowCalculator(),
     showClock: getShowClock(),
     showWebSearch: getShowWebSearch(),
+    showNews: getShowNews(),
     showAgent: value,
     showReddit: getShowReddit(),
     roundedBorders: getRoundedBorders()
@@ -578,6 +607,7 @@ export function setShowReddit(show) {
     showCalculator: getShowCalculator(),
     showClock: getShowClock(),
     showWebSearch: getShowWebSearch(),
+    showNews: getShowNews(),
     showAgent: getShowAgent(),
     showReddit: value,
     roundedBorders: getRoundedBorders()
@@ -597,6 +627,7 @@ export function setRoundedBorders(rounded) {
     showCalculator: getShowCalculator(),
     showClock: getShowClock(),
     showWebSearch: getShowWebSearch(),
+    showNews: getShowNews(),
     showAgent: getShowAgent(),
     showReddit: getShowReddit(),
     roundedBorders: value

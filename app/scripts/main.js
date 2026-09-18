@@ -1,5 +1,5 @@
 import { applyTheme } from './theme.js';
-import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getOpenAIModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings, getShowInspirationQuote, setShowInspirationQuote, getShowCalculator, setShowCalculator, getShowClock, setShowClock, getClockView, setClockView, getShowAnalogClockFrame, setShowAnalogClockFrame, getAnalogClockFrameWidth, setAnalogClockFrameWidth, getShowWebSearch, setShowWebSearch, getShowAgent, setShowAgent, getShowReddit, setShowReddit, getRoundedBorders, setRoundedBorders, BASIC_REASONING_LEVELS, DEFAULT_BASIC_REASONING, setBasicReasoning } from './state.js';
+import { initState, getState, THEMES, MODES, setTheme, setMode, setModelKey, getOpenAIModelKey, getChatHistory, appendChatMessage, clearChat, getLocation, setLocation, getRedditSubreddit, setRedditSubreddit, getRedditSubredditAt, setRedditSubredditAt, UI_CONFIG, loadUserSettings, getShowInspirationQuote, setShowInspirationQuote, getShowCalculator, setShowCalculator, getShowClock, setShowClock, getClockView, setClockView, getShowAnalogClockFrame, setShowAnalogClockFrame, getAnalogClockFrameWidth, setAnalogClockFrameWidth, getShowWebSearch, setShowWebSearch, getShowNews, setShowNews, getShowAgent, setShowAgent, getShowReddit, setShowReddit, getRoundedBorders, setRoundedBorders, BASIC_REASONING_LEVELS, DEFAULT_BASIC_REASONING, setBasicReasoning } from './state.js';
 import { getModels, loadModels, providerFor, modelIdFor, getDefaultModelKey, getFavoriteModelIds, saveFavoriteModels } from './services/modelRegistry.js';
 import { fetchQuote } from './services/quoteService.js';
 import { sendChat } from './services/chatService.js';
@@ -98,12 +98,10 @@ document.addEventListener('DOMContentLoaded', () => {
   syncDisclaimerForMode(s.mode);
   showStarterIfEmpty(s.mode);
 
-  // Initial news
+  // Set the initial news tab; content loads after persisted UI settings.
   setActiveTab(NEWS.defaultCategory);
 
   // Collapsible toggles are rendered inline below summaries in News and Web Search.
-
-  void loadNews(NEWS.defaultCategory);
 
   // Update subreddit tab labels when viewport crosses mobile threshold
   window.addEventListener('resize', () => { hydrateRedditTabs(); updateRedditSummariesForViewport(); });
@@ -135,10 +133,12 @@ document.addEventListener('DOMContentLoaded', () => {
     syncCalculatorSection();
     syncClockSection();
     syncWebSearchSection();
+    syncNewsSection();
     syncAgentSection();
     syncRedditSection();
     document.body.dataset.userSettingsReady = 'true';
     applyRoundedBorders(getRoundedBorders());
+    if (getShowNews()) void loadNews(NEWS.defaultCategory);
     if (getShowInspirationQuote()) void refreshQuote();
     if (getShowReddit()) {
       hydrateRedditTabs();
@@ -660,6 +660,7 @@ function wireStateEvents() {
     syncCalculatorSection();
     syncClockSection();
     syncWebSearchSection();
+    syncNewsSection();
     syncAgentSection();
     syncRedditSection();
     applyRoundedBorders(getRoundedBorders());
@@ -1677,6 +1678,20 @@ function syncWebSearchSection() {
   }
 }
 
+function syncNewsSection() {
+  const show = getShowNews();
+  const card = document.getElementById('news');
+  if (card) {
+    card.hidden = !show;
+    card.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
+  const tab = document.querySelector('.menu-bar .tabs a[href="#news"]');
+  if (tab) {
+    tab.hidden = !show;
+    tab.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
+}
+
 function syncAgentSection() {
   const show = getShowAgent();
   const card = document.getElementById('agent');
@@ -1710,6 +1725,7 @@ function applyRoundedBorders(rounded) {
 }
 
 async function loadNews(category) {
+  if (!getShowNews()) return;
   setNewsBusy(true);
   renderNewsLoading();
 
@@ -1814,6 +1830,7 @@ function initSettingsUI() {
   const inputShowCalculator = document.getElementById('settingsShowCalculator');
   const inputShowClock = document.getElementById('settingsShowClock');
   const inputShowWebSearch = document.getElementById('settingsShowWebSearch');
+  const inputShowNews = document.getElementById('settingsShowNews');
   const inputShowAgent = document.getElementById('settingsShowAgent');
   const inputShowReddit = document.getElementById('settingsShowReddit');
   const inputRoundedBorders = document.getElementById('settingsRoundedBorders');
@@ -1916,6 +1933,7 @@ function initSettingsUI() {
     if (inputShowCalculator) inputShowCalculator.checked = getShowCalculator();
     if (inputShowClock) inputShowClock.checked = getShowClock();
     if (inputShowWebSearch) inputShowWebSearch.checked = getShowWebSearch();
+    if (inputShowNews) inputShowNews.checked = getShowNews();
     if (inputShowAgent) inputShowAgent.checked = getShowAgent();
     if (inputShowReddit) inputShowReddit.checked = getShowReddit();
     if (inputRoundedBorders) inputRoundedBorders.checked = getRoundedBorders();
@@ -2034,6 +2052,7 @@ function initSettingsUI() {
     if (inputShowCalculator) setShowCalculator(inputShowCalculator.checked);
     if (inputShowClock) setShowClock(inputShowClock.checked);
     if (inputShowWebSearch) setShowWebSearch(inputShowWebSearch.checked);
+    if (inputShowNews) setShowNews(inputShowNews.checked);
     if (inputShowAgent) setShowAgent(inputShowAgent.checked);
     if (inputShowReddit) setShowReddit(inputShowReddit.checked);
     if (inputRoundedBorders) setRoundedBorders(inputRoundedBorders.checked);
@@ -2088,6 +2107,7 @@ function initSettingsUI() {
     syncCalculatorSection();
     syncClockSection();
     syncWebSearchSection();
+    syncNewsSection();
     syncAgentSection();
     syncRedditSection();
     applyRoundedBorders(getRoundedBorders());

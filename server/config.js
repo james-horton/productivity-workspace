@@ -188,6 +188,9 @@ function loadSecrets() {
       showWebSearch: (json.userSettings && typeof json.userSettings.showWebSearch === 'boolean')
         ? json.userSettings.showWebSearch
         : true,
+      showNews: (json.userSettings && typeof json.userSettings.showNews === 'boolean')
+        ? json.userSettings.showNews
+        : true,
       showReddit: (json.userSettings && typeof json.userSettings.showReddit === 'boolean')
         ? json.userSettings.showReddit
         : false,
