@@ -74,7 +74,9 @@ export const NEWS = Object.freeze({
 
 export const REDDIT = Object.freeze({
   // Max posts to display per subreddit tab
-  maxPosts: 8
+  maxPosts: 8,
+  // Keep subreddit responses local for 30 minutes between API requests
+  cacheTtlMs: 30 * 60 * 1000
 });
 
 export const UI_DEFAULTS = Object.freeze({
