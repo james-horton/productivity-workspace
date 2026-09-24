@@ -315,9 +315,16 @@
         <section class="agent-pane agent-timeline-pane" aria-labelledby="agentTimelineTitle">
           <div class="agent-pane-head">
             <h3 id="agentTimelineTitle">Run Timeline</h3>
-            <span>Visible progress only</span>
+            <div class="agent-pane-actions">
+              <span>Visible progress only</span>
+              <button id="agentJumpLatest" class="btn icon-only agent-jump-latest" type="button" title="Jump to latest" aria-label="Jump to latest" hidden>
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 4v16m-7-7 7 7 7-7"></path>
+                </svg>
+              </button>
+            </div>
           </div>
-          <div id="agentTimeline" class="agent-timeline"></div>
+          <div id="agentTimeline" class="agent-timeline" role="region" aria-label="Agent run timeline" tabindex="0"></div>
         </section>
         <aside class="agent-pane agent-approval-pane" aria-labelledby="agentApprovalsTitle">
           <div class="agent-pane-head">
@@ -328,6 +335,10 @@
         </aside>
       </div>
       <div id="agentLive" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+      <div id="agentStopDock" class="agent-stop-dock" hidden>
+        <span id="agentDockStatus" class="agent-stop-dock-status"></span>
+        <button id="agentStopDockButton" class="btn agent-stop" type="button">Stop run</button>
+      </div>
     </section>
 
     <section id="websearch" class="card search-card" aria-labelledby="webSearchTitle">

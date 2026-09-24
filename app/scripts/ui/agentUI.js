@@ -41,7 +41,10 @@ const ui = {
   stream: null,
   selectionToken: 0,
   eventRevision: 0,
-  modelCapable: false
+  modelCapable: false,
+  stopVisible: false,
+  followTimeline: true,
+  renderFrame: 0
 };
 
 const byId = id => document.getElementById(id);
@@ -159,7 +162,7 @@ function renderHeader() {
   if (snapshot) snapshot.textContent = modelSnapshot(ui.currentRun || currentModel());
   if (mode) {
     const currentMode = ui.currentRun ? approvalMode(ui.currentRun) : 'manual';
-    mode.textContent = currentMode === 'yolo' ? 'YOLO mode' : 'Manual approvals';
+    mode.textContent = currentMode === 'yolo' ? 'YOLO' : 'Manual approvals';
     mode.dataset.mode = currentMode;
   }
   if (request) request.textContent = ui.currentRun ? text(firstValue(ui.currentRun, ['request', 'prompt', 'mission'])) : '';
@@ -198,6 +201,9 @@ function syncControls() {
   const anyActive = ui.runs.some(isActive) || selectedActive;
   const start = byId('agentStart');
   const stop = byId('agentStop');
+  const dock = byId('agentStopDock');
+  const dockButton = byId('agentStopDockButton');
+  const dockStatus = byId('agentDockStatus');
   const newRun = byId('agentNewRun');
   const request = byId('agentRequest');
   const history = byId('agentHistory');
@@ -205,6 +211,14 @@ function syncControls() {
   const securityNote = byId('agentSecurityNote');
   if (start) start.disabled = ui.busy || anyActive || !ui.modelCapable;
   if (stop) stop.disabled = ui.busy || !selectedActive;
+  if (dock) {
+    dock.hidden = !selectedActive || ui.stopVisible;
+    dock.dataset.mode = selectedActive ? approvalMode(ui.currentRun) : 'manual';
+  }
+  if (dockButton) dockButton.disabled = ui.busy || !selectedActive;
+  if (dockStatus && selectedActive) {
+    dockStatus.textContent = `${approvalMode(ui.currentRun) === 'yolo' ? 'YOLO' : 'Agent'} ${statusLabel(runStatus(ui.currentRun))}`;
+  }
   if (newRun) newRun.disabled = ui.busy;
   if (request) request.disabled = ui.busy;
   if (history) history.disabled = ui.busy;
@@ -503,9 +517,18 @@ function renderTimelineEvent(event) {
   return card;
 }
 
+function syncTimelineScroll() {
+  const timeline = byId('agentTimeline');
+  const jump = byId('agentJumpLatest');
+  if (!timeline || !jump) return;
+  ui.followTimeline = timeline.scrollHeight - timeline.clientHeight - timeline.scrollTop <= 40;
+  jump.hidden = !ui.currentRun || ui.followTimeline;
+}
+
 function renderTimeline() {
   const timeline = byId('agentTimeline');
   if (!timeline) return;
+  const previousTop = timeline.scrollTop;
   timeline.replaceChildren();
   if (ui.currentRun) {
     const mission = create('article', 'agent-event agent-event-mission');
@@ -531,6 +554,8 @@ function renderTimeline() {
     if (node) timeline.appendChild(node);
   });
   if (!timeline.childElementCount) timeline.appendChild(create('p', 'agent-empty', 'Select a run or start a new one.'));
+  timeline.scrollTop = ui.followTimeline ? timeline.scrollHeight : previousTop;
+  syncTimelineScroll();
 }
 
 function renderAll() {
@@ -539,6 +564,14 @@ function renderAll() {
   renderTimeline();
   renderApprovals();
   syncControls();
+}
+
+function scheduleRender() {
+  if (ui.renderFrame) return;
+  ui.renderFrame = requestAnimationFrame(() => {
+    ui.renderFrame = 0;
+    renderAll();
+  });
 }
 
 function normalizeEmbeddedEvent(value) {
@@ -606,7 +639,7 @@ function applyEvent(event) {
     announce(`Agent run ${statusLabel(nextStatus || terminalStatus)}.`);
     if (TERMINAL_STATUSES.has(nextStatus || terminalStatus)) void refreshHistory();
   }
-  renderAll();
+  scheduleRender();
 }
 
 function closeStream() {
@@ -677,6 +710,7 @@ async function selectRun(id) {
   ui.eventIds.clear();
   ui.eventRevision = 0;
   ui.approvals = [];
+  ui.followTimeline = true;
 
   if (!selectedId) {
     ui.currentRun = null;
@@ -693,6 +727,7 @@ async function selectRun(id) {
     ui.currentRun = run;
     replaceEmbeddedEvents(run, false);
     ui.approvals = approvalsFromRun(run);
+    ui.followTimeline = isActive(run);
     if (!ui.runs.some(item => runId(item) === selectedId)) ui.runs.unshift(run);
     renderAll();
     attachStream(token);
@@ -801,6 +836,22 @@ export function initAgentUI() {
   ui.initialized = true;
   byId('agentForm')?.addEventListener('submit', handleStart);
   byId('agentStop')?.addEventListener('click', () => void handleStop());
+  byId('agentStopDockButton')?.addEventListener('click', () => void handleStop());
+  byId('agentTimeline')?.addEventListener('scroll', syncTimelineScroll);
+  byId('agentJumpLatest')?.addEventListener('click', () => {
+    const timeline = byId('agentTimeline');
+    ui.followTimeline = true;
+    timeline.scrollTop = timeline.scrollHeight;
+    timeline.focus({ preventScroll: true });
+    syncTimelineScroll();
+  });
+  if (typeof IntersectionObserver === 'function') {
+    const observer = new IntersectionObserver(([entry]) => {
+      ui.stopVisible = entry.intersectionRatio >= .95;
+      syncControls();
+    }, { threshold: [.95] });
+    observer.observe(byId('agentStop'));
+  }
   byId('agentNewRun')?.addEventListener('click', () => void selectRun(''));
   byId('agentHistory')?.addEventListener('change', event => void selectRun(event.target.value));
   byId('agentRequest')?.addEventListener('input', autoGrowRequest);
