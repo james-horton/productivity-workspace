@@ -311,8 +311,8 @@
         <span>YOLO commands run with the server process user's permissions. Output is capped and may contain sensitive data.</span>
       </div>
 
-      <div class="agent-workspace">
-        <section class="agent-pane agent-timeline-pane" aria-labelledby="agentTimelineTitle">
+      <div id="agentWorkspace" class="agent-workspace" hidden>
+        <section id="agentTimelinePane" class="agent-pane agent-timeline-pane" aria-labelledby="agentTimelineTitle">
           <div class="agent-pane-head">
             <h3 id="agentTimelineTitle">Run Timeline</h3>
             <div class="agent-pane-actions">
@@ -333,7 +333,7 @@
             </button>
           </div>
         </section>
-        <aside class="agent-pane agent-approval-pane" aria-labelledby="agentApprovalsTitle">
+        <aside id="agentApprovalPane" class="agent-pane agent-approval-pane" aria-labelledby="agentApprovalsTitle">
           <div class="agent-pane-head">
             <h3 id="agentApprovalsTitle">Approval Queue</h3>
             <span>One decision per command</span>

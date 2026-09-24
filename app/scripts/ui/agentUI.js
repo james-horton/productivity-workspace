@@ -73,6 +73,20 @@ function isActive(run) {
   return ACTIVE_STATUSES.has(runStatus(run));
 }
 
+function syncWorkspace() {
+  const workspace = byId('agentWorkspace');
+  const timeline = byId('agentTimelinePane');
+  const approvals = byId('agentApprovalPane');
+  const hasSelectedRun = !!ui.currentRun;
+  const showApprovals = isActive(ui.currentRun) && approvalMode(ui.currentRun) === 'manual';
+  if (workspace) {
+    workspace.hidden = !hasSelectedRun;
+    workspace.classList.toggle('agent-workspace-timeline-only', hasSelectedRun && !showApprovals);
+  }
+  if (timeline) timeline.hidden = !hasSelectedRun;
+  if (approvals) approvals.hidden = !showApprovals;
+}
+
 function eventPayload(event) {
   const data = event?.data && typeof event.data === 'object' ? event.data : {};
   return data.payload && typeof data.payload === 'object' ? data.payload : data;
@@ -161,7 +175,9 @@ function renderHeader() {
   }
   if (snapshot) snapshot.textContent = modelSnapshot(ui.currentRun || currentModel());
   if (mode) {
-    const currentMode = ui.currentRun ? approvalMode(ui.currentRun) : 'manual';
+    const currentMode = ui.currentRun
+      ? approvalMode(ui.currentRun)
+      : (byId('agentYolo')?.checked ? 'yolo' : 'manual');
     mode.textContent = currentMode === 'yolo' ? 'YOLO' : 'Manual approvals';
     mode.dataset.mode = currentMode;
   }
@@ -197,6 +213,7 @@ function renderHistory() {
 }
 
 function syncControls() {
+  syncWorkspace();
   const selectedActive = isActive(ui.currentRun);
   const anyActive = ui.runs.some(isActive) || selectedActive;
   const start = byId('agentStart');
@@ -719,6 +736,8 @@ async function selectRun(id) {
 
   if (!selectedId) {
     ui.currentRun = null;
+    const yolo = byId('agentYolo');
+    if (yolo) yolo.checked = false;
     renderAll();
     byId('agentRequest')?.focus();
     return;
@@ -874,7 +893,10 @@ export function initAgentUI() {
       byId('agentForm')?.requestSubmit();
     }
   });
-  byId('agentYolo')?.addEventListener('change', syncControls);
+  byId('agentYolo')?.addEventListener('change', () => {
+    renderHeader();
+    syncControls();
+  });
   document.addEventListener('pw:model:changed', refreshCapability);
   document.addEventListener('pw:settings:loaded', refreshCapability);
 
