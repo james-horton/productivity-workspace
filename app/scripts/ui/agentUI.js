@@ -520,9 +520,14 @@ function renderTimelineEvent(event) {
 function syncTimelineScroll() {
   const timeline = byId('agentTimeline');
   const jump = byId('agentJumpLatest');
-  if (!timeline || !jump) return;
+  const jumpTop = byId('agentJumpTop');
+  const footer = byId('agentTimelineFooter');
+  if (!timeline || !jump || !jumpTop || !footer) return;
+  const hasOverflow = timeline.scrollHeight > timeline.clientHeight;
   ui.followTimeline = timeline.scrollHeight - timeline.clientHeight - timeline.scrollTop <= 40;
   jump.hidden = !ui.currentRun || ui.followTimeline;
+  jumpTop.hidden = !ui.currentRun || !hasOverflow || timeline.scrollTop <= 0;
+  footer.hidden = jumpTop.hidden;
 }
 
 function renderTimeline() {
@@ -842,6 +847,14 @@ export function initAgentUI() {
     const timeline = byId('agentTimeline');
     ui.followTimeline = true;
     timeline.scrollTop = timeline.scrollHeight;
+    timeline.focus({ preventScroll: true });
+    syncTimelineScroll();
+  });
+  byId('agentJumpTop')?.addEventListener('click', () => {
+    const timeline = byId('agentTimeline');
+    if (!timeline) return;
+    ui.followTimeline = false;
+    timeline.scrollTop = 0;
     timeline.focus({ preventScroll: true });
     syncTimelineScroll();
   });

@@ -2725,10 +2725,12 @@ body.modal-open { overflow: hidden; }
   align-items: center;
   gap: .5rem;
 }
-.agent-jump-latest.btn.icon-only {
+.agent-jump-latest.btn.icon-only,
+.agent-jump-top.btn.icon-only {
   width: 36px;
   height: 36px;
   padding: 0;
+  margin-inline-end: 1rem;
   color: var(--text);
   flex: none;
 }
@@ -2747,6 +2749,12 @@ body.modal-open { overflow: hidden; }
   scrollbar-gutter: stable;
   -webkit-overflow-scrolling: touch;
 }
+.agent-timeline-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 .8rem .6rem;
+}
+.agent-timeline-footer[hidden] { display: none; }
 .agent-timeline:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
@@ -2962,7 +2970,8 @@ body.modal-open { overflow: hidden; }
 
 @media (max-width: 600px) {
   .agent-stop-dock { left: 1rem; right: 1rem; justify-content: space-between; }
-  .agent-jump-latest.btn.icon-only { width: 44px; height: 44px; }
+  .agent-jump-latest.btn.icon-only,
+  .agent-jump-top.btn.icon-only { width: 44px; height: 44px; }
   .agent-run-controls select { flex-basis: 100%; min-width: 0; }
   .agent-run-controls .btn { flex: 1 1 0; min-height: 44px; }
   .agent-run-strip { grid-template-columns: auto minmax(0, 1fr); padding-inline: .8rem; }
