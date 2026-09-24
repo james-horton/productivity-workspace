@@ -2695,6 +2695,9 @@ body.modal-open { overflow: hidden; }
   grid-template-columns: minmax(0, 1.65fr) minmax(300px, .85fr);
   border-top: 1px solid var(--ring);
 }
+.agent-workspace[hidden],
+.agent-pane[hidden] { display: none; }
+.agent-workspace-timeline-only { grid-template-columns: minmax(0, 1fr); }
 .agent-pane {
   min-width: 0;
   background: color-mix(in oklab, var(--surface) 96%, var(--accent));
