@@ -2533,6 +2533,41 @@ body.modal-open { overflow: hidden; }
 .agent-stop:not(:disabled):hover {
   background: color-mix(in oklab, #ef4444 15%, var(--surface));
 }
+.agent-stop-dock {
+  position: fixed;
+  z-index: 80;
+  right: calc(1rem + env(safe-area-inset-right));
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  max-width: calc(100vw - 2rem);
+  padding: .45rem .5rem .45rem .85rem;
+  border: 1px solid color-mix(in oklab, #ef4444 55%, var(--ring));
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.agent-stop-dock-status {
+  color: var(--text);
+  font-size: .8rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+.agent-stop-dock-status::before {
+  content: '';
+  display: inline-block;
+  width: .45rem;
+  height: .45rem;
+  margin-right: .5rem;
+  border-radius: 50%;
+  background: #ef4444;
+  vertical-align: .08em;
+}
+.agent-stop-dock[data-mode="yolo"] .agent-stop-dock-status {
+  color: color-mix(in oklab, #ef4444 78%, var(--text));
+}
+.agent-stop-dock .agent-stop { min-height: 44px; }
 .agent-run-strip {
   display: grid;
   grid-template-columns: auto auto auto minmax(0, 1fr);
@@ -2544,16 +2579,20 @@ body.modal-open { overflow: hidden; }
   color: var(--muted);
   font-size: .8rem;
 }
+.agent-run-strip > :not(:first-child):not(:empty) {
+  border-left: 1px solid var(--ring);
+  padding-left: .65rem;
+}
 .agent-status {
   display: inline-flex;
   align-items: center;
   gap: .35rem;
   width: max-content;
-  padding: .18rem .5rem;
-  border: 1px solid var(--ring);
-  border-radius: 999px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
   color: var(--text);
-  background: var(--surface);
+  background: transparent;
   font-weight: 750;
 }
 .agent-status::before {
@@ -2583,17 +2622,15 @@ body.modal-open { overflow: hidden; }
 }
 .agent-approval-mode {
   width: max-content;
-  padding: .18rem .5rem;
-  border: 1px solid var(--ring);
-  border-radius: 999px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
   color: var(--muted);
   font-size: .72rem;
   font-weight: 750;
 }
 .agent-approval-mode[data-mode="yolo"] {
-  border-color: color-mix(in oklab, #ef4444 64%, var(--ring));
   color: color-mix(in oklab, #ef4444 78%, var(--text));
-  background: color-mix(in oklab, #ef4444 10%, var(--surface));
 }
 .agent-current-request {
   min-width: 0;
@@ -2683,6 +2720,18 @@ body.modal-open { overflow: hidden; }
   color: var(--muted);
   font-size: .7rem;
 }
+.agent-pane-actions {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.agent-jump-latest.btn.icon-only {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: var(--text);
+  flex: none;
+}
 .agent-timeline,
 .agent-approvals {
   display: grid;
@@ -2690,6 +2739,17 @@ body.modal-open { overflow: hidden; }
   gap: .65rem;
   min-width: 0;
   padding: .8rem;
+}
+.agent-timeline {
+  max-height: min(40rem, 60dvh);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+}
+.agent-timeline:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 .agent-event,
 .agent-approval-bundle {
@@ -2901,13 +2961,17 @@ body.modal-open { overflow: hidden; }
 }
 
 @media (max-width: 600px) {
+  .agent-stop-dock { left: 1rem; right: 1rem; justify-content: space-between; }
+  .agent-jump-latest.btn.icon-only { width: 44px; height: 44px; }
   .agent-run-controls select { flex-basis: 100%; min-width: 0; }
   .agent-run-controls .btn { flex: 1 1 0; min-height: 44px; }
   .agent-run-strip { grid-template-columns: auto minmax(0, 1fr); padding-inline: .8rem; }
+  .agent-run-strip > :not(:first-child):not(:empty) { border-left: 0; padding-left: 0; }
   .agent-approval-mode { grid-column: 1 / -1; justify-self: start; }
   .agent-current-request { grid-column: 1 / -1; white-space: normal; }
   .agent-security-note { margin-inline: .8rem; }
   .agent-pane-head { align-items: flex-start; flex-direction: column; }
+  .agent-pane-actions { justify-content: space-between; width: 100%; }
   .agent-timeline,
   .agent-approvals { padding: .65rem; }
   .agent-detail { grid-template-columns: 1fr; gap: .12rem; }
