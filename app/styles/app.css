@@ -2704,6 +2704,7 @@ body.modal-open { overflow: hidden; }
 }
 .agent-approval-pane { border-left: 1px solid var(--ring); }
 .agent-pane-head {
+  position: relative;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -2727,15 +2728,23 @@ body.modal-open { overflow: hidden; }
   display: flex;
   align-items: center;
   gap: .5rem;
+  padding-inline-end: calc(30px + .5rem);
 }
 .agent-jump-latest.btn.icon-only,
 .agent-jump-top.btn.icon-only {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   padding: 0;
-  margin-inline-end: 1rem;
+  margin-inline-end: 0;
   color: var(--text);
   flex: none;
+}
+/* Keep the latest button out of the header flow so it cannot change its height. */
+.agent-jump-latest.btn.icon-only {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: .65rem;
+  translate: 0 -50%;
 }
 .agent-timeline,
 .agent-approvals {
@@ -2756,6 +2765,7 @@ body.modal-open { overflow: hidden; }
   display: flex;
   justify-content: flex-end;
   padding: 0 .8rem .6rem;
+  padding-inline-end: .65rem;
 }
 .agent-timeline-footer[hidden] { display: none; }
 .agent-timeline:focus-visible {
@@ -2974,7 +2984,11 @@ body.modal-open { overflow: hidden; }
 @media (max-width: 600px) {
   .agent-stop-dock { left: 1rem; right: 1rem; justify-content: space-between; }
   .agent-jump-latest.btn.icon-only,
-  .agent-jump-top.btn.icon-only { width: 44px; height: 44px; }
+  .agent-jump-top.btn.icon-only {
+    width: 44px;
+    height: 44px;
+  }
+  .agent-pane-actions { padding-inline-end: calc(44px + .5rem); }
   .agent-run-controls select { flex-basis: 100%; min-width: 0; }
   .agent-run-controls .btn { flex: 1 1 0; min-height: 44px; }
   .agent-run-strip { grid-template-columns: auto minmax(0, 1fr); padding-inline: .8rem; }
