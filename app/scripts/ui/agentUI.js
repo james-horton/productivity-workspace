@@ -140,9 +140,9 @@ function refreshCapability() {
 
 function modelSnapshot(run) {
   const snapshot = run?.modelSnapshot || run?.model_snapshot || {};
-  const provider = firstValue(snapshot, ['provider']) || firstValue(run, ['provider', 'providerUsed', 'provider_used']);
-  const model = firstValue(snapshot, ['model', 'modelId', 'model_id']) || firstValue(run, ['model', 'modelId', 'model_id']);
-  return [provider, model].filter(Boolean).join(' / ');
+  const model = text(firstValue(snapshot, ['model', 'modelId', 'model_id']) || firstValue(run, ['model', 'modelId', 'model_id'])).trim();
+  const separator = model.lastIndexOf('/');
+  return separator === -1 ? model : model.slice(separator + 1);
 }
 
 function approvalMode(run) {
