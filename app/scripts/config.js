@@ -27,7 +27,7 @@ export const TIMEOUTS = Object.freeze({
   // Default fetch abort timeout for generic operations
   defaultMs: 45000,
   // Chat requests may stream longer
-  chatMs: 180000,
+  chatMs: 310000,
   // Quote is quick
   quoteMs: 20000
 });

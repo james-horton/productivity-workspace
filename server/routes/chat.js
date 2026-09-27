@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 
 const { openaiChat } = require('../lib/providers/openai');
-const { openrouterChat } = require('../lib/providers/openrouter');
+const { openrouterChat, openrouterImage } = require('../lib/providers/openrouter');
+const { isOpenRouterImageModel } = require('./models');
 const { config } = require('../config');
 // Mode specifications: reasoning + default search + disclaimers
 const MODE_SPECS = {
@@ -68,6 +69,12 @@ const MODE_SPECS = {
     reasoning: 'high',
     defaultSearch: false,
     disclaimer: ''
+  },
+  image: {
+    model: 'gpt-5.6-sol',
+    reasoning: 'low',
+    defaultSearch: false,
+    disclaimer: null
   }
 };
 
@@ -78,6 +85,37 @@ const SELECTABLE_OPENAI_MODELS = new Set(['gpt-5.6-sol', 'gpt-6-astra']);
 
 function coerceArray(val) {
   return Array.isArray(val) ? val : [];
+}
+
+function badAttachment() {
+  const error = new Error('Invalid attachment. Use images, PDFs, or text files (up to 4 MB each, 8 MB total).');
+  error.status = 400;
+  throw error;
+}
+
+function sanitizeAttachments(raw, mode) {
+  if (raw == null) return [];
+  if (!Array.isArray(raw) || raw.length > (mode === 'image' ? 1 : 3)) badAttachment();
+  let total = 0;
+  return raw.map(file => {
+    if (!file || typeof file.name !== 'string' || !file.name.trim() || file.name.length > 180 ||
+        typeof file.type !== 'string' || typeof file.dataUrl !== 'string') badAttachment();
+    const type = file.type;
+    if (!(type === 'application/pdf' || /^image\/(?:png|jpeg|webp|gif)$/.test(type) || /^text\/[a-z0-9.+-]+$/.test(type)) ||
+        (mode === 'image' && !type.startsWith('image/'))) badAttachment();
+    const prefix = `data:${type};base64,`;
+    const encoded = file.dataUrl.startsWith(prefix) ? file.dataUrl.slice(prefix.length) : '';
+    if (!encoded || encoded.length > Math.ceil(4 * 1024 * 1024 / 3) * 4 ||
+        !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encoded)) badAttachment();
+    const buffer = Buffer.from(encoded, 'base64');
+    if (buffer.length > 4 * 1024 * 1024 || (total += buffer.length) > 8 * 1024 * 1024) badAttachment();
+    if (type === 'application/pdf' && buffer.subarray(0, 5).toString() !== '%PDF-') badAttachment();
+    if (type === 'image/png' && buffer.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a') badAttachment();
+    if (type === 'image/jpeg' && buffer.subarray(0, 3).toString('hex') !== 'ffd8ff') badAttachment();
+    if (type === 'image/gif' && !/^GIF8[79]a$/.test(buffer.subarray(0, 6).toString())) badAttachment();
+    if (type === 'image/webp' && !(buffer.subarray(0, 4).toString() === 'RIFF' && buffer.subarray(8, 12).toString() === 'WEBP')) badAttachment();
+    return { name: file.name.replace(/[\r\n<>]/g, '_'), type, dataUrl: file.dataUrl, buffer };
+  });
 }
 
 function sanitizeMessages(messages) {
@@ -160,6 +198,8 @@ function buildSystemPrompt(mode) {
         '- Keep paragraphs brief and technical.',
         'Do not browse the web or include URLs unless asked.'
       ].join(' ');
+    case 'image':
+      return 'Generate an image from the user prompt.';
     default:
       return 'You are a helpful assistant.';
   }
@@ -229,6 +269,22 @@ router.post('/', async (req, res, next) => {
 
     // Build conversation
     const userMessages = sanitizeMessages(rawMessages);
+    const latestRawUser = coerceArray(rawMessages).slice().reverse().find(message => message?.role === 'user');
+    const attachments = sanitizeAttachments(latestRawUser?.attachments, mode);
+    const textFiles = attachments.filter(file => file.type.startsWith('text/'));
+    if (textFiles.length) {
+      for (const file of textFiles) {
+        if (file.buffer.length > 100_000) badAttachment();
+      }
+      const latest = userMessages.slice().reverse().find(message => message.role === 'user');
+      if (latest) latest.content += textFiles.map(file => `\n\nAttached file (${file.name}):\n${file.buffer.toString('utf8')}`).join('');
+    }
+    const mediaAttachments = attachments.filter(file => !file.type.startsWith('text/'))
+      .map(({ name, type, dataUrl }) => ({ name, type, dataUrl }));
+    if (mediaAttachments.length) {
+      const latest = userMessages.slice().reverse().find(message => message.role === 'user');
+      if (latest) latest.attachments = mediaAttachments;
+    }
     let latestUserContent = '';
     for (let i = userMessages.length - 1; i >= 0; i--) {
       const um = userMessages[i];
@@ -251,6 +307,47 @@ router.post('/', async (req, res, next) => {
     const selectedModel = requestedProvider === 'openrouter'
       ? (requestedModel || config.openrouter.defaultModel || undefined)
       : (SELECTABLE_OPENAI_MODELS.has(requestedModel) ? requestedModel : spec.model);
+    if (mode === 'image') {
+      const prompt = latestUserContent.trim();
+      if (!prompt) return res.status(400).json({ error: { message: 'Enter an image prompt.' } });
+      const referenceMessage = coerceArray(rawMessages).slice().reverse().find(message => message?.image);
+      const referenceImage = mediaAttachments[0]?.dataUrl || referenceMessage?.image?.dataUrl;
+      if (!mediaAttachments.length && referenceMessage && (typeof referenceImage !== 'string' || referenceImage.length > 30_000_040 ||
+          !/^data:image\/(?:png|jpeg|webp|gif);base64,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(referenceImage))) {
+        return res.status(400).json({ error: { message: 'The previous image is not a supported image reference.' } });
+      }
+      if (requestedProvider === 'openai' && requestedModel && !SELECTABLE_OPENAI_MODELS.has(requestedModel)) {
+        return res.status(400).json({ error: { message: 'The selected OpenAI model is not available for image generation.' } });
+      }
+      let generated;
+      if (requestedProvider === 'openrouter') {
+        if (!await isOpenRouterImageModel(selectedModel)) {
+          return res.status(400).json({ error: { message: 'The selected model does not support image generation. Select an image-output model.' } });
+        }
+        if (referenceImage && !await isOpenRouterImageModel(selectedModel, true)) {
+          return res.status(400).json({ error: { message: 'The selected model cannot edit images. Select a model that supports image input and output.' } });
+        }
+        generated = await openrouterImage({ model: selectedModel, prompt, referenceImage });
+      } else {
+        generated = await openaiChat({ messages: [{ role: 'user', content: prompt }], model: selectedModel, reasoningLevel: 'low', imageGeneration: true, referenceImage });
+      }
+      const base64 = generated.image;
+      const mediaType = generated.mediaType || 'image/png';
+      if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(mediaType) ||
+          typeof base64 !== 'string' || !base64 || base64.length > 30_000_000 ||
+          !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(base64)) {
+        const err = new Error('The selected model did not return a supported image.');
+        err.status = 502;
+        throw err;
+      }
+      return res.json({
+        message: { role: 'assistant', content: generated.text || 'Generated image.', image: { dataUrl: `data:${mediaType};base64,${base64}` } },
+        modelUsed: generated.modelUsed,
+        providerUsed: requestedProvider,
+        disclaimer: null,
+        sources: []
+      });
+    }
     const usingAstra = requestedProvider === 'openai' && selectedModel === 'gpt-6-astra';
     const finalMessages = [systemMsg, ...userMessages];
 

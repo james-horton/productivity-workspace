@@ -30,7 +30,9 @@ async function openaiChat({
   temperature = (config.openai?.defaultTemperature ?? 1),
   maxTokens = (config.openai?.defaultMaxTokens ?? 80000),
   stop,
-  webSearch = false
+  webSearch = false,
+  imageGeneration = false,
+  referenceImage
 }) {
   const apiKey = config.openai.apiKey;
 
@@ -80,6 +82,29 @@ async function openaiChat({
       payload.tools = [{ type: 'web_search' }];
       payload.tool_choice = 'auto';
     }
+    if (imageGeneration) {
+      if (referenceImage) {
+        payload.input = [{
+          role: 'user',
+          content: [
+            { type: 'input_text', text: messages[messages.length - 1].content },
+            { type: 'input_image', image_url: referenceImage }
+          ]
+        }];
+      }
+      payload.tools = [{ type: 'image_generation', ...(referenceImage ? { action: 'edit' } : {}) }];
+      payload.tool_choice = { type: 'image_generation' };
+    } else {
+      const latest = messages[messages.length - 1];
+      if (latest?.attachments?.length) {
+        payload.input = [{ role: 'user', content: [
+          { type: 'input_text', text: toTranscript(messages.slice(0, -1)) + `\n\nUser: ${latest.content}` },
+          ...latest.attachments.map(file => file.type === 'application/pdf'
+            ? { type: 'input_file', filename: file.name, file_data: file.dataUrl }
+            : { type: 'input_image', image_url: file.dataUrl })
+        ] }];
+      }
+    }
 
     console.log(
       `[openaiChat] POST ${OPENAI_RESPONSES_API_URL} model=${modelToUse} webSearch=${!!webSearch} ` +
@@ -127,7 +152,10 @@ async function openaiChat({
       text = data.choices[0].message.content.trim();
     }
 
-    return { text, raw: data, modelUsed: modelToUse };
+    const image = imageGeneration && Array.isArray(data.output)
+      ? data.output.find(item => item?.type === 'image_generation_call' && typeof item.result === 'string')?.result
+      : null;
+    return { text, image, raw: data, modelUsed: modelToUse };
 
   } catch (error) {
     // Normalize error

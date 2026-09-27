@@ -17,13 +17,13 @@ function withTimeout(promise, ms = TIMEOUTS.defaultMs) {
 /**
  * Send chat request to backend
  * @param {Object} opts
- * @param {'doctor'|'therapist'|'web'|'basic'|'excuse'|'grammar'|'eli5'|'debate_lord'|'big_brain'|'coder'} opts.mode
+ * @param {'doctor'|'therapist'|'web'|'basic'|'excuse'|'grammar'|'eli5'|'debate_lord'|'big_brain'|'coder'|'image'} opts.mode
  * @param {Array<{role:'user'|'assistant', content:string}>} opts.messages
  * @param {'openai'|'openrouter'} [opts.provider]
  * @param {string} [opts.model]
  * @param {boolean} [opts.webSearch] When true, enables provider-side web search (OpenAI GPT-5 tools). When false, disables provider web search. If omitted, the server uses the mode default.
  * @param {'none'|'low'|'medium'|'high'|'xhigh'} [opts.reasoning] OpenAI reasoning effort. Only honored by the server when mode === 'basic'. For other modes the server always uses its fixed per-mode reasoning value.
- * @returns {Promise<{ message:{role:'assistant',content:string}, modelUsed:string, providerUsed:string, disclaimer:string|null, sources:Array<{title:string,url:string,source:string}> }>}
+ * @returns {Promise<{ message:{role:'assistant',content:string,image?:{dataUrl:string}}, modelUsed:string, providerUsed:string, disclaimer:string|null, sources:Array<{title:string,url:string,source:string}> }>}
  */
 export async function sendChat({ mode, messages, provider, model, webSearch, reasoning }) {
   const body = JSON.stringify({

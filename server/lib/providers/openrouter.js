@@ -59,7 +59,15 @@ async function openrouterChat({
   const modelToUse = resolveOpenRouterModel(model);
   const payload = {
     model: modelToUse,
-    messages: Array.isArray(messages) ? messages : []
+    messages: Array.isArray(messages) ? messages.map(message => message.attachments?.length ? {
+      role: message.role,
+      content: [
+        { type: 'text', text: message.content },
+        ...message.attachments.map(file => file.type === 'application/pdf'
+          ? { type: 'file', file: { filename: file.name, file_data: file.dataUrl } }
+          : { type: 'image_url', image_url: { url: file.dataUrl } })
+      ]
+    } : message) : []
   };
 
   if (Number.isFinite(temperature)) payload.temperature = temperature;
@@ -115,8 +123,40 @@ async function openrouterChat({
   }
 }
 
+async function openrouterImage({ model, prompt, referenceImage }) {
+  const apiKey = config.openrouter && config.openrouter.apiKey;
+  if (!apiKey) {
+    const err = new Error('OpenRouter API key missing');
+    err.status = 400;
+    throw err;
+  }
+
+  try {
+    const url = new URL(config.openrouter.chatCompletionsUrl);
+    if (!/\/chat\/completions\/?$/.test(url.pathname)) throw new Error('Invalid OpenRouter chat completions URL');
+    url.pathname = url.pathname.replace(/\/chat\/completions\/?$/, '/images');
+    const payload = { model, prompt };
+    if (referenceImage) {
+      payload.input_references = [{ type: 'image_url', image_url: { url: referenceImage } }];
+    }
+    const res = await axios.post(url.toString(), payload, {
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      timeout: Math.max(config.openrouter.timeoutMs || 120000, 180000)
+    });
+    const image = res.data?.data?.[0];
+    return { image: image?.b64_json, mediaType: image?.media_type, modelUsed: model };
+  } catch (error) {
+    const status = error.response ? error.response.status : 500;
+    const msg = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+    const err = new Error(`OpenRouter image request failed: ${msg}`);
+    err.status = status;
+    throw err;
+  }
+}
+
 module.exports = {
   openrouterChat,
+  openrouterImage,
   resolveOpenRouterModel,
   buildOpenRouterReasoningPayload
 };
