@@ -243,6 +243,7 @@
               <option value="debate_lord">Debate Lord</option>
               <option value="big_brain">Big Brain</option>
               <option value="coder">Coder</option>
+              <option value="image">Image Generator</option>
             </select>
           </label>
 
@@ -266,8 +267,11 @@
       </div>
 
       <form id="chatForm" class="chat-input" autocomplete="off">
+        <div id="chatAttachments" class="chat-attachments" aria-live="polite" hidden></div>
         <label class="sr-only" for="chatInput">Your message</label>
         <textarea id="chatInput" placeholder="Type your message..." required rows="1"></textarea>
+        <input id="chatFiles" class="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf,text/*,.md,.json,.js,.css,.html,.xml" multiple aria-label="Attach files to chat">
+        <button id="chatAttach" class="btn" type="button" title="Attach files" aria-label="Attach files">Attach</button>
         <button id="chatSend" class="btn primary" type="submit">Send</button>
       </form>
     </section>

@@ -73,6 +73,7 @@ let modelFilterText = '';
 let highlightedModelIndex = -1;
 let modelDragState = null;
 let clockControlsVisible = false;
+let chatResetVersion = 0;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -150,11 +151,99 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function wireControls() {
+  const selectedFiles = [];
+  const fileInput = $('#chatFiles');
+  const attachmentList = $('#chatAttachments');
+  const attachButton = $('#chatAttach');
+  let fileSelectionVersion = 0;
+  let readingFiles = false;
+  const renderAttachments = (error = '') => {
+    attachmentList.replaceChildren();
+    selectedFiles.forEach((file, index) => {
+      const chip = document.createElement('div');
+      chip.className = 'chat-attachment';
+      if (file.type.startsWith('image/')) {
+        const image = document.createElement('img');
+        image.src = file.dataUrl;
+        image.alt = '';
+        chip.appendChild(image);
+      }
+      const name = document.createElement('span');
+      name.textContent = file.name;
+      chip.appendChild(name);
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'btn';
+      remove.textContent = 'Remove';
+      remove.setAttribute('aria-label', `Remove ${file.name}`);
+      remove.addEventListener('click', () => { selectedFiles.splice(index, 1); renderAttachments(); });
+      chip.appendChild(remove);
+      attachmentList.appendChild(chip);
+    });
+    if (error) {
+      const warning = document.createElement('span');
+      warning.setAttribute('role', 'alert');
+      warning.textContent = error;
+      attachmentList.appendChild(warning);
+    }
+    attachmentList.hidden = !selectedFiles.length && !error;
+  };
+  const clearAttachments = () => {
+    fileSelectionVersion += 1;
+    readingFiles = false;
+    attachButton.disabled = false;
+    selectedFiles.length = 0;
+    fileInput.value = '';
+    renderAttachments();
+  };
+  attachButton.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', async () => {
+    const files = [...fileInput.files];
+    fileInput.value = '';
+    const version = ++fileSelectionVersion;
+    readingFiles = true;
+    attachButton.disabled = true;
+    try {
+      for (const file of files) {
+        if (version !== fileSelectionVersion) return;
+        const type = ({ 'application/json': 'text/plain', 'application/javascript': 'text/plain', 'application/xml': 'text/plain' }[file.type] || file.type) || ({ md: 'text/markdown', json: 'text/plain', js: 'text/plain', css: 'text/plain', html: 'text/plain', xml: 'text/plain' }[file.name.split('.').pop().toLowerCase()] || '');
+        if (!(/^image\/(?:png|jpeg|webp|gif)$/.test(type) || type === 'application/pdf' || type.startsWith('text/')) || (getState().mode === 'image' && !type.startsWith('image/'))) {
+          renderAttachments('Choose an image for image mode, or an image, PDF, or text file for chat.');
+          continue;
+        }
+        if (selectedFiles.length >= (getState().mode === 'image' ? 1 : 3) || file.size > 4 * 1024 * 1024 || selectedFiles.reduce((sum, item) => sum + item.size, 0) + file.size > 8 * 1024 * 1024) {
+          renderAttachments(getState().mode === 'image' ? 'Attach one image at a time in image mode (4 MB maximum).' : 'Limit: 3 files, 4 MB each and 8 MB total.');
+          continue;
+        }
+        if (type.startsWith('text/') && file.size > 100_000) {
+          renderAttachments('Text files must be 100 KB or smaller.');
+          continue;
+        }
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error(`Could not read ${file.name}.`));
+          reader.readAsDataURL(new Blob([file], { type }));
+        });
+        if (version !== fileSelectionVersion) return;
+        selectedFiles.push({ name: file.name, type, size: file.size, dataUrl });
+        renderAttachments();
+      }
+    } catch (error) {
+      renderAttachments(error.message);
+    } finally {
+      if (version === fileSelectionVersion) {
+        readingFiles = false;
+        attachButton.disabled = false;
+      }
+    }
+  });
   // Model
   wireModelCombobox();
 
   // Mode
   modeSelect().addEventListener('change', (e) => {
+    clearAttachments();
     const m = e.target.value;
     setMode(m);
     syncDisclaimerForMode(m);
@@ -294,11 +383,13 @@ function wireControls() {
       const originalAria = btn.getAttribute('aria-label') || originalTitle || 'Reset';
       try {
         // Clear all mode histories
+        chatResetVersion += 1;
+        clearAttachments();
         Object.keys(MODES).forEach((m) => clearChat(m));
         // Reset disclaimer + starter for current mode and re-render
         syncDisclaimerForMode(s.mode);
         showStarterIfEmpty(s.mode);
-        renderChat(getChatHistory(s.mode));
+        renderChat(getChatHistory(s.mode), { mode: s.mode });
         btn.title = 'Reset';
         btn.setAttribute('aria-label', 'Reset');
       } finally {
@@ -315,13 +406,16 @@ function wireControls() {
     e.preventDefault();
     const input = chatInput();
     const text = (input.value || '').trim();
-    if (!text) return;
+    if (!text || input.disabled || readingFiles) return;
 
     // Scroll anchoring handled after assistant typing bubble is inserted.
 
     const s = getState();
+    const resetVersion = chatResetVersion;
     // Append user message to history
-    appendChatMessage(s.mode, { role: 'user', content: text });
+    const attachments = selectedFiles.map(({ name, type, dataUrl }) => ({ name, type, dataUrl }));
+    appendChatMessage(s.mode, { role: 'user', content: text, attachments });
+    clearAttachments();
     input.value = '';
     // If textarea, trigger auto-resize shrink after clearing
     if (input.tagName && input.tagName.toLowerCase() === 'textarea') {
@@ -376,33 +470,45 @@ function wireControls() {
       const provider = providerFor(modelKey);
       const modelId = modelIdFor(modelKey);
 
+      const imageHistory = s.mode === 'image' ? getChatHistory(s.mode) : [];
+      const previousImage = attachments.length ? null : imageHistory.slice().reverse().find(message => message.image)?.image;
       const resp = await sendChat({
         mode: s.mode,
-        messages: getChatHistory(s.mode),
+        messages: s.mode === 'image'
+          ? [...(previousImage ? [{ role: 'assistant', content: 'Previous generated image', image: previousImage }] : []), { role: 'user', content: text, attachments }]
+          : getChatHistory(s.mode).map((message, index, history) => index === history.length - 1
+            ? message
+            : { role: message.role, content: message.content + (message.attachments?.length ? `\n[Previously attached: ${message.attachments.map(file => file.name).join(', ')}]` : '') }),
         provider,
         model: modelId,
         reasoning: s.mode === 'basic' ? s.basicReasoning : undefined
       });
 
       hideAssistantTyping();
+      if (resetVersion !== chatResetVersion) return;
 
       if (resp?.disclaimer) setDisclaimer(resp.disclaimer);
       // Append assistant reply
       appendChatMessage(s.mode, resp.message);
       // Re-render with sources (if any)
-      renderChat(getChatHistory(s.mode), { sources: resp.sources || [], mode: s.mode });
-      // Maintain top anchoring on the final assistant message (avoid bottom scrolling)
-      requestAnimationFrame(() => { anchorLatestAssistantToTop(); });
+      if (getState().mode === s.mode) {
+        renderChat(getChatHistory(s.mode), { sources: resp.sources || [], mode: s.mode });
+        // Maintain top anchoring on the final assistant message (avoid bottom scrolling)
+        requestAnimationFrame(() => { anchorLatestAssistantToTop(); });
+      }
     } catch (err) {
       hideAssistantTyping();
+      if (resetVersion !== chatResetVersion) return;
       // Surface error as assistant message
-      appendChatMessage(getState().mode, {
+      appendChatMessage(s.mode, {
         role: 'assistant',
         content: `Error: ${err.message || 'Something went wrong.'}`
       });
-      renderChat(getChatHistory(getState().mode), { mode: getState().mode });
-      // Maintain top anchoring on the error assistant message as well
-      requestAnimationFrame(() => { anchorLatestAssistantToTop(); });
+      if (getState().mode === s.mode) {
+        renderChat(getChatHistory(s.mode), { mode: s.mode });
+        // Maintain top anchoring on the error assistant message as well
+        requestAnimationFrame(() => { anchorLatestAssistantToTop(); });
+      }
     } finally {
       hideAssistantTyping();
       setBusy(false);
@@ -877,7 +983,7 @@ function renderModelOptions() {
   const query = normalizeModelSearch(modelFilterText);
   const modelMatchesQuery = model => {
     if (!query) return true;
-    return normalizeModelSearch(`${model.label} ${model.model} ${model.provider}`).includes(query);
+    return normalizeModelSearch(`${model.label} ${model.model} ${model.provider} ${model.supportsImageGeneration ? 'image' : ''}`).includes(query);
   };
   const openAIModels = availableModels.filter(model => model.provider === 'openai');
   const matchingOpenAIModels = openAIModels.filter(modelMatchesQuery);
@@ -980,7 +1086,7 @@ function renderModelOptions() {
 
     const label = document.createElement('span');
     label.className = 'model-combobox-option-label';
-    label.textContent = model.label;
+    label.textContent = model.label + (model.supportsImageInput && model.supportsImageGeneration ? ' [Image edit]' : model.supportsImageGeneration ? ' [Image]' : '');
 
     option.append(label);
 
@@ -1382,7 +1488,7 @@ function formatChatForCopy(messages, mode) {
   const sep = '\n' + '-'.repeat(header.length) + '\n\n';
   const body = (messages || []).map(m => {
     const role = m.role === 'user' ? 'User' : 'Assistant';
-    const text = String(m.content || '');
+    const text = String(m.content || '') + (m.image ? '\n[Generated image: use the image download button to save it]' : '') + (m.attachments?.length ? `\n[Attached: ${m.attachments.map(file => file.name).join(', ')}]` : '');
     return `${role}:\n${text}`;
   }).join('\n\n');
   return header + sep + body + '\n';

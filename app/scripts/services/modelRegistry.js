@@ -112,6 +112,8 @@ function normalizeRemoteModel(model) {
     favorite: model.favorite === true,
     default: model.default === true,
     supportsToolCalling: model.supportsToolCalling === true,
+    supportsImageGeneration: model.supportsImageGeneration === true,
+    supportsImageInput: model.supportsImageInput === true,
     supportedParameters: supportedParameters.map(value => String(value || '')).filter(Boolean),
     tier: model.tier || 'medium'
   };

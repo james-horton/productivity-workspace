@@ -115,7 +115,7 @@ function supportsTextOutput(model) {
   const outputModalities = architecture.output_modalities || architecture.outputModalities;
   const inputModalities = architecture.input_modalities || architecture.inputModalities;
 
-  if (Array.isArray(outputModalities) && outputModalities.length && !outputModalities.includes('text')) {
+  if (Array.isArray(outputModalities) && outputModalities.length && !outputModalities.includes('text') && !outputModalities.includes('image')) {
     return false;
   }
 
@@ -159,7 +159,9 @@ function normalizeModels(rawModels) {
         default: false,
         tier: normalizeTier(modelId),
         supportedParameters,
-        supportsToolCalling: supportedParameters.includes('tools')
+        supportsToolCalling: supportedParameters.includes('tools'),
+        supportsImageGeneration: (model.architecture?.output_modalities || model.architecture?.outputModalities || []).includes('image'),
+        supportsImageInput: (model.architecture?.input_modalities || model.architecture?.inputModalities || []).includes('image')
       };
     })
     .filter(model => {
@@ -196,6 +198,14 @@ async function fetchOpenRouterModels() {
   });
 
   return normalizeModels((res.data && res.data.data) || []);
+}
+
+async function isOpenRouterImageModel(modelId, requiresImageInput = false) {
+  const now = Date.now();
+  const models = cachedPayload && now - cachedAt < CACHE_TTL_MS
+    ? cachedPayload.models
+    : await fetchOpenRouterModels();
+  return models.some(model => model.provider === 'openrouter' && model.model === modelId && model.supportsImageGeneration && (!requiresImageInput || model.supportsImageInput));
 }
 
 router.get('/', async (req, res, next) => {
@@ -250,3 +260,4 @@ router.put('/favorites', (req, res, next) => {
 });
 
 module.exports = router;
+module.exports.isOpenRouterImageModel = isOpenRouterImageModel;

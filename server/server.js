@@ -84,6 +84,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // JSON body parsing
+app.use('/api/chat', express.json({ limit: '32mb' }));
 app.use(express.json({ limit: '1mb' }));
 
 // API routes

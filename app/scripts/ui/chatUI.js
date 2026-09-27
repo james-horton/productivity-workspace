@@ -269,6 +269,38 @@ export function setBusy(on) {
   if (box) box.setAttribute('aria-busy', on ? 'true' : 'false');
 }
 
+function openGeneratedImage(url, trigger) {
+  let dialog = document.querySelector('#generatedImageViewer');
+  if (!dialog) {
+    dialog = document.createElement('dialog');
+    dialog.id = 'generatedImageViewer';
+    dialog.className = 'generated-image-viewer';
+    dialog.setAttribute('aria-label', 'Full-size generated image');
+
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'btn generated-image-viewer-close';
+    close.textContent = 'Close';
+    close.addEventListener('click', () => dialog.close());
+
+    const image = document.createElement('img');
+    image.alt = 'Generated image, full view';
+    dialog.append(close, image);
+    dialog.addEventListener('click', event => {
+      if (event.target === dialog) dialog.close();
+    });
+    dialog.addEventListener('close', () => {
+      image.removeAttribute('src');
+      if (dialog.returnFocus?.isConnected) dialog.returnFocus.focus();
+    });
+    document.body.appendChild(dialog);
+  }
+  dialog.returnFocus = trigger;
+  dialog.querySelector('img').src = url;
+  dialog.showModal();
+  dialog.querySelector('button').focus();
+}
+
 export function renderChat(messages, { sources, mode } = {}) {
   const box = $('#chatMessages');
   if (!box) return;
@@ -292,6 +324,49 @@ export function renderChat(messages, { sources, mode } = {}) {
       frag = renderContentWithLinks(String(msg.content || ''));
     }
     bubble.appendChild(frag);
+    if (msg.role === 'user' && Array.isArray(msg.attachments)) {
+      const attachments = document.createElement('div');
+      attachments.className = 'message-attachments';
+      msg.attachments.forEach(file => {
+        const item = document.createElement('div');
+        item.className = 'message-attachment';
+        if (/^image\/(?:png|jpeg|webp|gif)$/.test(file.type) && /^data:image\/(?:png|jpeg|webp|gif);base64,/.test(file.dataUrl)) {
+          const preview = document.createElement('img');
+          preview.src = file.dataUrl;
+          preview.alt = file.name;
+          item.appendChild(preview);
+        }
+        const name = document.createElement('span');
+        name.textContent = file.name;
+        item.appendChild(name);
+        attachments.appendChild(item);
+      });
+      bubble.appendChild(attachments);
+    }
+    if (mode === 'image' && msg.role !== 'user' && msg.image?.dataUrl) {
+      const url = msg.image.dataUrl;
+      const type = /^data:(image\/(?:png|jpeg|webp|gif));base64,/.exec(url)?.[1];
+      if (type) {
+        const image = document.createElement('img');
+        image.className = 'generated-image';
+        image.src = url;
+        image.alt = 'Generated image';
+        const view = document.createElement('button');
+        view.type = 'button';
+        view.className = 'image-preview-trigger';
+        view.setAttribute('aria-label', 'View generated image full screen');
+        view.appendChild(image);
+        view.addEventListener('click', () => openGeneratedImage(url, view));
+        bubble.appendChild(view);
+
+        const download = document.createElement('a');
+        download.className = 'btn image-download';
+        download.href = url;
+        download.download = `generated-image.${{ 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' }[type]}`;
+        download.textContent = 'Download image';
+        bubble.appendChild(download);
+      }
+    }
 
     row.appendChild(bubble);
     box.appendChild(row);

@@ -1130,6 +1130,60 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
   background: color-mix(in oklab, var(--accent) 26%, var(--surface-2));
   border-color: color-mix(in oklab, var(--accent) 58%, var(--ring));
 }
+.msg .bubble .generated-image {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  height: auto;
+  border-radius: 8px;
+  object-fit: contain;
+}
+.image-preview-trigger {
+  display: block;
+  max-width: 100%;
+  margin-top: 0.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  cursor: zoom-in;
+}
+.image-preview-trigger:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.generated-image-viewer {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  max-height: none;
+  padding: 1rem;
+  border: 0;
+  background: #101114;
+  color: #fff;
+}
+.generated-image-viewer::backdrop { background: rgba(0, 0, 0, 0.9); }
+.generated-image-viewer[open] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+.generated-image-viewer img {
+  grid-area: 1 / 1;
+  place-self: center;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.generated-image-viewer-close {
+  grid-area: 1 / 1;
+  z-index: 1;
+  justify-self: end;
+  align-self: start;
+}
+.msg .bubble .image-download {
+  display: inline-block;
+  margin-top: 0.75rem;
+}
 .msg .bubble .chat-markup {
   min-width: 0;
   max-width: 100%;
@@ -1266,9 +1320,41 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
 
 .chat-input {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 0.6rem;
   padding: 0.9rem 1rem 1.1rem 1rem;
+}
+.chat-attachments {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.chat-attachments[hidden] { display: none; }
+.chat-attachment {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 100%;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--ring);
+  border-radius: 8px;
+  background: var(--surface-2);
+  overflow-wrap: anywhere;
+}
+.chat-attachment img, .message-attachment img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+.chat-attachment button { flex: none; }
+.message-attachments { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
+.message-attachment { display: flex; align-items: center; gap: 0.4rem; overflow-wrap: anywhere; }
+.chat-input #chatAttach { min-height: 44px; }
+@media (max-width: 600px) {
+  .chat-input { gap: 0.4rem; padding-inline: 0.5rem; }
+  .chat-input #chatAttach { padding-inline: 0.5rem; }
 }
 .chat-input textarea {
   width: 100%;

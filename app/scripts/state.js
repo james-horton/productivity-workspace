@@ -112,6 +112,13 @@ export const MODES = {
     starter: 'Whatcha wanna code?',
     disclaimer: '',
     defaultSearch: false
+  },
+  image: {
+    id: 'image',
+    label: 'Image Generator',
+    starter: 'Describe an image, then follow up to edit the latest result. For OpenRouter edits, select a model marked [Image edit].',
+    disclaimer: 'Image generation uses the selected model and may incur a separate image charge.',
+    defaultSearch: false
   }
 };
 
@@ -125,7 +132,8 @@ const chatHistories = {
   grammar: [],
   eli5: [],
   big_brain: [],
-  coder: []
+  coder: [],
+  image: []
 };
 
 const state = {
@@ -230,7 +238,12 @@ export function getChatHistory(mode) {
 export function appendChatMessage(mode, message) {
   if (!MODES[mode]) return;
   const arr = chatHistories[mode];
-  arr.push({ role: message.role, content: String(message.content || '').slice(0, 8000) });
+  arr.push({
+    role: message.role,
+    content: String(message.content || '').slice(0, 8000),
+    ...(mode === 'image' && message.image ? { image: message.image } : {}),
+    ...(message.role === 'user' && message.attachments?.length ? { attachments: message.attachments } : {})
+  });
   dispatch('pw:chat:updated', { mode, messages: [...arr] });
 }
 
