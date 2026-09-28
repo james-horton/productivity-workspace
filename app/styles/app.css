@@ -1351,10 +1351,24 @@ body:not([data-theme="matrix"]):not([data-theme="nyan-cat"]):not([data-theme="us
 .chat-attachment button { flex: none; }
 .message-attachments { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
 .message-attachment { display: flex; align-items: center; gap: 0.4rem; overflow-wrap: anywhere; }
-.chat-input #chatAttach { min-height: 44px; }
+.chat-input #chatAttach {
+  inline-size: 44px;
+  block-size: 44px;
+  padding: 0;
+}
+#agentNewRun.btn.icon-only {
+  inline-size: 34px;
+  block-size: 34px;
+  padding: 0;
+  flex: 0 0 34px;
+}
+#chatAttach .icon,
+#agentNewRun .icon {
+  width: 50%;
+  height: 50%;
+}
 @media (max-width: 600px) {
   .chat-input { gap: 0.4rem; padding-inline: 0.5rem; }
-  .chat-input #chatAttach { padding-inline: 0.5rem; }
 }
 .chat-input textarea {
   width: 100%;
@@ -3077,6 +3091,11 @@ body.modal-open { overflow: hidden; }
   .agent-pane-actions { padding-inline-end: calc(44px + .5rem); }
   .agent-run-controls select { flex-basis: 100%; min-width: 0; }
   .agent-run-controls .btn { flex: 1 1 0; min-height: 44px; }
+  #agentNewRun.btn.icon-only {
+    inline-size: 44px;
+    block-size: 44px;
+    flex-basis: 44px;
+  }
   .agent-run-strip { grid-template-columns: auto minmax(0, 1fr); padding-inline: .8rem; }
   .agent-run-strip > :not(:first-child):not(:empty) { border-left: 0; padding-left: 0; }
   .agent-approval-mode { grid-column: 1 / -1; justify-self: start; }
